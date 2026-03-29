@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Input Harian — Warkop Jaya</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2300d4aa'/><text x='16' y='22' text-anchor='middle' fill='%230a0f1a' font-size='16' font-weight='bold'>☕</text></svg>"/>
+  <meta name="theme-color" content="#00d4aa"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0f1a; --bg2: #111827; --bg3: #1a2235; --bg4: #243049;
+      --border: #2a3a54; --text: #e8ecf4; --text2: #8b9dc3; --text3: #5a6f94;
+      --accent: #00d4aa; --accent2: #00b894; --accent-bg: rgba(0,212,170,0.08);
+      --red: #ff6b6b; --red-bg: rgba(255,107,107,0.08);
+      --blue: #4da6ff; --blue-bg: rgba(77,166,255,0.08);
+      --orange: #ffa94d; --orange-bg: rgba(255,169,77,0.08);
+      --green: #51cf66; --green-bg: rgba(81,207,102,0.08);
+      --purple: #a855f7; --purple-bg: rgba(168,85,247,0.08);
+      --shadow: 0 4px 24px rgba(0,0,0,0.3); --radius: 10px;
+    }
+    html,body,#root { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; }
+    .app { min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, var(--bg2), var(--bg3));
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px; display: flex; align-items: center; gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-logo {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px; color: var(--bg); flex-shrink: 0;
+    }
+    .header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    .header-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+    /* SYNC BADGE */
+    .sync-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 99px; font-size: 11px; font-weight: 600;
+    }
+    .sync-online { background: var(--green-bg); color: var(--green); }
+    .sync-offline { background: var(--red-bg); color: var(--red); }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .sync-dot.online { background: var(--green); animation: pulse 2s infinite; }
+    .sync-dot.offline { background: var(--red); }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* LAYOUT */
+    .main-area { display: flex; flex: 1; }
+    .sidebar {
+      width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
+      padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;
+    }
+    .nav-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border: none; background: transparent;
+      color: var(--text2); font-size: 13.5px; font-family: inherit; font-weight: 500;
+      border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .nav-btn:hover { background: var(--bg3); color: var(--text); }
+    .nav-btn.active { background: var(--accent-bg); color: var(--accent); }
+
+    .content { flex: 1; padding: 24px; overflow-y: auto; max-height: calc(100vh - 73px); }
+    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .page-sub { color: var(--text2); font-size: 13px; margin-bottom: 24px; }
+
+    /* STAT CARDS */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+    .stat-card.highlight { border-color: rgba(0,212,170,0.3); background: linear-gradient(135deg, rgba(0,212,170,0.06), var(--bg2)); }
+    .stat-card.warn { border-color: rgba(255,107,107,0.3); background: linear-gradient(135deg, rgba(255,107,107,0.06), var(--bg2)); }
+    .stat-card.kas { border-color: rgba(81,207,102,0.3); background: linear-gradient(135deg, rgba(81,207,102,0.06), var(--bg2)); }
+    .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .stat-value.green { color: var(--accent); } .stat-value.blue { color: var(--blue); }
+    .stat-value.orange { color: var(--orange); } .stat-value.red { color: var(--red); }
+
+    .section-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .section-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: none; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: var(--bg); }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,107,107,0.2); }
+    .btn-danger:hover { background: rgba(255,107,107,0.15); }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-save {
+      width: 100%; padding: 15px; font-size: 15px; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: var(--bg); border: none; border-radius: 12px; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,212,170,0.25);
+      transition: all 0.2s; position: relative; overflow: hidden;
+    }
+    .btn-save:hover { box-shadow: 0 6px 24px rgba(0,212,170,0.35); transform: translateY(-1px); }
+    .btn-save:active { transform: translateY(0) scale(0.99); }
+    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    /* PRODUCT ROW */
+    .product-row {
+      display: flex; align-items: center; padding: 14px 0;
+      border-bottom: 1px solid rgba(42,58,84,0.4); gap: 12px;
+    }
+    .product-row:last-child { border-bottom: none; }
+    .product-info { flex: 1; min-width: 0; }
+    .product-name { font-size: 14px; font-weight: 600; }
+    .product-meta { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+    .qty-control {
+      display: flex; align-items: center;
+      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2); flex-shrink: 0;
+    }
+    .qty-btn {
+      width: 40px; height: 40px; background: var(--bg3); border: none;
+      font-size: 20px; color: var(--text2); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; user-select: none; font-family: inherit;
+    }
+    .qty-btn:hover { background: var(--bg4); color: var(--accent); }
+    .qty-btn:active { background: var(--accent-bg); color: var(--accent); transform: scale(0.92); }
+    .qty-display {
+      width: 52px; height: 40px; text-align: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500;
+      color: var(--accent); border: none; background: var(--bg2);
+      border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+      -moz-appearance: textfield; outline: none;
+    }
+    .qty-display::-webkit-inner-spin-button { display: none; }
+    .qty-display:focus { background: var(--accent-bg); }
+
+    /* EXPENSE ROW */
+    .expense-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .expense-input {
+      flex: 1; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px; outline: none; transition: border-color 0.15s;
+    }
+    .expense-input:focus { border-color: var(--accent); }
+    .expense-input::placeholder { color: var(--text3); }
+    .expense-amount {
+      width: 120px; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px;
+      text-align: right; outline: none; transition: border-color 0.15s; flex-shrink: 0;
+    }
+    .expense-amount:focus { border-color: var(--accent); }
+    .expense-amount::placeholder { color: var(--text3); }
+    .del-btn {
+      width: 36px; height: 36px; background: none; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text3); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+      flex-shrink: 0; transition: all 0.15s; font-family: inherit;
+    }
+    .del-btn:hover { background: var(--red-bg); color: var(--red); border-color: rgba(255,107,107,0.3); }
+    .add-expense-btn {
+      font-family: inherit; font-size: 13px; font-weight: 600; color: var(--accent);
+      background: var(--accent-bg); border: 1px dashed rgba(0,212,170,0.3);
+      border-radius: 10px; padding: 10px 14px; cursor: pointer; width: 100%; transition: all 0.2s;
+    }
+    .add-expense-btn:hover { background: rgba(0,212,170,0.12); border-color: rgba(0,212,170,0.5); }
+
+    /* CARD */
+    .card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+    /* DATE ROW */
+    .date-row { display: flex; align-items: center; gap: 10px; }
+    .date-input {
+      font-family: 'JetBrains Mono', monospace; font-size: 14px;
+      border: 1px solid var(--border); background: var(--bg3); color: var(--text);
+      padding: 10px 14px; border-radius: 8px; flex: 1; cursor: pointer; outline: none; transition: all 0.2s;
+    }
+    .date-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+
+    /* SUMMARY */
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .summary-item {
+      background: var(--bg3); border-radius: 10px; padding: 14px 16px;
+      border: 1px solid transparent;
+    }
+    .summary-item.gaji-box {
+      background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,212,170,0.03));
+      grid-column: span 2; border: 1px solid rgba(0,212,170,0.2);
+    }
+    .summary-item.gaji-box .summary-value { font-size: 24px; font-weight: 600; color: var(--accent); }
+    .summary-item.kas-box {
+      background: var(--green-bg); grid-column: span 2; border: 1px solid rgba(81,207,102,0.15);
+    }
+    .summary-item.kas-box .summary-value { font-size: 22px; font-weight: 600; color: var(--green); }
+    .summary-item.outbox { background: var(--red-bg); border: 1px solid rgba(255,107,107,0.1); }
+    .summary-item.outbox .summary-value { color: var(--red); }
+    .summary-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .summary-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; color: var(--text); }
+
+    /* DAY TOTAL BANNER */
+    .day-total {
+      margin-top: 12px; padding: 12px 14px; background: var(--bg3);
+      border-radius: 8px; border: 1px solid var(--border);
+      font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text2); line-height: 1.8;
+    }
+    .day-total strong { color: var(--accent); font-weight: 600; }
+
+    /* PAYDAY BANNER */
+    .payday-banner {
+      padding: 16px 18px; border-radius: var(--radius); margin-bottom: 16px;
+    }
+    .payday-banner.today { background: linear-gradient(135deg, rgba(81,207,102,0.1), rgba(81,207,102,0.04)); border: 1px solid rgba(81,207,102,0.25); }
+    .payday-banner.upcoming { background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,212,170,0.03)); border: 1px solid rgba(0,212,170,0.2); }
+    .payday-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .payday-banner.today .payday-title { color: var(--green); }
+    .payday-banner.upcoming .payday-title { color: var(--accent); }
+    .payday-detail { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+    .payday-amount { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 6px; }
+    .payday-banner.today .payday-amount { color: var(--green); }
+    .payday-banner.upcoming .payday-amount { color: var(--accent); }
+
+    /* SYNC STATUS */
+    .sync-status {
+      text-align: center; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+      padding: 8px; margin-top: 8px; border-radius: 8px;
+    }
+    .sync-status.syncing { color: var(--accent); background: var(--accent-bg); }
+    .sync-status.success { color: var(--green); background: var(--green-bg); }
+    .sync-status.error { color: var(--red); background: var(--red-bg); }
+
+    /* HISTORY */
+    .history-item {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
+      cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+    }
+    .history-item:hover { border-color: var(--accent); }
+    .history-item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+    .history-date { font-size: 13px; font-weight: 600; }
+    .history-gaji { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--accent); }
+    .history-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill {
+      font-size: 11px; padding: 3px 10px; border-radius: 20px;
+      background: var(--bg3); color: var(--text2); font-family: 'JetBrains Mono', monospace;
+      font-weight: 500; border: 1px solid var(--border);
+    }
+    .history-detail {
+      margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
+      animation: slideDown 0.25s ease;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    .detail-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px; padding: 5px 0; color: var(--text2);
+    }
+    .detail-row span:last-child { font-family: 'JetBrains Mono', monospace; }
+    .detail-row.total { color: var(--accent); font-weight: 700; border-top: 2px solid var(--border); margin-top: 6px; padding-top: 10px; font-size: 15px; }
+
+    /* GAJIAN */
+    .gajian-card {
+      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 20px; margin-bottom: 14px; position: relative; overflow: hidden;
+    }
+    .gajian-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    }
+    .gajian-card.active-period { border-color: rgba(0,212,170,0.3); }
+    .gajian-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+    .gajian-period-label { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
+    .gajian-period-dates { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+    .gajian-total-box { text-align: right; }
+    .gajian-total-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+    .gajian-total-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: var(--accent); }
+    .gajian-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .gajian-stat { background: var(--bg3); border-radius: 8px; padding: 8px 10px; }
+    .gajian-stat-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+    .gajian-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; margin-top: 2px; }
+    .gajian-day-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid rgba(42,58,84,0.4); font-size: 13px;
+    }
+    .gajian-day-row:last-child { border-bottom: none; }
+    .gajian-day-date { color: var(--text2); }
+    .gajian-day-date .day-name { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+    .gajian-day-amount { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--accent); }
+    .gajian-day-row.empty .gajian-day-amount { color: var(--text3); }
+    .gajian-status-badge {
+      display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px;
+      border-radius: 20px; letter-spacing: 0.03em; margin-top: 4px;
+    }
+    .gajian-status-badge.paid { background: var(--green-bg); color: var(--green); border: 1px solid rgba(81,207,102,0.2); }
+    .gajian-status-badge.pending { background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(0,212,170,0.2); }
+    .gajian-status-badge.future { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(14px);
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: var(--bg); font-family: inherit; font-size: 13px; font-weight: 700;
+      padding: 11px 22px; border-radius: 24px; opacity: 0;
+      transition: opacity 0.25s, transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: none; z-index: 999; white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,212,170,0.3);
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 52px 20px; color: var(--text3); font-size: 14px; }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* MOBILE NAV */
+    .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid var(--border); padding: 8px 0 env(safe-area-inset-bottom,8px); z-index: 100; }
+    .mobile-nav-inner { display: flex; justify-content: space-around; }
+    .mobile-nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--text3); font-family: inherit; font-size: 10px; font-weight: 500; padding: 6px 12px; cursor: pointer; }
+    .mobile-nav-btn.active { color: var(--accent); }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); border-bottom: 1px solid var(--border); }
+    td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid rgba(42,58,84,0.4); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+
+    /* FORM */
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input { width: 100%; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--accent); }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(4px); }
+    .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 28px; width: 480px; max-width: 95vw; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(0.7) sepia(0.3) hue-rotate(170deg); opacity: 0.6; cursor: pointer; }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    @media (max-width:900px) {
+      .stats-row { grid-template-columns: repeat(2,1fr); }
+      .sidebar { display: none; }
+      .mobile-nav { display: block; }
+      .content { max-height: calc(100vh - 73px - 60px); padding-bottom: 80px; }
+    }
+    @media (max-width:600px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .header { padding: 12px 16px; }
+      .content { padding: 16px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .summary-item.gaji-box, .summary-item.kas-box { grid-column: span 1; }
+      .gajian-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <div class="toast" id="toast"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect, useRef, useCallback } = React;
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  GANTI KONFIGURASI DI BAWAH INI DENGAN MILIK ANDA          ║
+    // ║  Lihat PANDUAN-FIREBASE.md untuk cara mendapatkannya       ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    const firebaseConfig = {
+      apiKey: "GANTI_DENGAN_API_KEY_ANDA",
+      authDomain: "GANTI_DENGAN_AUTH_DOMAIN",
+      projectId: "GANTI_DENGAN_PROJECT_ID",
+      storageBucket: "GANTI_DENGAN_STORAGE_BUCKET",
+      messagingSenderId: "GANTI_DENGAN_SENDER_ID",
+      appId: "GANTI_DENGAN_APP_ID"
+    };
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  (OPSIONAL) URL GOOGLE APPS SCRIPT UNTUK SYNC KE SHEETS    ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    const SHEET_URL = '';
+
+    let db = null;
+    let firebaseReady = false;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      if (firebaseConfig.projectId !== "GANTI_DENGAN_PROJECT_ID") firebaseReady = true;
+    } catch (e) { console.error("Firebase init error:", e); }
+
+    // === DATA PRODUK (SAMA PERSIS DENGAN WARKOP JAYA) ===
+    const PRODUCTS = [
+      { id: 'vietnam',  name: 'Kopi Vietnam Drip', price: 8000,  gaji: 1500 },
+      { id: 'teh',      name: 'Teh',               price: 5000,  gaji: 1000 },
+      { id: 'kopilain', name: 'Kopi Lain',         price: 6000,  gaji: 1300 },
+      { id: 'v2k',      name: 'Voucher 2000',      price: 2000,  gaji: 500  },
+      { id: 'v10k',     name: 'Voucher 10000',     price: 10000, gaji: 1500 },
+      { id: 'v1bln',    name: 'Voucher 1 Bulan',   price: 30000, gaji: 5000 },
+    ];
+
+    const IDR = v => 'Rp' + Math.round(v).toLocaleString('id-ID');
+    const DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const MO = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+    const ML = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    function fmtDate(d) { const dt = new Date(d+'T00:00:00'); return `${DAYS[dt.getDay()]}, ${dt.getDate()} ${MO[dt.getMonth()]} ${dt.getFullYear()}`; }
+    function todayISO() { return new Date().toISOString().split('T')[0]; }
+
+    // Toast
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    // Gaji period helpers (sama persis)
+    function getPayPeriods(year, month) {
+      const mm = String(month+1).padStart(2,'0');
+      return [
+        { label:'Periode 1', start:`${year}-${mm}-01`, end:`${year}-${mm}-14`, payday:14, startDay:1, endDay:14 },
+        { label:'Periode 2', start:`${year}-${mm}-15`, end:`${year}-${mm}-28`, payday:28, startDay:15, endDay:28 },
+      ];
+    }
+
+    // Google Sheets sync
+    function syncToSheet(date, totals, accQty) {
+      return new Promise((resolve) => {
+        if (!SHEET_URL) { resolve(false); return; }
+        const dt = new Date(date+'T00:00:00');
+        const payload = { date, day:DAYS[dt.getDay()], qty:accQty, totalQty:totals.totalQty, totalSales:totals.totalSales, totalGaji:totals.totalGaji, totalExpense:totals.totalExpense||0, sisaKas:totals.sisaKas };
+        const url = SHEET_URL + '?data=' + encodeURIComponent(JSON.stringify(payload));
+        const script = document.createElement('script');
+        const timer = setTimeout(() => { cleanup(); resolve(true); }, 3000);
+        function cleanup() { clearTimeout(timer); if(script.parentNode) script.parentNode.removeChild(script); }
+        script.onerror = () => { cleanup(); resolve(true); };
+        script.src = url;
+        document.body.appendChild(script);
+      });
+    }
+
+    // ===== ICON COMPONENT =====
+    const Icon = ({type, size=18}) => {
+      const s = {width:size,height:size,fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round"};
+      const P = {
+        coffee:<><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></>,
+        home:<><path d="M3 12l9-9 9 9"/><path d="M5 10v10h5v-6h4v6h5V10"/></>,
+        dollar:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></>,
+        clock:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></>,
+        x:<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
+        check:<><polyline points="20 6 9 17 4 12"/></>,
+        edit:<><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
+        trash:<><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></>,
+        wifi:<><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></>,
+      };
+      return <svg viewBox="0 0 24 24" style={s}>{P[type]}</svg>;
+    };
+
+    // ===== MAIN APP =====
+    function App() {
+      const [page, setPage] = useState("input");
+      const [syncStatus, setSyncStatus] = useState(firebaseReady ? "loading" : "not_configured");
+      const [loading, setLoading] = useState(firebaseReady);
+      const [entries, setEntries] = useState({});
+
+      // Input state
+      const [selectedDate, setSelectedDate] = useState(todayISO());
+      const [quantities, setQuantities] = useState(()=>{ const q={}; PRODUCTS.forEach(p=>q[p.id]=0); return q; });
+      const [expenses, setExpenses] = useState([]);
+      const [saving, setSaving] = useState(false);
+      const [sheetStatus, setSheetStatus] = useState(null);
+
+      // History detail
+      const [openDetail, setOpenDetail] = useState(null);
+
+      // Load from Firebase
+      useEffect(() => {
+        if (!firebaseReady || !db) { setLoading(false); return; }
+        const unsub = db.collection("entries").onSnapshot(
+          snap => {
+            const data = {};
+            snap.docs.forEach(doc => { data[doc.id] = doc.data(); });
+            setEntries(data);
+            setSyncStatus("online");
+            setLoading(false);
+          },
+          () => { setSyncStatus("offline"); setLoading(false); }
+        );
+        return () => unsub();
+      }, []);
+
+      // Compute existing entry for selected date
+      const existingEntry = entries[selectedDate] || null;
+
+      // Compute input totals (hanya yang baru diinput)
+      const inputTotals = useMemo(() => {
+        let totalQty=0, totalSales=0, totalGaji=0;
+        PRODUCTS.forEach(p => {
+          const q = quantities[p.id]||0;
+          totalQty+=q; totalSales+=q*p.price; totalGaji+=q*p.gaji;
+        });
+        const totalExpense = expenses.reduce((s,e) => s+(e.amount||0), 0);
+        return { totalQty, totalSales, totalGaji, totalExpense, sisaKas: totalSales-totalGaji-totalExpense };
+      }, [quantities, expenses]);
+
+      // Change qty
+      function changeQty(id, delta) {
+        setQuantities(prev => ({...prev, [id]: Math.max(0, (prev[id]||0)+delta)}));
+      }
+      function setQty(id, val) {
+        setQuantities(prev => ({...prev, [id]: Math.max(0, parseInt(val)||0)}));
+      }
+
+      // Expenses
+      function addExpense() { setExpenses(prev => [...prev, {desc:'',amount:0}]); }
+      function removeExpense(i) { setExpenses(prev => prev.filter((_,idx)=>idx!==i)); }
+      function updateExpense(i, field, val) {
+        setExpenses(prev => prev.map((e,idx) => idx===i ? {...e, [field]: field==='amount' ? (parseInt(val)||0) : val} : e));
+      }
+
+      // SAVE ENTRY (AKUMULASI)
+      async function saveEntry() {
+        const hasQty = PRODUCTS.some(p => (quantities[p.id]||0) > 0);
+        const hasExp = expenses.some(e => (e.amount||0) > 0);
+        if (!hasQty && !hasExp) { showToast('Belum ada input!'); return; }
+        setSaving(true);
+
+        const existing = entries[selectedDate] || null;
+
+        // Akumulasi qty
+        const accQty = {};
+        PRODUCTS.forEach(p => {
+          const old = existing ? (existing.quantities?.[p.id]||0) : 0;
+          accQty[p.id] = old + (quantities[p.id]||0);
+        });
+
+        // Akumulasi expenses
+        const oldExpenses = existing ? (existing.expenses||[]) : [];
+        const newExpenses = expenses.filter(e => (e.amount||0)>0 || e.desc.trim()!=='');
+        const accExpenses = [...oldExpenses, ...newExpenses];
+
+        // Hitung total akumulasi
+        let totalSales=0, totalGaji=0, totalQty=0;
+        PRODUCTS.forEach(p => {
+          const q = accQty[p.id]||0;
+          totalQty+=q; totalSales+=q*p.price; totalGaji+=q*p.gaji;
+        });
+        const totalExpense = accExpenses.reduce((s,e) => s+(e.amount||0), 0);
+
+        const entry = {
+          date: selectedDate,
+          quantities: accQty,
+          expenses: accExpenses,
+          totalPenjualan: totalSales,
+          gaji: totalGaji,
+          totalPengeluaran: totalExpense,
+          sisaKas: totalSales-totalGaji-totalExpense,
+        };
+
+        try {
+          if(db && firebaseReady) {
+            await db.collection("entries").doc(selectedDate).set(entry);
+          }
+          const label = existing ? 'Ditambahkan' : 'Tersimpan';
+          showToast(label + ' · ' + fmtDate(selectedDate));
+
+          // Sync ke Google Sheets
+          if (SHEET_URL) {
+            setSheetStatus('syncing');
+            await syncToSheet(selectedDate, {totalQty, totalSales, totalGaji, totalExpense, sisaKas:totalSales-totalGaji-totalExpense}, accQty);
+            setSheetStatus('success');
+            setTimeout(()=>setSheetStatus(null), 3000);
+          }
+        } catch(e) {
+          showToast('Gagal menyimpan: '+e.message);
+          setSheetStatus('error');
+        }
+
+        // Reset input
+        const q = {}; PRODUCTS.forEach(p => q[p.id]=0);
+        setQuantities(q);
+        setExpenses([]);
+        setSaving(false);
+      }
+
+      // DELETE ENTRY
+      async function deleteEntry(date) {
+        if(!confirm('Yakin hapus data tanggal '+fmtDate(date)+'?')) return;
+        try {
+          if(db && firebaseReady) await db.collection("entries").doc(date).delete();
+          showToast('Entri dihapus');
+        } catch(e) { showToast('Gagal: '+e.message); }
+      }
+
+      // === PAYDAY CHECK ===
+      const paydayInfo = useMemo(() => {
+        const today = new Date();
+        const day = today.getDate();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const periods = getPayPeriods(year, month);
+        let show=null, period=null;
+        if (day===14||day===28) { period=day===14?periods[0]:periods[1]; show='today'; }
+        else if (day>=12&&day<=13) { period=periods[0]; show='upcoming'; }
+        else if (day>=26&&day<=27) { period=periods[1]; show='upcoming'; }
+        if (!show||!period) return null;
+        // Calc total gaji for period
+        const totalGaji = Object.values(entries).filter(e=>e.date>=period.start&&e.date<=period.end).reduce((s,e)=>s+(e.gaji||0),0);
+        const daysLeft = show==='today'?0:(period.payday-day);
+        return { show, period, totalGaji, daysLeft, month };
+      }, [entries]);
+
+      // === ENTRIES SORTED ===
+      const sortedEntries = useMemo(() => {
+        return Object.values(entries).sort((a,b)=>b.date.localeCompare(a.date));
+      }, [entries]);
+
+      // === CONFIG PAGE ===
+      if(syncStatus==="not_configured") return (
+        <div className="app">
+          <div className="header"><div className="header-logo">☕</div><div><div className="header-title">Input Warkop</div><div className="header-sub">Pencatatan Harian</div></div></div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"70vh",padding:40,textAlign:"center"}}>
+            <div style={{fontSize:48,marginBottom:20}}>⚙️</div>
+            <h2 style={{marginBottom:12}}>Konfigurasi Firebase Diperlukan</h2>
+            <p style={{color:"var(--text2)",maxWidth:500,lineHeight:1.7,marginBottom:24}}>Buka file <code style={{background:"var(--bg3)",padding:"2px 8px",borderRadius:4}}>index.html</code>, cari bagian <code style={{background:"var(--bg3)",padding:"2px 8px",borderRadius:4}}>firebaseConfig</code>, lalu ganti dengan konfigurasi dari Firebase Console Anda.</p>
+            <div style={{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:10,padding:20,textAlign:"left",maxWidth:500,width:"100%",fontSize:13,lineHeight:1.8,color:"var(--text2)"}}>
+              <div style={{fontWeight:600,color:"var(--text)",marginBottom:8}}>Langkah singkat:</div>
+              1. Buka <a href="https://console.firebase.google.com" target="_blank" style={{color:"var(--accent)"}}>console.firebase.google.com</a><br/>
+              2. Buat project → buat Firestore Database<br/>
+              3. Ambil konfigurasi dari Project Settings → Web app<br/>
+              4. Ganti nilai firebaseConfig di file ini<br/>
+              5. Upload ulang ke GitHub Pages
+            </div>
+          </div>
+        </div>
+      );
+
+      if(loading) return (
+        <div className="app">
+          <div className="header"><div className="header-logo">☕</div><div><div className="header-title">Input Warkop</div><div className="header-sub">Pencatatan Harian</div></div></div>
+          <div className="loading-screen" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"60vh",gap:16,color:"var(--text2)"}}>
+            <div className="spinner" style={{width:36,height:36,border:"3px solid var(--border)",borderTopColor:"var(--accent)",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}></div>
+            <div>Menghubungkan ke database...</div>
+          </div>
+        </div>
+      );
+
+      const SyncBadge = () => (
+        <div className={"sync-badge "+(syncStatus==="online"?"sync-online":"sync-offline")}>
+          <div className={"sync-dot "+(syncStatus==="online"?"online":"offline")}/>
+          {syncStatus==="online"?"Real-time":"Offline"}
+        </div>
+      );
+
+      const today = new Date();
+
+      return (
+        <div className="app">
+          <div className="header">
+            <div className="header-logo">☕</div>
+            <div><div className="header-title">Input Warkop</div><div className="header-sub">{today.getDate()} {ML[today.getMonth()]} {today.getFullYear()} · {DAYS[today.getDay()]}</div></div>
+            <div className="header-right"><SyncBadge/></div>
+          </div>
+
+          <div className="main-area">
+            <div className="sidebar">
+              <button className={"nav-btn "+(page==="input"?"active":"")} onClick={()=>setPage("input")}><Icon type="coffee" size={18}/> Input Harian</button>
+              <button className={"nav-btn "+(page==="gajian"?"active":"")} onClick={()=>setPage("gajian")}><Icon type="dollar" size={18}/> Gajian</button>
+              <button className={"nav-btn "+(page==="riwayat"?"active":"")} onClick={()=>setPage("riwayat")}><Icon type="clock" size={18}/> Riwayat</button>
+            </div>
+
+            <div className="content">
+
+              {/* ===== TAB: INPUT HARIAN ===== */}
+              {page==="input" && <>
+                <h1 className="page-title">Input Harian</h1>
+                <p className="page-sub">Catat penjualan dan pengeluaran harian warkop</p>
+
+                {/* Payday banner */}
+                {paydayInfo && (
+                  <div className={"payday-banner "+paydayInfo.show}>
+                    <div className="payday-title">{paydayInfo.show==='today'?'🎉 Hari Ini Gajian!':'📅 Gajian '+paydayInfo.daysLeft+' hari lagi (tgl '+paydayInfo.period.payday+')'}</div>
+                    <div className="payday-detail">{paydayInfo.period.label}: Tgl {paydayInfo.period.startDay}–{paydayInfo.period.endDay} {MO[paydayInfo.month]}</div>
+                    <div className="payday-amount">{IDR(paydayInfo.totalGaji)}</div>
+                    {paydayInfo.show==='upcoming' && <div className="payday-detail" style={{marginTop:4}}>Sementara terkumpul</div>}
+                  </div>
+                )}
+
+                {/* Card: Tanggal */}
+                <div className="card">
+                  <div className="card-title">Tanggal</div>
+                  <div className="date-row">
+                    <input type="date" className="date-input" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)}/>
+                    <button className="btn btn-ghost" onClick={()=>{
+                      if(existingEntry) showToast('Data '+fmtDate(selectedDate)+' ditemukan');
+                      else showToast('Belum ada data untuk tanggal ini');
+                    }}>Cek data</button>
+                  </div>
+                  {existingEntry && (
+                    <div className="day-total">
+                      📦 Sudah tercatat: <strong>{PRODUCTS.filter(p=>(existingEntry.quantities?.[p.id]||0)>0).map(p=>p.name+' ×'+existingEntry.quantities[p.id]).join(', ')||'–'}</strong><br/>
+                      💰 Penjualan: <strong>{IDR(existingEntry.totalPenjualan)}</strong> · Gaji: <strong>{IDR(existingEntry.gaji)}</strong><br/>
+                      💸 Pengeluaran: <strong>{IDR(existingEntry.totalPengeluaran||0)}</strong> ({(existingEntry.expenses||[]).length} item)<br/>
+                      <span style={{fontSize:11,color:"var(--text3)"}}>Input baru akan ditambahkan ke data di atas</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Card: Jumlah Laku */}
+                <div className="card">
+                  <div className="card-title">Jumlah Laku</div>
+                  {PRODUCTS.map(p => (
+                    <div key={p.id} className="product-row">
+                      <div className="product-info">
+                        <div className="product-name">{p.name}</div>
+                        <div className="product-meta">{IDR(p.price)} · Gaji: {IDR(p.gaji)}</div>
+                      </div>
+                      <div className="qty-control">
+                        <button className="qty-btn" onClick={()=>changeQty(p.id,-1)}>−</button>
+                        <input className="qty-display" type="number" min="0" value={quantities[p.id]} onChange={e=>setQty(p.id,e.target.value)}/>
+                        <button className="qty-btn" onClick={()=>changeQty(p.id,1)}>+</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Card: Ringkasan */}
+                <div className="card">
+                  <div className="card-title">Ringkasan</div>
+                  <div className="summary-grid">
+                    <div className="summary-item">
+                      <div className="summary-label">Total Laku</div>
+                      <div className="summary-value">{inputTotals.totalQty} cup</div>
+                    </div>
+                    <div className="summary-item">
+                      <div className="summary-label">Total Penjualan</div>
+                      <div className="summary-value">{IDR(inputTotals.totalSales)}</div>
+                    </div>
+                    <div className="summary-item gaji-box">
+                      <div className="summary-label">Gaji Kamu Hari Ini</div>
+                      <div className="summary-value">{IDR(inputTotals.totalGaji)}</div>
+                    </div>
+                    <div className="summary-item outbox">
+                      <div className="summary-label">Total Pengeluaran</div>
+                      <div className="summary-value">{IDR(inputTotals.totalExpense)}</div>
+                    </div>
+                    <div className="summary-item kas-box">
+                      <div className="summary-label">Sisa Kas (Penjualan − Gaji − Pengeluaran)</div>
+                      <div className="summary-value" style={{color:inputTotals.sisaKas<0?"var(--red)":"var(--green)"}}>{IDR(inputTotals.sisaKas)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card: Pengeluaran */}
+                <div className="card">
+                  <div className="card-title">Pengeluaran</div>
+                  {expenses.map((exp, i) => (
+                    <div key={i} className="expense-row">
+                      <input className="expense-input" type="text" placeholder="Keterangan…" value={exp.desc} onChange={e=>updateExpense(i,'desc',e.target.value)}/>
+                      <input className="expense-amount" type="number" placeholder="Jumlah" value={exp.amount||''} onChange={e=>updateExpense(i,'amount',e.target.value)}/>
+                      <button className="del-btn" onClick={()=>removeExpense(i)}>×</button>
+                    </div>
+                  ))}
+                  <button className="add-expense-btn" onClick={addExpense}>+ Tambah Pengeluaran</button>
+                </div>
+
+                {/* Save Button */}
+                <button className="btn-save" disabled={saving} onClick={saveEntry}>
+                  ☕ Tambah & Simpan
+                </button>
+                {sheetStatus && (
+                  <div className={"sync-status "+sheetStatus}>
+                    {sheetStatus==='syncing'&&'⏳ Mengirim ke Google Sheets...'}
+                    {sheetStatus==='success'&&'✓ Data terkirim ke Google Sheets'}
+                    {sheetStatus==='error'&&'⚠ Gagal mengirim ke Google Sheets'}
+                  </div>
+                )}
+              </>}
+
+              {/* ===== TAB: GAJIAN ===== */}
+              {page==="gajian" && <>
+                <h1 className="page-title">Rekap Gajian</h1>
+                <p className="page-sub">Ringkasan gaji per periode (tgl 1–14 dan 15–28)</p>
+
+                {(()=>{
+                  const currentMonth = today.getMonth();
+                  const currentYear = today.getFullYear();
+                  const currentDay = today.getDate();
+                  const monthsToShow = [
+                    { year: currentYear, month: currentMonth },
+                    currentMonth === 0 ? { year: currentYear-1, month: 11 } : { year: currentYear, month: currentMonth-1 }
+                  ];
+
+                  return monthsToShow.map(({year, month}) => {
+                    const periods = getPayPeriods(year, month);
+                    const isCurrentMonth = (year===currentYear && month===currentMonth);
+                    const monthLabel = `${ML[month]} ${year}`;
+
+                    return periods.map((p,pi) => {
+                      const periodEntries = Object.values(entries).filter(e=>e.date>=p.start&&e.date<=p.end);
+                      const totalGaji = periodEntries.reduce((s,e)=>s+(e.gaji||0),0);
+                      const totalPenjualan = periodEntries.reduce((s,e)=>s+(e.totalPenjualan||0),0);
+                      const totalPengeluaran = periodEntries.reduce((s,e)=>s+(e.totalPengeluaran||0),0);
+                      const totalSisaKas = totalPenjualan-totalGaji-totalPengeluaran;
+                      const totalDays = periodEntries.length;
+
+                      const isPast = !isCurrentMonth || (isCurrentMonth && currentDay > p.payday);
+                      const isCurrent = isCurrentMonth && ((p.payday===14 && currentDay>=1 && currentDay<=14) || (p.payday===28 && currentDay>=15 && currentDay<=28));
+                      let statusClass, statusText;
+                      if (isPast && !isCurrent) { statusClass='paid'; statusText='Selesai'; }
+                      else if (isCurrent) { statusClass='pending'; statusText='Berjalan'; }
+                      else { statusClass='future'; statusText='Belum'; }
+
+                      return (
+                        <div key={year+'-'+month+'-'+pi} className={"gajian-card"+(isCurrent?" active-period":"")}>
+                          <div className="gajian-header">
+                            <div>
+                              <div className="gajian-period-label">{monthLabel} · {p.label}</div>
+                              <div className="gajian-period-dates">Tgl {p.startDay}–{p.endDay} · Gajian tgl {p.payday} · {totalDays} hari kerja</div>
+                            </div>
+                            <div className="gajian-total-box">
+                              <div className="gajian-total-label">Total Gaji</div>
+                              <div className="gajian-total-value">{IDR(totalGaji)}</div>
+                              <span className={"gajian-status-badge "+statusClass}>{statusText}</span>
+                            </div>
+                          </div>
+                          <div className="gajian-stats">
+                            <div className="gajian-stat">
+                              <div className="gajian-stat-label">Penjualan</div>
+                              <div className="gajian-stat-value" style={{color:"var(--text)"}}>{IDR(totalPenjualan)}</div>
+                            </div>
+                            <div className="gajian-stat" style={{background:"var(--red-bg)"}}>
+                              <div className="gajian-stat-label">Pengeluaran</div>
+                              <div className="gajian-stat-value" style={{color:"var(--red)"}}>{IDR(totalPengeluaran)}</div>
+                            </div>
+                            <div className="gajian-stat" style={{background:"var(--green-bg)"}}>
+                              <div className="gajian-stat-label">Sisa Kas</div>
+                              <div className="gajian-stat-value" style={{color:"var(--green)"}}>{IDR(totalSisaKas)}</div>
+                            </div>
+                          </div>
+                          {/* Day rows */}
+                          {Array.from({length:p.endDay-p.startDay+1},(_,i)=>p.startDay+i).map(d => {
+                            const dd = String(d).padStart(2,'0');
+                            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${dd}`;
+                            const entry = entries[dateStr];
+                            const dt = new Date(dateStr+'T00:00:00');
+                            const dayName = DAYS[dt.getDay()];
+
+                            if (entry) {
+                              const items = PRODUCTS.filter(pr=>(entry.quantities?.[pr.id]||0)>0).map(pr=>pr.name.split(' ').slice(-1)[0]+' ×'+entry.quantities[pr.id]).join(', ');
+                              const dayExp = entry.totalPengeluaran||0;
+                              return (
+                                <div key={dateStr} className="gajian-day-row">
+                                  <div className="gajian-day-date">
+                                    {d} {MO[month]} <span className="day-name">{dayName}</span>
+                                    <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'JetBrains Mono',monospace"}}>{items}{dayExp>0&&<span style={{color:"var(--red)",fontSize:10}}> −{IDR(dayExp)}</span>}</div>
+                                  </div>
+                                  <div className="gajian-day-amount">{IDR(entry.gaji)}</div>
+                                </div>
+                              );
+                            } else {
+                              return (
+                                <div key={dateStr} className="gajian-day-row empty">
+                                  <div className="gajian-day-date">{d} {MO[month]} <span className="day-name">{dayName}</span></div>
+                                  <div className="gajian-day-amount">–</div>
+                                </div>
+                              );
+                            }
+                          })}
+                        </div>
+                      );
+                    });
+                  });
+                })()}
+              </>}
+
+              {/* ===== TAB: RIWAYAT ===== */}
+              {page==="riwayat" && <>
+                <h1 className="page-title">Riwayat</h1>
+                <p className="page-sub">Data penjualan yang sudah tersimpan</p>
+
+                {sortedEntries.length===0 ? (
+                  <div className="empty"><div className="empty-icon">📋</div>Belum ada data tersimpan.<br/>Mulai input di tab "Input Harian".</div>
+                ) : sortedEntries.map((e, i) => {
+                  const sold = PRODUCTS.filter(p=>(e.quantities?.[p.id]||0)>0);
+                  const totalExp = e.totalPengeluaran||0;
+                  const sisaKas = e.sisaKas!=null ? e.sisaKas : (e.totalPenjualan-e.gaji-totalExp);
+                  const isOpen = openDetail===i;
+
+                  return (
+                    <div key={e.date} className="history-item" onClick={()=>setOpenDetail(isOpen?null:i)}>
+                      <div className="history-item-header">
+                        <span className="history-date">{fmtDate(e.date)}</span>
+                        <span className="history-gaji">{IDR(sisaKas)}</span>
+                      </div>
+                      <div className="history-pills">
+                        {sold.length>0 ? sold.map(p=><span key={p.id} className="pill">{p.name} ×{e.quantities[p.id]}</span>) : <span className="pill" style={{color:"var(--text3)"}}>–</span>}
+                        {totalExp>0 && <span className="pill" style={{background:"var(--red-bg)",color:"var(--red)",borderColor:"rgba(255,107,107,0.2)"}}>-{IDR(totalExp)}</span>}
+                      </div>
+                      {isOpen && (
+                        <div className="history-detail">
+                          <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--accent)",margin:"0 0 6px"}}>Penjualan & Gaji</div>
+                          {sold.length>0 ? sold.map(p=>(
+                            <div key={p.id} className="detail-row">
+                              <span>{p.name} ×{e.quantities[p.id]}</span>
+                              <span>{IDR(e.quantities[p.id]*p.gaji)}</span>
+                            </div>
+                          )) : <div className="detail-row"><span style={{color:"var(--text3)"}}>Tidak ada</span><span></span></div>}
+                          <div className="detail-row total"><span>Total Gaji</span><span>{IDR(e.gaji)}</span></div>
+
+                          {((e.expenses||[]).length>0 || totalExp>0) && <>
+                            <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--red)",margin:"12px 0 6px"}}>Pengeluaran</div>
+                            {(e.expenses||[]).map((x,xi)=>(
+                              <div key={xi} className="detail-row"><span>{x.desc||'Pengeluaran'}</span><span style={{color:"var(--red)"}}>{IDR(x.amount)}</span></div>
+                            ))}
+                            <div className="detail-row" style={{fontWeight:600}}><span>Total Pengeluaran</span><span style={{color:"var(--red)"}}>{IDR(totalExp)}</span></div>
+                          </>}
+
+                          <div className="detail-row" style={{color:"var(--green)",fontWeight:700,borderTop:"2px solid var(--border)",marginTop:8,paddingTop:10,fontSize:14}}>
+                            <span>Sisa Kas</span><span>{IDR(sisaKas)}</span>
+                          </div>
+
+                          <button className="btn btn-danger" style={{width:"100%",marginTop:14,padding:"10px"}} onClick={(ev)=>{ev.stopPropagation();deleteEntry(e.date);}}>
+                            <Icon type="trash" size={14}/> Hapus Data Ini
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </>}
+            </div>
+          </div>
+
+          {/* MOBILE NAV */}
+          <div className="mobile-nav"><div className="mobile-nav-inner">
+            <button className={"mobile-nav-btn "+(page==="input"?"active":"")} onClick={()=>setPage("input")}><Icon type="coffee" size={20}/> Input</button>
+            <button className={"mobile-nav-btn "+(page==="gajian"?"active":"")} onClick={()=>setPage("gajian")}><Icon type="dollar" size={20}/> Gajian</button>
+            <button className={"mobile-nav-btn "+(page==="riwayat"?"active":"")} onClick={()=>setPage("riwayat")}><Icon type="clock" size={20}/> Riwayat</button>
+          </div></div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
