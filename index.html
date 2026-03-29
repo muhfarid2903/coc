@@ -432,12 +432,38 @@
       toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
     }
 
-    // Gaji period helpers (sama persis)
+    // Gaji period helpers
+    // Tgl 29-31 dimasukkan ke Periode 1 bulan berikutnya
     function getPayPeriods(year, month) {
       const mm = String(month+1).padStart(2,'0');
+      // Hitung bulan sebelumnya (untuk overflow tgl 29-31)
+      const prevMonth = month === 0 ? 11 : month - 1;
+      const prevYear  = month === 0 ? year - 1 : year;
+      const pmm = String(prevMonth+1).padStart(2,'0');
+      // Cari hari terakhir bulan sebelumnya
+      const lastDayPrev = new Date(year, month, 0).getDate(); // hari terakhir bulan lalu
+      const overflowDays = [];
+      for (let d = 29; d <= lastDayPrev; d++) overflowDays.push(d);
+
       return [
-        { label:'Periode 1', start:`${year}-${mm}-01`, end:`${year}-${mm}-14`, payday:14, startDay:1, endDay:14 },
-        { label:'Periode 2', start:`${year}-${mm}-15`, end:`${year}-${mm}-28`, payday:28, startDay:15, endDay:28 },
+        {
+          label: 'Periode 1',
+          start: `${year}-${mm}-01`,
+          end:   `${year}-${mm}-14`,
+          payday: 14, startDay: 1, endDay: 14,
+          // tambahan: range overflow dari bulan sebelumnya
+          overflowStart: overflowDays.length > 0 ? `${prevYear}-${pmm}-${String(overflowDays[0]).padStart(2,'0')}` : null,
+          overflowEnd:   overflowDays.length > 0 ? `${prevYear}-${pmm}-${String(lastDayPrev).padStart(2,'0')}` : null,
+          overflowDays,
+          prevYear, prevMonth,
+        },
+        {
+          label: 'Periode 2',
+          start: `${year}-${mm}-15`,
+          end:   `${year}-${mm}-28`,
+          payday: 28, startDay: 15, endDay: 28,
+          overflowStart: null, overflowEnd: null, overflowDays: [], prevYear, prevMonth,
+        },
       ];
     }
 
@@ -622,8 +648,12 @@
         else if (day>=12&&day<=13) { period=periods[0]; show='upcoming'; }
         else if (day>=26&&day<=27) { period=periods[1]; show='upcoming'; }
         if (!show||!period) return null;
-        // Calc total gaji for period
-        const totalGaji = Object.values(entries).filter(e=>e.date>=period.start&&e.date<=period.end).reduce((s,e)=>s+(e.gaji||0),0);
+        // Calc total gaji for period (termasuk overflow tgl 29-31 bulan lalu untuk Periode 1)
+        const periodGaji = Object.values(entries).filter(e=>e.date>=period.start&&e.date<=period.end).reduce((s,e)=>s+(e.gaji||0),0);
+        const overflowGaji = (period.overflowStart && period.overflowEnd)
+          ? Object.values(entries).filter(e=>e.date>=period.overflowStart&&e.date<=period.overflowEnd).reduce((s,e)=>s+(e.gaji||0),0)
+          : 0;
+        const totalGaji = periodGaji + overflowGaji;
         const daysLeft = show==='today'?0:(period.payday-day);
         return { show, period, totalGaji, daysLeft, month };
       }, [entries]);
@@ -815,7 +845,14 @@
                     const monthLabel = `${ML[month]} ${year}`;
 
                     return periods.map((p,pi) => {
-                      const periodEntries = Object.values(entries).filter(e=>e.date>=p.start&&e.date<=p.end);
+                      // Filter entri utama (tgl 1-14 atau 15-28)
+                      const mainEntries = Object.values(entries).filter(e=>e.date>=p.start&&e.date<=p.end);
+                      // Filter entri overflow (tgl 29-31 bulan lalu → masuk Periode 1 bulan ini)
+                      const overflowEntries = (p.overflowStart && p.overflowEnd)
+                        ? Object.values(entries).filter(e=>e.date>=p.overflowStart&&e.date<=p.overflowEnd)
+                        : [];
+                      const periodEntries = [...overflowEntries, ...mainEntries];
+
                       const totalGaji = periodEntries.reduce((s,e)=>s+(e.gaji||0),0);
                       const totalPenjualan = periodEntries.reduce((s,e)=>s+(e.totalPenjualan||0),0);
                       const totalPengeluaran = periodEntries.reduce((s,e)=>s+(e.totalPengeluaran||0),0);
@@ -829,12 +866,17 @@
                       else if (isCurrent) { statusClass='pending'; statusText='Berjalan'; }
                       else { statusClass='future'; statusText='Belum'; }
 
+                      // Label tanggal periode (tampilkan overflow jika ada)
+                      const overflowLabel = overflowEntries.length>0
+                        ? ` (+tgl ${p.overflowDays[0]}–${p.overflowDays[p.overflowDays.length-1]} ${MO[p.prevMonth]})`
+                        : '';
+
                       return (
                         <div key={year+'-'+month+'-'+pi} className={"gajian-card"+(isCurrent?" active-period":"")}>
                           <div className="gajian-header">
                             <div>
                               <div className="gajian-period-label">{monthLabel} · {p.label}</div>
-                              <div className="gajian-period-dates">Tgl {p.startDay}–{p.endDay} · Gajian tgl {p.payday} · {totalDays} hari kerja</div>
+                              <div className="gajian-period-dates">Tgl {p.startDay}–{p.endDay}{overflowLabel} · Gajian tgl {p.payday} · {totalDays} hari kerja</div>
                             </div>
                             <div className="gajian-total-box">
                               <div className="gajian-total-label">Total Gaji</div>
@@ -856,7 +898,44 @@
                               <div className="gajian-stat-value" style={{color:"var(--green)"}}>{IDR(totalSisaKas)}</div>
                             </div>
                           </div>
-                          {/* Day rows */}
+
+                          {/* Overflow day rows (tgl 29-31 bulan lalu) */}
+                          {overflowEntries.length>0 && (
+                            <div style={{borderBottom:"1px dashed var(--border)",marginBottom:4,paddingBottom:4}}>
+                              <div style={{fontSize:10,fontWeight:700,color:"var(--orange)",letterSpacing:".06em",textTransform:"uppercase",padding:"4px 0 6px"}}>
+                                ⬆ Limpahan bulan {ML[p.prevMonth]}
+                              </div>
+                              {p.overflowDays.map(d => {
+                                const dd = String(d).padStart(2,'0');
+                                const dateStr = `${p.prevYear}-${String(p.prevMonth+1).padStart(2,'0')}-${dd}`;
+                                const entry = entries[dateStr];
+                                const dt = new Date(dateStr+'T00:00:00');
+                                const dayName = DAYS[dt.getDay()];
+                                if (entry) {
+                                  const items = PRODUCTS.filter(pr=>(entry.quantities?.[pr.id]||0)>0).map(pr=>pr.name.split(' ').slice(-1)[0]+' ×'+entry.quantities[pr.id]).join(', ');
+                                  const dayExp = entry.totalPengeluaran||0;
+                                  return (
+                                    <div key={dateStr} className="gajian-day-row" style={{background:"rgba(255,169,77,0.04)"}}>
+                                      <div className="gajian-day-date">
+                                        {d} {MO[p.prevMonth]} <span className="day-name">{dayName}</span>
+                                        <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'JetBrains Mono',monospace"}}>{items}{dayExp>0&&<span style={{color:"var(--red)",fontSize:10}}> −{IDR(dayExp)}</span>}</div>
+                                      </div>
+                                      <div className="gajian-day-amount">{IDR(entry.gaji)}</div>
+                                    </div>
+                                  );
+                                } else {
+                                  return (
+                                    <div key={dateStr} className="gajian-day-row empty">
+                                      <div className="gajian-day-date">{d} {MO[p.prevMonth]} <span className="day-name">{dayName}</span></div>
+                                      <div className="gajian-day-amount">–</div>
+                                    </div>
+                                  );
+                                }
+                              })}
+                            </div>
+                          )}
+
+                          {/* Main day rows (tgl 1-14 atau 15-28) */}
                           {Array.from({length:p.endDay-p.startDay+1},(_,i)=>p.startDay+i).map(d => {
                             const dd = String(d).padStart(2,'0');
                             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${dd}`;
