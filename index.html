@@ -856,7 +856,13 @@
                       const totalGaji = periodEntries.reduce((s,e)=>s+(e.gaji||0),0);
                       const totalPenjualan = periodEntries.reduce((s,e)=>s+(e.totalPenjualan||0),0);
                       const totalPengeluaran = periodEntries.reduce((s,e)=>s+(e.totalPengeluaran||0),0);
-                      const totalSisaKas = totalPenjualan-totalGaji-totalPengeluaran;
+                      const kasNetoPeriode = totalPenjualan-totalGaji-totalPengeluaran;
+                      // Saldo awal: akumulasi sisa kas dari semua entri sebelum periode ini
+                      const periodEarliestDate = p.overflowStart || p.start;
+                      const saldoAwal = Object.values(entries)
+                        .filter(e => e.date < periodEarliestDate)
+                        .reduce((s,e) => s + (e.sisaKas != null ? e.sisaKas : ((e.totalPenjualan||0)-(e.gaji||0)-(e.totalPengeluaran||0))), 0);
+                      const totalSisaKas = kasNetoPeriode + saldoAwal;
                       const totalDays = periodEntries.length;
 
                       const isPast = !isCurrentMonth || (isCurrentMonth && currentDay > p.payday);
@@ -893,8 +899,14 @@
                               <div className="gajian-stat-label">Pengeluaran</div>
                               <div className="gajian-stat-value" style={{color:"var(--red)"}}>{IDR(totalPengeluaran)}</div>
                             </div>
+                            {saldoAwal !== 0 && (
+                              <div className="gajian-stat" style={{background:"var(--blue-bg)"}}>
+                                <div className="gajian-stat-label">Saldo Awal</div>
+                                <div className="gajian-stat-value" style={{color:"var(--blue)"}}>{IDR(saldoAwal)}</div>
+                              </div>
+                            )}
                             <div className="gajian-stat" style={{background:"var(--green-bg)"}}>
-                              <div className="gajian-stat-label">Sisa Kas</div>
+                              <div className="gajian-stat-label">Sisa Kas {saldoAwal!==0?"(+Saldo Awal)":""}</div>
                               <div className="gajian-stat-value" style={{color:"var(--green)"}}>{IDR(totalSisaKas)}</div>
                             </div>
                           </div>
