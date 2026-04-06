@@ -3,373 +3,369 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Input Harian — Warkop Jaya</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2300d4aa'/><text x='16' y='22' text-anchor='middle' fill='%230a0f1a' font-size='16' font-weight='bold'>☕</text></svg>"/>
-  <meta name="theme-color" content="#00d4aa"/>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <title>Warkop Jaya — Input Harian</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23d4a574'/><text x='16' y='22' text-anchor='middle' fill='%231a0e05' font-size='16' font-weight='bold'>☕</text></svg>"/>
+  <meta name="theme-color" content="#1a0e05"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg: #0a0f1a; --bg2: #111827; --bg3: #1a2235; --bg4: #243049;
-      --border: #2a3a54; --text: #e8ecf4; --text2: #8b9dc3; --text3: #5a6f94;
-      --accent: #00d4aa; --accent2: #00b894; --accent-bg: rgba(0,212,170,0.08);
-      --red: #ff6b6b; --red-bg: rgba(255,107,107,0.08);
-      --blue: #4da6ff; --blue-bg: rgba(77,166,255,0.08);
-      --orange: #ffa94d; --orange-bg: rgba(255,169,77,0.08);
-      --green: #51cf66; --green-bg: rgba(81,207,102,0.08);
-      --purple: #a855f7; --purple-bg: rgba(168,85,247,0.08);
-      --shadow: 0 4px 24px rgba(0,0,0,0.3); --radius: 10px;
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0f0a06;--bg2:#1a1209;--bg3:#241a0e;--bg4:#332614;
+      --border:#3d2e1a;--border2:#4a3821;
+      --text:#f2e8db;--text2:#b8a48e;--text3:#7a6650;
+      --accent:#d4a574;--accent2:#c4935f;--accent3:#e8c49a;
+      --accent-bg:rgba(212,165,116,0.1);--accent-border:rgba(212,165,116,0.2);
+      --red:#e85d5d;--red-bg:rgba(232,93,93,0.1);--red-border:rgba(232,93,93,0.15);
+      --green:#5dba6f;--green-bg:rgba(93,186,111,0.1);--green-border:rgba(93,186,111,0.15);
+      --blue:#5da3e8;--blue-bg:rgba(93,163,232,0.1);
+      --orange:#e8a34d;--orange-bg:rgba(232,163,77,0.1);--orange-border:rgba(232,163,77,0.15);
+      --purple:#a87de8;--purple-bg:rgba(168,125,232,0.1);
+      --shadow:0 8px 32px rgba(0,0,0,0.4);--radius:14px;
     }
-    html,body,#root { height: 100%; }
-    body { background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; }
-    .app { min-height: 100vh; display: flex; flex-direction: column; }
+    html,body,#root{height:100%}
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:'DM Sans',-apple-system,sans-serif;
+      background-image:radial-gradient(ellipse at 20% 0%,rgba(212,165,116,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(212,165,116,0.04) 0%,transparent 50%);
+    }
+    .app{min-height:100vh;display:flex;flex-direction:column}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-    /* HEADER */
-    .header {
-      background: linear-gradient(135deg, var(--bg2), var(--bg3));
-      border-bottom: 1px solid var(--border);
-      padding: 16px 24px; display: flex; align-items: center; gap: 16px;
-      position: sticky; top: 0; z-index: 100;
+    .header{
+      background:linear-gradient(180deg,rgba(26,18,9,.95),rgba(15,10,6,.9));
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      padding:14px 24px;display:flex;align-items:center;gap:14px;
+      position:sticky;top:0;z-index:100;
     }
-    .header-logo {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, var(--accent), var(--blue));
-      border-radius: 10px; display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 18px; color: var(--bg); flex-shrink: 0;
+    .header-logo{
+      width:44px;height:44px;
+      background:linear-gradient(145deg,var(--accent),#b8854a);
+      border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-size:22px;flex-shrink:0;
+      box-shadow:0 4px 16px rgba(212,165,116,.25),inset 0 1px 0 rgba(255,255,255,.15);
     }
-    .header-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-    .header-sub { font-size: 12px; color: var(--text2); margin-top: 1px; }
-    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .header-title{font-size:19px;font-weight:700;letter-spacing:-.5px;color:var(--text)}
+    .header-sub{font-size:12px;color:var(--text3);margin-top:1px}
+    .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 
-    /* SYNC BADGE */
-    .sync-badge {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 99px; font-size: 11px; font-weight: 600;
-    }
-    .sync-online { background: var(--green-bg); color: var(--green); }
-    .sync-offline { background: var(--red-bg); color: var(--red); }
-    .sync-dot { width: 7px; height: 7px; border-radius: 50%; }
-    .sync-dot.online { background: var(--green); animation: pulse 2s infinite; }
-    .sync-dot.offline { background: var(--red); }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .sync-badge{display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid transparent}
+    .sync-online{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+    .sync-offline{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+    .sync-dot{width:7px;height:7px;border-radius:50%}
+    .sync-dot.online{background:var(--green);animation:pulse 2s infinite}
+    .sync-dot.offline{background:var(--red)}
 
-    /* LAYOUT */
-    .main-area { display: flex; flex: 1; }
-    .sidebar {
-      width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
-      padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;
+    .main-area{display:flex;flex:1}
+    .sidebar{
+      width:230px;background:var(--bg2);border-right:1px solid var(--border);
+      padding:20px 14px;display:flex;flex-direction:column;gap:4px;flex-shrink:0;
     }
-    .nav-btn {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 14px; border: none; background: transparent;
-      color: var(--text2); font-size: 13.5px; font-family: inherit; font-weight: 500;
-      border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    .sidebar-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:12px 14px 8px;margin-top:4px}
+    .nav-btn{
+      display:flex;align-items:center;gap:10px;
+      padding:11px 16px;border:none;background:transparent;
+      color:var(--text2);font-size:14px;font-family:inherit;font-weight:500;
+      border-radius:10px;cursor:pointer;transition:all .2s;
     }
-    .nav-btn:hover { background: var(--bg3); color: var(--text); }
-    .nav-btn.active { background: var(--accent-bg); color: var(--accent); }
+    .nav-btn:hover{background:var(--bg3);color:var(--text)}
+    .nav-btn.active{
+      background:linear-gradient(135deg,var(--accent-bg),rgba(212,165,116,.05));
+      color:var(--accent);border:1px solid var(--accent-border);font-weight:600;
+    }
 
-    .content { flex: 1; padding: 24px; overflow-y: auto; max-height: calc(100vh - 73px); }
-    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-    .page-sub { color: var(--text2); font-size: 13px; margin-bottom: 24px; }
+    .content{flex:1;padding:28px 32px;overflow-y:auto;max-height:calc(100vh - 73px)}
+    .page-title{
+      font-size:26px;font-weight:700;margin-bottom:4px;letter-spacing:-.5px;
+      background:linear-gradient(135deg,var(--text),var(--accent3));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .page-sub{color:var(--text3);font-size:14px;margin-bottom:28px}
 
-    /* STAT CARDS */
-    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
-    .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
-    .stat-card.highlight { border-color: rgba(0,212,170,0.3); background: linear-gradient(135deg, rgba(0,212,170,0.06), var(--bg2)); }
-    .stat-card.warn { border-color: rgba(255,107,107,0.3); background: linear-gradient(135deg, rgba(255,107,107,0.06), var(--bg2)); }
-    .stat-card.kas { border-color: rgba(81,207,102,0.3); background: linear-gradient(135deg, rgba(81,207,102,0.06), var(--bg2)); }
-    .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-    .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-    .stat-value.green { color: var(--accent); } .stat-value.blue { color: var(--blue); }
-    .stat-value.orange { color: var(--orange); } .stat-value.red { color: var(--red); }
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+    .stat-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;
+      position:relative;overflow:hidden;
+    }
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--border2),transparent)}
+    .stat-card.highlight{border-color:var(--accent-border)}
+    .stat-card.highlight::before{background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+    .stat-card.warn{border-color:var(--red-border)}
+    .stat-card.warn::before{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+    .stat-card.kas{border-color:var(--green-border)}
+    .stat-card.kas::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+    .stat-label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+    .stat-value{font-size:26px;font-weight:700;font-family:'Space Mono',monospace}
+    .stat-value.green{color:var(--accent)}.stat-value.blue{color:var(--blue)}
+    .stat-value.orange{color:var(--orange)}.stat-value.red{color:var(--red)}
 
-    .section-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-    .section-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .section-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .section-title .dot{width:8px;height:8px;border-radius:50%}
 
-    /* BUTTONS */
-    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border: none; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-    .btn-primary { background: var(--accent); color: var(--bg); }
-    .btn-primary:hover { background: var(--accent2); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,107,107,0.2); }
-    .btn-danger:hover { background: rgba(255,107,107,0.15); }
-    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-    .btn-ghost:hover { background: var(--bg3); color: var(--text); }
-    .btn-sm { padding: 5px 10px; font-size: 12px; }
-    .btn-save {
-      width: 100%; padding: 15px; font-size: 15px; font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: var(--bg); border: none; border-radius: 12px; cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0,212,170,0.25);
-      transition: all 0.2s; position: relative; overflow: hidden;
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+    .btn-primary{background:var(--accent);color:var(--bg)}
+    .btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+    .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+    .btn-danger:hover{background:rgba(232,93,93,.18)}
+    .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+    .btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+    .btn-sm{padding:5px 10px;font-size:12px}
+    .btn-save{
+      width:100%;padding:16px;font-size:15px;font-weight:700;
+      background:linear-gradient(135deg,var(--accent),#b8854a);
+      color:var(--bg);border:none;border-radius:14px;cursor:pointer;
+      box-shadow:0 6px 24px rgba(212,165,116,.3),inset 0 1px 0 rgba(255,255,255,.15);
+      transition:all .25s;letter-spacing:.02em;
     }
-    .btn-save:hover { box-shadow: 0 6px 24px rgba(0,212,170,0.35); transform: translateY(-1px); }
-    .btn-save:active { transform: translateY(0) scale(0.99); }
-    .btn-save:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+    .btn-save:hover{box-shadow:0 8px 32px rgba(212,165,116,.4);transform:translateY(-2px)}
+    .btn-save:active{transform:translateY(0) scale(.99)}
+    .btn-save:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
 
-    /* PRODUCT ROW */
-    .product-row {
-      display: flex; align-items: center; padding: 14px 0;
-      border-bottom: 1px solid rgba(42,58,84,0.4); gap: 12px;
+    .product-row{
+      display:flex;align-items:center;padding:16px 0;
+      border-bottom:1px solid rgba(61,46,26,.5);gap:14px;transition:all .15s;
     }
-    .product-row:last-child { border-bottom: none; }
-    .product-info { flex: 1; min-width: 0; }
-    .product-name { font-size: 14px; font-weight: 600; }
-    .product-meta { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
-    .qty-control {
-      display: flex; align-items: center;
-      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2); flex-shrink: 0;
+    .product-row:last-child{border-bottom:none}
+    .product-row:hover{padding-left:4px}
+    .product-emoji{
+      width:42px;height:42px;border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:20px;flex-shrink:0;
+      background:var(--bg3);border:1px solid var(--border);
     }
-    .qty-btn {
-      width: 40px; height: 40px; background: var(--bg3); border: none;
-      font-size: 20px; color: var(--text2); cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s; user-select: none; font-family: inherit;
+    .product-info{flex:1;min-width:0}
+    .product-name{font-size:14px;font-weight:600;letter-spacing:-.2px}
+    .product-meta{font-size:11px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:3px}
+    .qty-control{
+      display:flex;align-items:center;
+      border:1px solid var(--border);border-radius:12px;overflow:hidden;
+      box-shadow:0 2px 8px rgba(0,0,0,.2);flex-shrink:0;background:var(--bg3);
     }
-    .qty-btn:hover { background: var(--bg4); color: var(--accent); }
-    .qty-btn:active { background: var(--accent-bg); color: var(--accent); transform: scale(0.92); }
-    .qty-display {
-      width: 52px; height: 40px; text-align: center;
-      font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 500;
-      color: var(--accent); border: none; background: var(--bg2);
-      border-left: 1px solid var(--border); border-right: 1px solid var(--border);
-      -moz-appearance: textfield; outline: none;
+    .qty-btn{
+      width:42px;height:42px;background:transparent;border:none;
+      font-size:20px;color:var(--text2);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:all .15s;user-select:none;font-family:inherit;
     }
-    .qty-display::-webkit-inner-spin-button { display: none; }
-    .qty-display:focus { background: var(--accent-bg); }
+    .qty-btn:hover{background:var(--bg4);color:var(--accent)}
+    .qty-btn:active{color:var(--accent);transform:scale(.88)}
+    .qty-display{
+      width:50px;height:42px;text-align:center;
+      font-family:'Space Mono',monospace;font-size:15px;font-weight:700;
+      color:var(--accent);border:none;background:var(--bg2);
+      border-left:1px solid var(--border);border-right:1px solid var(--border);
+      -moz-appearance:textfield;outline:none;
+    }
+    .qty-display::-webkit-inner-spin-button{display:none}
+    .qty-display:focus{background:var(--accent-bg)}
 
-    /* EXPENSE ROW */
-    .expense-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .expense-input {
-      flex: 1; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px; outline: none; transition: border-color 0.15s;
+    .expense-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .expense-input{
+      flex:1;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);
+      border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;outline:none;transition:all .2s;
     }
-    .expense-input:focus { border-color: var(--accent); }
-    .expense-input::placeholder { color: var(--text3); }
-    .expense-amount {
-      width: 120px; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px;
-      text-align: right; outline: none; transition: border-color 0.15s; flex-shrink: 0;
+    .expense-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+    .expense-input::placeholder{color:var(--text3)}
+    .expense-amount{
+      width:130px;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);
+      border-radius:10px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;
+      text-align:right;outline:none;transition:all .2s;flex-shrink:0;
     }
-    .expense-amount:focus { border-color: var(--accent); }
-    .expense-amount::placeholder { color: var(--text3); }
-    .del-btn {
-      width: 36px; height: 36px; background: none; border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text3); cursor: pointer;
-      display: flex; align-items: center; justify-content: center; font-size: 16px;
-      flex-shrink: 0; transition: all 0.15s; font-family: inherit;
+    .expense-amount:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+    .expense-amount::placeholder{color:var(--text3)}
+    .del-btn{
+      width:38px;height:38px;background:none;border:1px solid var(--border);
+      border-radius:10px;color:var(--text3);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:16px;
+      flex-shrink:0;transition:all .15s;font-family:inherit;
     }
-    .del-btn:hover { background: var(--red-bg); color: var(--red); border-color: rgba(255,107,107,0.3); }
-    .add-expense-btn {
-      font-family: inherit; font-size: 13px; font-weight: 600; color: var(--accent);
-      background: var(--accent-bg); border: 1px dashed rgba(0,212,170,0.3);
-      border-radius: 10px; padding: 10px 14px; cursor: pointer; width: 100%; transition: all 0.2s;
+    .del-btn:hover{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+    .add-expense-btn{
+      font-family:inherit;font-size:13px;font-weight:600;color:var(--accent);
+      background:var(--accent-bg);border:1px dashed var(--accent-border);
+      border-radius:12px;padding:12px 14px;cursor:pointer;width:100%;transition:all .2s;
     }
-    .add-expense-btn:hover { background: rgba(0,212,170,0.12); border-color: rgba(0,212,170,0.5); }
+    .add-expense-btn:hover{background:rgba(212,165,116,.15);border-color:var(--accent)}
 
-    /* CARD */
-    .card {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+    .card{
+      background:var(--bg2);border:1px solid var(--border);
+      border-radius:16px;padding:22px;margin-bottom:16px;
+      position:relative;overflow:hidden;animation:fadeUp .4s ease both;
     }
-    .card-title {
-      font-size: 11px; font-weight: 700; color: var(--accent);
-      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px;
-      display: flex; align-items: center; gap: 8px;
+    .card:nth-child(2){animation-delay:.05s}
+    .card:nth-child(3){animation-delay:.1s}
+    .card:nth-child(4){animation-delay:.15s}
+    .card-title{
+      font-size:11px;font-weight:700;color:var(--accent);
+      letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;
+      display:flex;align-items:center;gap:10px;
     }
-    .card-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+    .card-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
 
-    /* DATE ROW */
-    .date-row { display: flex; align-items: center; gap: 10px; }
-    .date-input {
-      font-family: 'JetBrains Mono', monospace; font-size: 14px;
-      border: 1px solid var(--border); background: var(--bg3); color: var(--text);
-      padding: 10px 14px; border-radius: 8px; flex: 1; cursor: pointer; outline: none; transition: all 0.2s;
+    .date-row{display:flex;align-items:center;gap:10px}
+    .date-input{
+      font-family:'Space Mono',monospace;font-size:14px;
+      border:1px solid var(--border);background:var(--bg3);color:var(--text);
+      padding:11px 14px;border-radius:10px;flex:1;cursor:pointer;outline:none;transition:all .2s;
     }
-    .date-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+    .date-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
 
-    /* SUMMARY */
-    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .summary-item {
-      background: var(--bg3); border-radius: 10px; padding: 14px 16px;
-      border: 1px solid transparent;
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .summary-item{background:var(--bg3);border-radius:12px;padding:16px 18px;border:1px solid transparent;transition:all .2s}
+    .summary-item:hover{border-color:var(--border2)}
+    .summary-item.gaji-box{
+      background:linear-gradient(135deg,rgba(212,165,116,.1),rgba(212,165,116,.03));
+      grid-column:span 2;border:1px solid var(--accent-border);
     }
-    .summary-item.gaji-box {
-      background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,212,170,0.03));
-      grid-column: span 2; border: 1px solid rgba(0,212,170,0.2);
-    }
-    .summary-item.gaji-box .summary-value { font-size: 24px; font-weight: 600; color: var(--accent); }
-    .summary-item.kas-box {
-      background: var(--green-bg); grid-column: span 2; border: 1px solid rgba(81,207,102,0.15);
-    }
-    .summary-item.kas-box .summary-value { font-size: 22px; font-weight: 600; color: var(--green); }
-    .summary-item.outbox { background: var(--red-bg); border: 1px solid rgba(255,107,107,0.1); }
-    .summary-item.outbox .summary-value { color: var(--red); }
-    .summary-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-    .summary-value { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 500; color: var(--text); }
+    .summary-item.gaji-box .summary-value{font-size:24px;font-weight:700;color:var(--accent)}
+    .summary-item.kas-box{background:var(--green-bg);grid-column:span 2;border:1px solid var(--green-border)}
+    .summary-item.kas-box .summary-value{font-size:22px;font-weight:700;color:var(--green)}
+    .summary-item.outbox{background:var(--red-bg);border:1px solid var(--red-border)}
+    .summary-item.outbox .summary-value{color:var(--red)}
+    .summary-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .summary-value{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:var(--text)}
 
-    /* DAY TOTAL BANNER */
-    .day-total {
-      margin-top: 12px; padding: 12px 14px; background: var(--bg3);
-      border-radius: 8px; border: 1px solid var(--border);
-      font-size: 12px; font-family: 'JetBrains Mono', monospace; color: var(--text2); line-height: 1.8;
+    .day-total{
+      margin-top:14px;padding:14px 16px;background:var(--bg3);
+      border-radius:10px;border:1px solid var(--border);
+      font-size:12px;font-family:'Space Mono',monospace;color:var(--text2);line-height:1.9;
     }
-    .day-total strong { color: var(--accent); font-weight: 600; }
+    .day-total strong{color:var(--accent);font-weight:700}
 
-    /* PAYDAY BANNER */
-    .payday-banner {
-      padding: 16px 18px; border-radius: var(--radius); margin-bottom: 16px;
-    }
-    .payday-banner.today { background: linear-gradient(135deg, rgba(81,207,102,0.1), rgba(81,207,102,0.04)); border: 1px solid rgba(81,207,102,0.25); }
-    .payday-banner.upcoming { background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,212,170,0.03)); border: 1px solid rgba(0,212,170,0.2); }
-    .payday-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-    .payday-banner.today .payday-title { color: var(--green); }
-    .payday-banner.upcoming .payday-title { color: var(--accent); }
-    .payday-detail { font-size: 12px; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
-    .payday-amount { font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; margin-top: 6px; }
-    .payday-banner.today .payday-amount { color: var(--green); }
-    .payday-banner.upcoming .payday-amount { color: var(--accent); }
+    .payday-banner{padding:18px 20px;border-radius:16px;margin-bottom:18px;position:relative;overflow:hidden}
+    .payday-banner::before{content:'';position:absolute;inset:0;opacity:.03;background:repeating-linear-gradient(45deg,transparent,transparent 10px,currentColor 10px,currentColor 11px)}
+    .payday-banner.today{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green)}
+    .payday-banner.upcoming{background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent)}
+    .payday-title{font-size:15px;font-weight:700;margin-bottom:4px;position:relative}
+    .payday-detail{font-size:12px;color:var(--text2);font-family:'Space Mono',monospace;position:relative}
+    .payday-amount{font-size:24px;font-weight:700;font-family:'Space Mono',monospace;margin-top:8px;position:relative}
+    .payday-banner.today .payday-title,.payday-banner.today .payday-amount{color:var(--green)}
+    .payday-banner.upcoming .payday-title,.payday-banner.upcoming .payday-amount{color:var(--accent)}
 
-    /* SYNC STATUS */
-    .sync-status {
-      text-align: center; font-size: 12px; font-family: 'JetBrains Mono', monospace;
-      padding: 8px; margin-top: 8px; border-radius: 8px;
-    }
-    .sync-status.syncing { color: var(--accent); background: var(--accent-bg); }
-    .sync-status.success { color: var(--green); background: var(--green-bg); }
-    .sync-status.error { color: var(--red); background: var(--red-bg); }
+    .sync-status{text-align:center;font-size:12px;font-family:'Space Mono',monospace;padding:10px;margin-top:10px;border-radius:10px}
+    .sync-status.syncing{color:var(--accent);background:var(--accent-bg)}
+    .sync-status.success{color:var(--green);background:var(--green-bg)}
+    .sync-status.error{color:var(--red);background:var(--red-bg)}
 
-    /* HISTORY */
-    .history-item {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px;
-      cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+    .history-item{
+      background:var(--bg2);border:1px solid var(--border);
+      border-radius:16px;padding:18px 20px;margin-bottom:10px;
+      cursor:pointer;transition:all .25s;animation:fadeUp .3s ease both;
     }
-    .history-item:hover { border-color: var(--accent); }
-    .history-item-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-    .history-date { font-size: 13px; font-weight: 600; }
-    .history-gaji { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--accent); }
-    .history-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-    .pill {
-      font-size: 11px; padding: 3px 10px; border-radius: 20px;
-      background: var(--bg3); color: var(--text2); font-family: 'JetBrains Mono', monospace;
-      font-weight: 500; border: 1px solid var(--border);
+    .history-item:hover{border-color:var(--accent-border);transform:translateY(-1px);box-shadow:var(--shadow)}
+    .history-item-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+    .history-date{font-size:13px;font-weight:600}
+    .history-gaji{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--accent)}
+    .history-pills{display:flex;gap:6px;flex-wrap:wrap}
+    .pill{
+      font-size:11px;padding:4px 12px;border-radius:20px;
+      background:var(--bg3);color:var(--text2);font-family:'Space Mono',monospace;
+      font-weight:400;border:1px solid var(--border);
     }
-    .history-detail {
-      margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
-      animation: slideDown 0.25s ease;
-    }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-    .detail-row {
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 13px; padding: 5px 0; color: var(--text2);
-    }
-    .detail-row span:last-child { font-family: 'JetBrains Mono', monospace; }
-    .detail-row.total { color: var(--accent); font-weight: 700; border-top: 2px solid var(--border); margin-top: 6px; padding-top: 10px; font-size: 15px; }
+    .history-detail{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);animation:fadeUp .25s ease}
+    .detail-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;font-family:'Space Mono',monospace}
+    .detail-row.total{font-weight:700;color:var(--accent);border-top:1px solid var(--border);margin-top:4px;padding-top:10px}
 
-    /* GAJIAN */
-    .gajian-card {
-      background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 20px; margin-bottom: 14px; position: relative; overflow: hidden;
+    .gajian-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+      padding:22px;margin-bottom:16px;position:relative;overflow:hidden;animation:fadeUp .4s ease both;
     }
-    .gajian-card::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    .gajian-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--border2),transparent)}
+    .gajian-card.active-period{border-color:var(--accent-border)}
+    .gajian-card.active-period::before{background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+    .gajian-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+    .gajian-period-label{font-size:10px;font-weight:700;color:var(--accent);letter-spacing:.1em;text-transform:uppercase}
+    .gajian-period-dates{font-size:12px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:3px}
+    .gajian-total-box{text-align:right}
+    .gajian-total-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+    .gajian-total-value{font-family:'Space Mono',monospace;font-size:24px;font-weight:700;color:var(--accent)}
+    .gajian-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+    .gajian-stats2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .gajian-stat{background:var(--bg3);border-radius:10px;padding:10px 12px;border:1px solid var(--border)}
+    .gajian-stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+    .gajian-stat-value{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;margin-top:4px}
+    .gajian-day-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(61,46,26,.4);font-size:13px}
+    .gajian-day-row:last-child{border-bottom:none}
+    .gajian-day-date{color:var(--text2)}
+    .gajian-day-date .day-name{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace}
+    .gajian-day-amount{font-family:'Space Mono',monospace;font-weight:700;color:var(--accent)}
+    .gajian-day-row.empty .gajian-day-amount{color:var(--text3);font-weight:400}
+    .gajian-status-badge{display:inline-block;font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:.03em;margin-top:6px}
+    .gajian-status-badge.paid{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+    .gajian-status-badge.pending{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+    .gajian-status-badge.future{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
+
+    .toast{
+      position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+      background:linear-gradient(135deg,var(--accent),#b8854a);
+      color:var(--bg);font-family:inherit;font-size:13px;font-weight:700;
+      padding:12px 24px;border-radius:28px;opacity:0;
+      transition:opacity .3s,transform .3s cubic-bezier(.34,1.56,.64,1);
+      pointer-events:none;z-index:999;white-space:nowrap;
+      box-shadow:0 8px 32px rgba(212,165,116,.35);
     }
-    .gajian-card.active-period { border-color: rgba(0,212,170,0.3); }
-    .gajian-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
-    .gajian-period-label { font-size: 10px; font-weight: 700; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; }
-    .gajian-period-dates { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
-    .gajian-total-box { text-align: right; }
-    .gajian-total-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
-    .gajian-total-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; color: var(--accent); }
-    .gajian-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-    .gajian-stat { background: var(--bg3); border-radius: 8px; padding: 8px 10px; }
-    .gajian-stat-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
-    .gajian-stat-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; margin-top: 2px; }
-    .gajian-day-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 0; border-bottom: 1px solid rgba(42,58,84,0.4); font-size: 13px;
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    .empty{text-align:center;padding:60px 20px;color:var(--text3);font-size:14px}
+    .empty-icon{font-size:48px;margin-bottom:16px}
+
+    .mobile-nav{
+      display:none;position:fixed;bottom:0;left:0;right:0;
+      background:rgba(15,10,6,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,6px);z-index:100;
     }
-    .gajian-day-row:last-child { border-bottom: none; }
-    .gajian-day-date { color: var(--text2); }
-    .gajian-day-date .day-name { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
-    .gajian-day-amount { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--accent); }
-    .gajian-day-row.empty .gajian-day-amount { color: var(--text3); }
-    .gajian-status-badge {
-      display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px;
-      border-radius: 20px; letter-spacing: 0.03em; margin-top: 4px;
+    .mobile-nav-inner{display:flex;justify-content:space-around}
+    .mobile-nav-btn{
+      display:flex;flex-direction:column;align-items:center;gap:3px;
+      background:none;border:none;color:var(--text3);
+      font-family:inherit;font-size:10px;font-weight:600;
+      padding:8px 16px;cursor:pointer;border-radius:10px;transition:all .2s;
     }
-    .gajian-status-badge.paid { background: var(--green-bg); color: var(--green); border: 1px solid rgba(81,207,102,0.2); }
-    .gajian-status-badge.pending { background: var(--accent-bg); color: var(--accent); border: 1px solid rgba(0,212,170,0.2); }
-    .gajian-status-badge.future { background: var(--bg3); color: var(--text3); border: 1px solid var(--border); }
+    .mobile-nav-btn.active{color:var(--accent);background:var(--accent-bg)}
 
-    /* TOAST */
-    .toast {
-      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(14px);
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: var(--bg); font-family: inherit; font-size: 13px; font-weight: 700;
-      padding: 11px 22px; border-radius: 24px; opacity: 0;
-      transition: opacity 0.25s, transform 0.25s cubic-bezier(0.4,0,0.2,1);
-      pointer-events: none; z-index: 999; white-space: nowrap;
-      box-shadow: 0 8px 32px rgba(0,212,170,0.3);
+    table{width:100%;border-collapse:collapse}
+    th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);border-bottom:1px solid var(--border)}
+    td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(61,46,26,.4)}
+    tr:hover td{background:rgba(212,165,116,.03)}
+    .tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600}
+
+    .form-group{margin-bottom:16px}
+    .form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.06em}
+    .form-input{width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:inherit;font-size:13px;outline:none;transition:all .2s}
+    .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(8px)}
+    .modal{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:28px;width:480px;max-width:95vw;box-shadow:var(--shadow);max-height:90vh;overflow-y:auto}
+    .modal-title{font-size:18px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+
+    input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.8) sepia(.5) hue-rotate(350deg) saturate(2);opacity:.6;cursor:pointer}
+    input[type="number"]{-moz-appearance:textfield}
+
+    @media(max-width:900px){
+      .stats-row{grid-template-columns:repeat(2,1fr)}
+      .sidebar{display:none}
+      .mobile-nav{display:block}
+      .content{max-height:calc(100vh - 73px - 60px);padding:20px 16px 90px}
     }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* EMPTY STATE */
-    .empty { text-align: center; padding: 52px 20px; color: var(--text3); font-size: 14px; }
-    .empty-icon { font-size: 40px; margin-bottom: 12px; }
-
-    /* MOBILE NAV */
-    .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid var(--border); padding: 8px 0 env(safe-area-inset-bottom,8px); z-index: 100; }
-    .mobile-nav-inner { display: flex; justify-content: space-around; }
-    .mobile-nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; color: var(--text3); font-family: inherit; font-size: 10px; font-weight: 500; padding: 6px 12px; cursor: pointer; }
-    .mobile-nav-btn.active { color: var(--accent); }
-
-    /* TABLE */
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); border-bottom: 1px solid var(--border); }
-    td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid rgba(42,58,84,0.4); }
-    tr:hover td { background: rgba(255,255,255,0.02); }
-    .tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; }
-
-    /* FORM */
-    .form-group { margin-bottom: 16px; }
-    .form-label { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
-    .form-input { width: 100%; padding: 10px 14px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 13px; outline: none; transition: border-color 0.15s; }
-    .form-input:focus { border-color: var(--accent); }
-
-    /* MODAL */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(4px); }
-    .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 28px; width: 480px; max-width: 95vw; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; }
-    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-
-    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) brightness(0.7) sepia(0.3) hue-rotate(170deg); opacity: 0.6; cursor: pointer; }
-    input[type="number"] { -moz-appearance: textfield; }
-
-    @media (max-width:900px) {
-      .stats-row { grid-template-columns: repeat(2,1fr); }
-      .sidebar { display: none; }
-      .mobile-nav { display: block; }
-      .content { max-height: calc(100vh - 73px - 60px); padding-bottom: 80px; }
-    }
-    @media (max-width:600px) {
-      .stats-row { grid-template-columns: 1fr; }
-      .header { padding: 12px 16px; }
-      .content { padding: 16px; }
-      .summary-grid { grid-template-columns: 1fr; }
-      .summary-item.gaji-box, .summary-item.kas-box { grid-column: span 1; }
-      .gajian-stats { grid-template-columns: 1fr; }
+    @media(max-width:600px){
+      .stats-row{grid-template-columns:1fr}
+      .header{padding:12px 16px}
+      .content{padding:16px 14px 90px}
+      .summary-grid{grid-template-columns:1fr}
+      .summary-item.gaji-box,.summary-item.kas-box{grid-column:span 1}
+      .gajian-stats{grid-template-columns:1fr}
+      .gajian-stats2{grid-template-columns:1fr}
+      .page-title{font-size:22px}
     }
   </style>
 </head>
@@ -380,10 +376,6 @@
   <script type="text/babel">
     const { useState, useMemo, useEffect, useRef, useCallback } = React;
 
-    // ╔══════════════════════════════════════════════════════════════╗
-    // ║  GANTI KONFIGURASI DI BAWAH INI DENGAN MILIK ANDA          ║
-    // ║  Lihat PANDUAN-FIREBASE.md untuk cara mendapatkannya       ║
-    // ╚══════════════════════════════════════════════════════════════╝
     const firebaseConfig = {
       apiKey: "AIzaSyBlWMc-CLMMFC0ULA38w-XtzLcuSG4ZdGQ",
       authDomain: "kas-warkop.firebaseapp.com",
@@ -392,10 +384,6 @@
       messagingSenderId: "444201535987",
       appId: "1:444201535987:web:e8cbde0f63ba784ec66a86"
     };
-
-    // ╔══════════════════════════════════════════════════════════════╗
-    // ║  (OPSIONAL) URL GOOGLE APPS SCRIPT UNTUK SYNC KE SHEETS    ║
-    // ╚══════════════════════════════════════════════════════════════╝
     const SHEET_URL = '';
 
     let db = null;
@@ -406,24 +394,23 @@
       if (firebaseConfig.projectId !== "GANTI_DENGAN_PROJECT_ID") firebaseReady = true;
     } catch (e) { console.error("Firebase init error:", e); }
 
-    // === DATA PRODUK (SAMA PERSIS DENGAN WARKOP JAYA) ===
     const PRODUCTS = [
-      { id: 'vietnam',  name: 'Kopi Vietnam Drip', price: 8000,  gaji: 1500 },
-      { id: 'teh',      name: 'Teh',               price: 5000,  gaji: 1000 },
-      { id: 'kopilain', name: 'Kopi Lain',         price: 6000,  gaji: 1300 },
-      { id: 'v2k',      name: 'Voucher 2000',      price: 2000,  gaji: 500  },
-      { id: 'v10k',     name: 'Voucher 10000',     price: 10000, gaji: 1500 },
-      { id: 'v1bln',    name: 'Voucher 1 Bulan',   price: 30000, gaji: 5000 },
+      { id: 'vietnam',  name: 'Kopi Vietnam Drip', price: 8000,  gaji: 1500, emoji: '☕' },
+      { id: 'teh',      name: 'Teh',               price: 5000,  gaji: 1000, emoji: '🍵' },
+      { id: 'kopilain', name: 'Kopi Lain',         price: 6000,  gaji: 1300, emoji: '🫖' },
+      { id: 'v2k',      name: 'Voucher 2000',      price: 2000,  gaji: 500,  emoji: '📶' },
+      { id: 'v10k',     name: 'Voucher 10000',     price: 10000, gaji: 1500, emoji: '📡' },
+      { id: 'v1bln',    name: 'Voucher 1 Bulan',   price: 30000, gaji: 5000, emoji: '🌐' },
+      { id: 'ps4',      name: 'PS4 (1 Jam)',       price: 10000, gaji: 2000, emoji: '🎮' },
     ];
 
     const IDR = v => 'Rp' + Math.round(v).toLocaleString('id-ID');
     const DAYS = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     const MO = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     const ML = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    function fmtDate(d) { const dt = new Date(d+'T00:00:00'); return `${DAYS[dt.getDay()]}, ${dt.getDate()} ${MO[dt.getMonth()]} ${dt.getFullYear()}`; }
+    function fmtDate(d) { const dt = new Date(d+'T00:00:00'); return DAYS[dt.getDay()]+', '+dt.getDate()+' '+MO[dt.getMonth()]+' '+dt.getFullYear(); }
     function todayISO() { return new Date().toISOString().split('T')[0]; }
 
-    // Toast
     let toastTimer;
     function showToast(msg) {
       const t = document.getElementById('toast');
@@ -432,42 +419,24 @@
       toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
     }
 
-    // Gaji period helpers
-    // Tgl 29-31 dimasukkan ke Periode 1 bulan berikutnya
     function getPayPeriods(year, month) {
       const mm = String(month+1).padStart(2,'0');
-      // Hitung bulan sebelumnya (untuk overflow tgl 29-31)
       const prevMonth = month === 0 ? 11 : month - 1;
       const prevYear  = month === 0 ? year - 1 : year;
       const pmm = String(prevMonth+1).padStart(2,'0');
-      // Cari hari terakhir bulan sebelumnya
-      const lastDayPrev = new Date(year, month, 0).getDate(); // hari terakhir bulan lalu
+      const lastDayPrev = new Date(year, month, 0).getDate();
       const overflowDays = [];
       for (let d = 29; d <= lastDayPrev; d++) overflowDays.push(d);
-
       return [
-        {
-          label: 'Periode 1',
-          start: `${year}-${mm}-01`,
-          end:   `${year}-${mm}-14`,
-          payday: 14, startDay: 1, endDay: 14,
-          // tambahan: range overflow dari bulan sebelumnya
-          overflowStart: overflowDays.length > 0 ? `${prevYear}-${pmm}-${String(overflowDays[0]).padStart(2,'0')}` : null,
-          overflowEnd:   overflowDays.length > 0 ? `${prevYear}-${pmm}-${String(lastDayPrev).padStart(2,'0')}` : null,
-          overflowDays,
-          prevYear, prevMonth,
-        },
-        {
-          label: 'Periode 2',
-          start: `${year}-${mm}-15`,
-          end:   `${year}-${mm}-28`,
-          payday: 28, startDay: 15, endDay: 28,
-          overflowStart: null, overflowEnd: null, overflowDays: [], prevYear, prevMonth,
-        },
+        { label:'Periode 1', start:year+'-'+mm+'-01', end:year+'-'+mm+'-14', payday:14, startDay:1, endDay:14,
+          overflowStart: overflowDays.length>0 ? prevYear+'-'+pmm+'-'+String(overflowDays[0]).padStart(2,'0') : null,
+          overflowEnd: overflowDays.length>0 ? prevYear+'-'+pmm+'-'+String(lastDayPrev).padStart(2,'0') : null,
+          overflowDays, prevYear, prevMonth },
+        { label:'Periode 2', start:year+'-'+mm+'-15', end:year+'-'+mm+'-28', payday:28, startDay:15, endDay:28,
+          overflowStart:null, overflowEnd:null, overflowDays:[], prevYear, prevMonth },
       ];
     }
 
-    // Google Sheets sync
     function syncToSheet(date, totals, accQty) {
       return new Promise((resolve) => {
         if (!SHEET_URL) { resolve(false); return; }
@@ -478,253 +447,185 @@
         const timer = setTimeout(() => { cleanup(); resolve(true); }, 3000);
         function cleanup() { clearTimeout(timer); if(script.parentNode) script.parentNode.removeChild(script); }
         script.onerror = () => { cleanup(); resolve(true); };
-        script.src = url;
-        document.body.appendChild(script);
+        script.src = url; document.body.appendChild(script);
       });
     }
 
-    // ===== ICON COMPONENT =====
     const Icon = ({type, size=18}) => {
       const s = {width:size,height:size,fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round"};
       const P = {
         coffee:<><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></>,
-        home:<><path d="M3 12l9-9 9 9"/><path d="M5 10v10h5v-6h4v6h5V10"/></>,
         dollar:<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></>,
         clock:<><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></>,
-        x:<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
-        check:<><polyline points="20 6 9 17 4 12"/></>,
-        edit:<><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
         trash:<><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></>,
-        wifi:<><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1"/></>,
       };
       return <svg viewBox="0 0 24 24" style={s}>{P[type]}</svg>;
     };
 
-    // ===== MAIN APP =====
     function App() {
       const [page, setPage] = useState("input");
       const [syncStatus, setSyncStatus] = useState(firebaseReady ? "loading" : "not_configured");
       const [loading, setLoading] = useState(firebaseReady);
       const [entries, setEntries] = useState({});
-
-      // Input state
       const [selectedDate, setSelectedDate] = useState(todayISO());
       const [quantities, setQuantities] = useState(()=>{ const q={}; PRODUCTS.forEach(p=>q[p.id]=0); return q; });
       const [expenses, setExpenses] = useState([]);
       const [saving, setSaving] = useState(false);
       const [sheetStatus, setSheetStatus] = useState(null);
-
-      // History detail
       const [openDetail, setOpenDetail] = useState(null);
+      const [initialSaldo, setInitialSaldo] = useState(0);
+      const [editingSaldo, setEditingSaldo] = useState(false);
+      const [saldoInput, setSaldoInput] = useState('');
 
-      // Load from Firebase
       useEffect(() => {
         if (!firebaseReady || !db) { setLoading(false); return; }
+        // Load saldo awal
+        db.collection("config").doc("saldoAwal").get().then(doc => {
+          if (doc.exists) setInitialSaldo(doc.data().value || 0);
+        }).catch(()=>{});
         const unsub = db.collection("entries").onSnapshot(
-          snap => {
-            const data = {};
-            snap.docs.forEach(doc => { data[doc.id] = doc.data(); });
-            setEntries(data);
-            setSyncStatus("online");
-            setLoading(false);
-          },
+          snap => { const data = {}; snap.docs.forEach(doc => { data[doc.id] = doc.data(); }); setEntries(data); setSyncStatus("online"); setLoading(false); },
           () => { setSyncStatus("offline"); setLoading(false); }
         );
         return () => unsub();
       }, []);
 
-      // Compute existing entry for selected date
-      const existingEntry = entries[selectedDate] || null;
+      async function saveInitialSaldo(val) {
+        const v = parseInt(val) || 0;
+        setInitialSaldo(v);
+        setEditingSaldo(false);
+        try { if(db && firebaseReady) await db.collection("config").doc("saldoAwal").set({ value: v }); showToast('Saldo awal disimpan: '+IDR(v)); }
+        catch(e) { showToast('Gagal simpan saldo: '+e.message); }
+      }
 
-      // Compute input totals (hanya yang baru diinput)
+      // Compute saldo awal for each period by chaining from initialSaldo
+      const periodSaldoMap = useMemo(() => {
+        // Generate all periods from earliest entry to current month
+        const allDates = Object.keys(entries).sort();
+        if (allDates.length === 0) return {};
+        const earliest = new Date(allDates[0]+'T00:00:00');
+        const latest = new Date();
+        const periods = [];
+        let y = earliest.getFullYear(), m = earliest.getMonth();
+        while (y < latest.getFullYear() || (y === latest.getFullYear() && m <= latest.getMonth())) {
+          const pp = getPayPeriods(y, m);
+          pp.forEach((p,pi) => periods.push({ ...p, year:y, month:m, key:y+'-'+m+'-'+pi }));
+          m++; if(m>11){m=0;y++;}
+        }
+        // Chain saldo
+        const map = {};
+        let runSaldo = initialSaldo;
+        periods.forEach(p => {
+          map[p.key] = runSaldo;
+          const mainEntries = Object.values(entries).filter(e=>e.date>=p.start&&e.date<=p.end);
+          const overflowEntries = (p.overflowStart&&p.overflowEnd) ? Object.values(entries).filter(e=>e.date>=p.overflowStart&&e.date<=p.overflowEnd) : [];
+          const all = [...overflowEntries, ...mainEntries];
+          const penjualan = all.reduce((s,e)=>s+(e.totalPenjualan||0),0);
+          const gaji = all.reduce((s,e)=>s+(e.gaji||0),0);
+          const pengeluaran = all.reduce((s,e)=>s+(e.totalPengeluaran||0),0);
+          runSaldo = runSaldo + penjualan - gaji - pengeluaran;
+        });
+        return map;
+      }, [entries, initialSaldo]);
+
+      const existingEntry = entries[selectedDate] || null;
       const inputTotals = useMemo(() => {
         let totalQty=0, totalSales=0, totalGaji=0;
-        PRODUCTS.forEach(p => {
-          const q = quantities[p.id]||0;
-          totalQty+=q; totalSales+=q*p.price; totalGaji+=q*p.gaji;
-        });
+        PRODUCTS.forEach(p => { const q=quantities[p.id]||0; totalQty+=q; totalSales+=q*p.price; totalGaji+=q*p.gaji; });
         const totalExpense = expenses.reduce((s,e) => s+(e.amount||0), 0);
         return { totalQty, totalSales, totalGaji, totalExpense, sisaKas: totalSales-totalGaji-totalExpense };
       }, [quantities, expenses]);
 
-      // Change qty
-      function changeQty(id, delta) {
-        setQuantities(prev => ({...prev, [id]: Math.max(0, (prev[id]||0)+delta)}));
-      }
-      function setQty(id, val) {
-        setQuantities(prev => ({...prev, [id]: Math.max(0, parseInt(val)||0)}));
-      }
-
-      // Expenses
+      function changeQty(id, delta) { setQuantities(prev => ({...prev, [id]: Math.max(0, (prev[id]||0)+delta)})); }
+      function setQty(id, val) { setQuantities(prev => ({...prev, [id]: Math.max(0, parseInt(val)||0)})); }
       function addExpense() { setExpenses(prev => [...prev, {desc:'',amount:0}]); }
       function removeExpense(i) { setExpenses(prev => prev.filter((_,idx)=>idx!==i)); }
-      function updateExpense(i, field, val) {
-        setExpenses(prev => prev.map((e,idx) => idx===i ? {...e, [field]: field==='amount' ? (parseInt(val)||0) : val} : e));
-      }
+      function updateExpense(i, field, val) { setExpenses(prev => prev.map((e,idx) => idx===i ? {...e, [field]: field==='amount' ? (parseInt(val)||0) : val} : e)); }
 
-      // SAVE ENTRY (AKUMULASI)
       async function saveEntry() {
         const hasQty = PRODUCTS.some(p => (quantities[p.id]||0) > 0);
         const hasExp = expenses.some(e => (e.amount||0) > 0);
         if (!hasQty && !hasExp) { showToast('Belum ada input!'); return; }
         setSaving(true);
-
         const existing = entries[selectedDate] || null;
-
-        // Akumulasi qty
-        const accQty = {};
-        PRODUCTS.forEach(p => {
-          const old = existing ? (existing.quantities?.[p.id]||0) : 0;
-          accQty[p.id] = old + (quantities[p.id]||0);
-        });
-
-        // Akumulasi expenses
-        const oldExpenses = existing ? (existing.expenses||[]) : [];
-        const newExpenses = expenses.filter(e => (e.amount||0)>0 || e.desc.trim()!=='');
-        const accExpenses = [...oldExpenses, ...newExpenses];
-
-        // Hitung total akumulasi
+        const accQty = {}; PRODUCTS.forEach(p => { accQty[p.id] = (existing?(existing.quantities?.[p.id]||0):0) + (quantities[p.id]||0); });
+        const accExpenses = [...(existing?(existing.expenses||[]):[]), ...expenses.filter(e => (e.amount||0)>0 || e.desc.trim()!=='')];
         let totalSales=0, totalGaji=0, totalQty=0;
-        PRODUCTS.forEach(p => {
-          const q = accQty[p.id]||0;
-          totalQty+=q; totalSales+=q*p.price; totalGaji+=q*p.gaji;
-        });
+        PRODUCTS.forEach(p => { const q=accQty[p.id]||0; totalQty+=q; totalSales+=q*p.price; totalGaji+=q*p.gaji; });
         const totalExpense = accExpenses.reduce((s,e) => s+(e.amount||0), 0);
-
-        const entry = {
-          date: selectedDate,
-          quantities: accQty,
-          expenses: accExpenses,
-          totalPenjualan: totalSales,
-          gaji: totalGaji,
-          totalPengeluaran: totalExpense,
-          sisaKas: totalSales-totalGaji-totalExpense,
-        };
-
+        const entry = { date:selectedDate, quantities:accQty, expenses:accExpenses, totalPenjualan:totalSales, gaji:totalGaji, totalPengeluaran:totalExpense, sisaKas:totalSales-totalGaji-totalExpense };
         try {
-          if(db && firebaseReady) {
-            await db.collection("entries").doc(selectedDate).set(entry);
-          }
-          const label = existing ? 'Ditambahkan' : 'Tersimpan';
-          showToast(label + ' · ' + fmtDate(selectedDate));
-
-          // Sync ke Google Sheets
-          if (SHEET_URL) {
-            setSheetStatus('syncing');
-            await syncToSheet(selectedDate, {totalQty, totalSales, totalGaji, totalExpense, sisaKas:totalSales-totalGaji-totalExpense}, accQty);
-            setSheetStatus('success');
-            setTimeout(()=>setSheetStatus(null), 3000);
-          }
-        } catch(e) {
-          showToast('Gagal menyimpan: '+e.message);
-          setSheetStatus('error');
-        }
-
-        // Reset input
-        const q = {}; PRODUCTS.forEach(p => q[p.id]=0);
-        setQuantities(q);
-        setExpenses([]);
-        setSaving(false);
+          if(db && firebaseReady) await db.collection("entries").doc(selectedDate).set(entry);
+          showToast((existing?'Ditambahkan':'Tersimpan')+' · '+fmtDate(selectedDate));
+          if (SHEET_URL) { setSheetStatus('syncing'); await syncToSheet(selectedDate, {totalQty, totalSales, totalGaji, totalExpense, sisaKas:totalSales-totalGaji-totalExpense}, accQty); setSheetStatus('success'); setTimeout(()=>setSheetStatus(null), 3000); }
+        } catch(e) { showToast('Gagal menyimpan: '+e.message); setSheetStatus('error'); }
+        const q = {}; PRODUCTS.forEach(p => q[p.id]=0); setQuantities(q); setExpenses([]); setSaving(false);
       }
 
-      // DELETE ENTRY
       async function deleteEntry(date) {
         if(!confirm('Yakin hapus data tanggal '+fmtDate(date)+'?')) return;
-        try {
-          if(db && firebaseReady) await db.collection("entries").doc(date).delete();
-          showToast('Entri dihapus');
-        } catch(e) { showToast('Gagal: '+e.message); }
+        try { if(db && firebaseReady) await db.collection("entries").doc(date).delete(); showToast('Entri dihapus'); } catch(e) { showToast('Gagal: '+e.message); }
       }
 
-      // === PAYDAY CHECK ===
       const paydayInfo = useMemo(() => {
-        const today = new Date();
-        const day = today.getDate();
-        const year = today.getFullYear();
-        const month = today.getMonth();
-        const periods = getPayPeriods(year, month);
-        let show=null, period=null;
+        const today = new Date(); const day = today.getDate(); const year = today.getFullYear(); const month = today.getMonth();
+        const periods = getPayPeriods(year, month); let show=null, period=null;
         if (day===14||day===28) { period=day===14?periods[0]:periods[1]; show='today'; }
         else if (day>=12&&day<=13) { period=periods[0]; show='upcoming'; }
         else if (day>=26&&day<=27) { period=periods[1]; show='upcoming'; }
         if (!show||!period) return null;
-        // Calc total gaji for period (termasuk overflow tgl 29-31 bulan lalu untuk Periode 1)
         const periodGaji = Object.values(entries).filter(e=>e.date>=period.start&&e.date<=period.end).reduce((s,e)=>s+(e.gaji||0),0);
-        const overflowGaji = (period.overflowStart && period.overflowEnd)
-          ? Object.values(entries).filter(e=>e.date>=period.overflowStart&&e.date<=period.overflowEnd).reduce((s,e)=>s+(e.gaji||0),0)
-          : 0;
-        const totalGaji = periodGaji + overflowGaji;
-        const daysLeft = show==='today'?0:(period.payday-day);
-        return { show, period, totalGaji, daysLeft, month };
+        const overflowGaji = (period.overflowStart&&period.overflowEnd) ? Object.values(entries).filter(e=>e.date>=period.overflowStart&&e.date<=period.overflowEnd).reduce((s,e)=>s+(e.gaji||0),0) : 0;
+        return { show, period, totalGaji:periodGaji+overflowGaji, daysLeft:show==='today'?0:(period.payday-day), month };
       }, [entries]);
 
-      // === ENTRIES SORTED ===
-      const sortedEntries = useMemo(() => {
-        return Object.values(entries).sort((a,b)=>b.date.localeCompare(a.date));
-      }, [entries]);
+      const sortedEntries = useMemo(() => Object.values(entries).sort((a,b)=>b.date.localeCompare(a.date)), [entries]);
 
-      // === CONFIG PAGE ===
       if(syncStatus==="not_configured") return (
         <div className="app">
-          <div className="header"><div className="header-logo">☕</div><div><div className="header-title">Input Warkop</div><div className="header-sub">Pencatatan Harian</div></div></div>
+          <div className="header"><div className="header-logo">☕</div><div><div className="header-title">Warkop Jaya</div><div className="header-sub">Pencatatan Harian</div></div></div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"70vh",padding:40,textAlign:"center"}}>
-            <div style={{fontSize:48,marginBottom:20}}>⚙️</div>
-            <h2 style={{marginBottom:12}}>Konfigurasi Firebase Diperlukan</h2>
-            <p style={{color:"var(--text2)",maxWidth:500,lineHeight:1.7,marginBottom:24}}>Buka file <code style={{background:"var(--bg3)",padding:"2px 8px",borderRadius:4}}>index.html</code>, cari bagian <code style={{background:"var(--bg3)",padding:"2px 8px",borderRadius:4}}>firebaseConfig</code>, lalu ganti dengan konfigurasi dari Firebase Console Anda.</p>
-            <div style={{background:"var(--bg2)",border:"1px solid var(--border)",borderRadius:10,padding:20,textAlign:"left",maxWidth:500,width:"100%",fontSize:13,lineHeight:1.8,color:"var(--text2)"}}>
-              <div style={{fontWeight:600,color:"var(--text)",marginBottom:8}}>Langkah singkat:</div>
-              1. Buka <a href="https://console.firebase.google.com" target="_blank" style={{color:"var(--accent)"}}>console.firebase.google.com</a><br/>
-              2. Buat project → buat Firestore Database<br/>
-              3. Ambil konfigurasi dari Project Settings → Web app<br/>
-              4. Ganti nilai firebaseConfig di file ini<br/>
-              5. Upload ulang ke GitHub Pages
-            </div>
+            <div style={{fontSize:56,marginBottom:24}}>⚙️</div>
+            <h2 style={{marginBottom:12,fontSize:22}}>Konfigurasi Firebase</h2>
+            <p style={{color:"var(--text2)",maxWidth:500,lineHeight:1.8,marginBottom:24}}>Buka file <code style={{background:"var(--bg3)",padding:"3px 10px",borderRadius:6,fontSize:13}}>index.html</code>, cari bagian <code style={{background:"var(--bg3)",padding:"3px 10px",borderRadius:6,fontSize:13}}>firebaseConfig</code>, lalu ganti dengan konfigurasi dari Firebase Console.</p>
           </div>
         </div>
       );
 
       if(loading) return (
         <div className="app">
-          <div className="header"><div className="header-logo">☕</div><div><div className="header-title">Input Warkop</div><div className="header-sub">Pencatatan Harian</div></div></div>
-          <div className="loading-screen" style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"60vh",gap:16,color:"var(--text2)"}}>
-            <div className="spinner" style={{width:36,height:36,border:"3px solid var(--border)",borderTopColor:"var(--accent)",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}></div>
-            <div>Menghubungkan ke database...</div>
+          <div className="header"><div className="header-logo">☕</div><div><div className="header-title">Warkop Jaya</div><div className="header-sub">Pencatatan Harian</div></div></div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"60vh",gap:18,color:"var(--text2)"}}>
+            <div style={{width:40,height:40,border:"3px solid var(--border)",borderTopColor:"var(--accent)",borderRadius:"50%",animation:"spin .8s linear infinite"}}></div>
+            <div style={{fontSize:14}}>Menghubungkan ke database...</div>
           </div>
         </div>
       );
 
-      const SyncBadge = () => (
-        <div className={"sync-badge "+(syncStatus==="online"?"sync-online":"sync-offline")}>
-          <div className={"sync-dot "+(syncStatus==="online"?"online":"offline")}/>
-          {syncStatus==="online"?"Real-time":"Offline"}
-        </div>
-      );
-
+      const SyncBadge = () => (<div className={"sync-badge "+(syncStatus==="online"?"sync-online":"sync-offline")}><div className={"sync-dot "+(syncStatus==="online"?"online":"offline")}/>{syncStatus==="online"?"Real-time":"Offline"}</div>);
       const today = new Date();
 
       return (
         <div className="app">
           <div className="header">
             <div className="header-logo">☕</div>
-            <div><div className="header-title">Input Warkop</div><div className="header-sub">{today.getDate()} {ML[today.getMonth()]} {today.getFullYear()} · {DAYS[today.getDay()]}</div></div>
+            <div><div className="header-title">Warkop Jaya</div><div className="header-sub">{today.getDate()} {ML[today.getMonth()]} {today.getFullYear()} · {DAYS[today.getDay()]}</div></div>
             <div className="header-right"><SyncBadge/></div>
           </div>
 
           <div className="main-area">
             <div className="sidebar">
+              <div className="sidebar-label">Menu</div>
               <button className={"nav-btn "+(page==="input"?"active":"")} onClick={()=>setPage("input")}><Icon type="coffee" size={18}/> Input Harian</button>
               <button className={"nav-btn "+(page==="gajian"?"active":"")} onClick={()=>setPage("gajian")}><Icon type="dollar" size={18}/> Gajian</button>
               <button className={"nav-btn "+(page==="riwayat"?"active":"")} onClick={()=>setPage("riwayat")}><Icon type="clock" size={18}/> Riwayat</button>
             </div>
 
             <div className="content">
-
-              {/* ===== TAB: INPUT HARIAN ===== */}
               {page==="input" && <>
                 <h1 className="page-title">Input Harian</h1>
                 <p className="page-sub">Catat penjualan dan pengeluaran harian warkop</p>
 
-                {/* Payday banner */}
                 {paydayInfo && (
                   <div className={"payday-banner "+paydayInfo.show}>
                     <div className="payday-title">{paydayInfo.show==='today'?'🎉 Hari Ini Gajian!':'📅 Gajian '+paydayInfo.daysLeft+' hari lagi (tgl '+paydayInfo.period.payday+')'}</div>
@@ -734,15 +635,11 @@
                   </div>
                 )}
 
-                {/* Card: Tanggal */}
                 <div className="card">
-                  <div className="card-title">Tanggal</div>
+                  <div className="card-title">📅 Tanggal</div>
                   <div className="date-row">
                     <input type="date" className="date-input" value={selectedDate} onChange={e=>setSelectedDate(e.target.value)}/>
-                    <button className="btn btn-ghost" onClick={()=>{
-                      if(existingEntry) showToast('Data '+fmtDate(selectedDate)+' ditemukan');
-                      else showToast('Belum ada data untuk tanggal ini');
-                    }}>Cek data</button>
+                    <button className="btn btn-ghost" onClick={()=>{ if(existingEntry) showToast('Data '+fmtDate(selectedDate)+' ditemukan'); else showToast('Belum ada data untuk tanggal ini'); }}>Cek data</button>
                   </div>
                   {existingEntry && (
                     <div className="day-total">
@@ -754,11 +651,11 @@
                   )}
                 </div>
 
-                {/* Card: Jumlah Laku */}
                 <div className="card">
-                  <div className="card-title">Jumlah Laku</div>
+                  <div className="card-title">☕ Jumlah Laku</div>
                   {PRODUCTS.map(p => (
                     <div key={p.id} className="product-row">
+                      <div className="product-emoji">{p.emoji}</div>
                       <div className="product-info">
                         <div className="product-name">{p.name}</div>
                         <div className="product-meta">{IDR(p.price)} · Gaji: {IDR(p.gaji)}</div>
@@ -772,36 +669,19 @@
                   ))}
                 </div>
 
-                {/* Card: Ringkasan */}
                 <div className="card">
-                  <div className="card-title">Ringkasan</div>
+                  <div className="card-title">📊 Ringkasan</div>
                   <div className="summary-grid">
-                    <div className="summary-item">
-                      <div className="summary-label">Total Laku</div>
-                      <div className="summary-value">{inputTotals.totalQty} cup</div>
-                    </div>
-                    <div className="summary-item">
-                      <div className="summary-label">Total Penjualan</div>
-                      <div className="summary-value">{IDR(inputTotals.totalSales)}</div>
-                    </div>
-                    <div className="summary-item gaji-box">
-                      <div className="summary-label">Gaji Kamu Hari Ini</div>
-                      <div className="summary-value">{IDR(inputTotals.totalGaji)}</div>
-                    </div>
-                    <div className="summary-item outbox">
-                      <div className="summary-label">Total Pengeluaran</div>
-                      <div className="summary-value">{IDR(inputTotals.totalExpense)}</div>
-                    </div>
-                    <div className="summary-item kas-box">
-                      <div className="summary-label">Sisa Kas (Penjualan − Gaji − Pengeluaran)</div>
-                      <div className="summary-value" style={{color:inputTotals.sisaKas<0?"var(--red)":"var(--green)"}}>{IDR(inputTotals.sisaKas)}</div>
-                    </div>
+                    <div className="summary-item"><div className="summary-label">Total Laku</div><div className="summary-value">{inputTotals.totalQty} item</div></div>
+                    <div className="summary-item"><div className="summary-label">Total Penjualan</div><div className="summary-value">{IDR(inputTotals.totalSales)}</div></div>
+                    <div className="summary-item gaji-box"><div className="summary-label">💰 Gaji Kamu Hari Ini</div><div className="summary-value">{IDR(inputTotals.totalGaji)}</div></div>
+                    <div className="summary-item outbox"><div className="summary-label">Total Pengeluaran</div><div className="summary-value">{IDR(inputTotals.totalExpense)}</div></div>
+                    <div className="summary-item kas-box"><div className="summary-label">Sisa Kas (Penjualan − Gaji − Pengeluaran)</div><div className="summary-value" style={{color:inputTotals.sisaKas<0?"var(--red)":"var(--green)"}}>{IDR(inputTotals.sisaKas)}</div></div>
                   </div>
                 </div>
 
-                {/* Card: Pengeluaran */}
                 <div className="card">
-                  <div className="card-title">Pengeluaran</div>
+                  <div className="card-title">💸 Pengeluaran</div>
                   {expenses.map((exp, i) => (
                     <div key={i} className="expense-row">
                       <input className="expense-input" type="text" placeholder="Keterangan…" value={exp.desc} onChange={e=>updateExpense(i,'desc',e.target.value)}/>
@@ -812,70 +692,58 @@
                   <button className="add-expense-btn" onClick={addExpense}>+ Tambah Pengeluaran</button>
                 </div>
 
-                {/* Save Button */}
-                <button className="btn-save" disabled={saving} onClick={saveEntry}>
-                  ☕ Tambah & Simpan
-                </button>
-                {sheetStatus && (
-                  <div className={"sync-status "+sheetStatus}>
-                    {sheetStatus==='syncing'&&'⏳ Mengirim ke Google Sheets...'}
-                    {sheetStatus==='success'&&'✓ Data terkirim ke Google Sheets'}
-                    {sheetStatus==='error'&&'⚠ Gagal mengirim ke Google Sheets'}
-                  </div>
-                )}
+                <button className="btn-save" disabled={saving} onClick={saveEntry}>☕ Tambah & Simpan</button>
+                {sheetStatus && (<div className={"sync-status "+sheetStatus}>{sheetStatus==='syncing'&&'⏳ Mengirim ke Google Sheets...'}{sheetStatus==='success'&&'✓ Data terkirim ke Google Sheets'}{sheetStatus==='error'&&'⚠ Gagal mengirim ke Google Sheets'}</div>)}
               </>}
 
-              {/* ===== TAB: GAJIAN ===== */}
               {page==="gajian" && <>
                 <h1 className="page-title">Rekap Gajian</h1>
                 <p className="page-sub">Ringkasan gaji per periode (tgl 1–14 dan 15–28)</p>
 
-                {(()=>{
-                  const currentMonth = today.getMonth();
-                  const currentYear = today.getFullYear();
-                  const currentDay = today.getDate();
-                  const monthsToShow = [
-                    { year: currentYear, month: currentMonth },
-                    currentMonth === 0 ? { year: currentYear-1, month: 11 } : { year: currentYear, month: currentMonth-1 }
-                  ];
+                {/* Saldo Awal Setting */}
+                <div className="card" style={{marginBottom:20}}>
+                  <div className="card-title">💰 Saldo Awal</div>
+                  {editingSaldo ? (
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <input className="expense-amount" style={{flex:1,width:"auto",textAlign:"left"}} type="number" autoFocus placeholder="Masukkan saldo awal..." value={saldoInput} onChange={e=>setSaldoInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')saveInitialSaldo(saldoInput)}}/>
+                      <button className="btn btn-primary" onClick={()=>saveInitialSaldo(saldoInput)}>Simpan</button>
+                      <button className="btn btn-ghost" onClick={()=>setEditingSaldo(false)}>Batal</button>
+                    </div>
+                  ) : (
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <div style={{fontFamily:"'Space Mono',monospace",fontSize:20,fontWeight:700,color:"var(--accent)"}}>{IDR(initialSaldo)}</div>
+                      <button className="btn btn-ghost btn-sm" onClick={()=>{setSaldoInput(String(initialSaldo));setEditingSaldo(true);}}>✏️ Ubah</button>
+                      <div style={{fontSize:11,color:"var(--text3)",marginLeft:4}}>Saldo ini akan terakumulasi ke setiap periode berikutnya</div>
+                    </div>
+                  )}
+                </div>
 
+                {(()=>{
+                  const currentMonth = today.getMonth(); const currentYear = today.getFullYear(); const currentDay = today.getDate();
+                  const monthsToShow = [{ year:currentYear, month:currentMonth }, currentMonth===0?{year:currentYear-1,month:11}:{year:currentYear,month:currentMonth-1}];
                   return monthsToShow.map(({year, month}) => {
                     const periods = getPayPeriods(year, month);
                     const isCurrentMonth = (year===currentYear && month===currentMonth);
-                    const monthLabel = `${ML[month]} ${year}`;
-
+                    const monthLabel = ML[month]+' '+year;
                     return periods.map((p,pi) => {
-                      // Filter entri utama (tgl 1-14 atau 15-28)
                       const mainEntries = Object.values(entries).filter(e=>e.date>=p.start&&e.date<=p.end);
-                      // Filter entri overflow (tgl 29-31 bulan lalu → masuk Periode 1 bulan ini)
-                      const overflowEntries = (p.overflowStart && p.overflowEnd)
-                        ? Object.values(entries).filter(e=>e.date>=p.overflowStart&&e.date<=p.overflowEnd)
-                        : [];
+                      const overflowEntries = (p.overflowStart&&p.overflowEnd) ? Object.values(entries).filter(e=>e.date>=p.overflowStart&&e.date<=p.overflowEnd) : [];
                       const periodEntries = [...overflowEntries, ...mainEntries];
-
                       const totalGaji = periodEntries.reduce((s,e)=>s+(e.gaji||0),0);
                       const totalPenjualan = periodEntries.reduce((s,e)=>s+(e.totalPenjualan||0),0);
                       const totalPengeluaran = periodEntries.reduce((s,e)=>s+(e.totalPengeluaran||0),0);
-                      const kasNetoPeriode = totalPenjualan-totalGaji-totalPengeluaran;
-                      // Saldo awal: akumulasi sisa kas dari semua entri sebelum periode ini
-                      const periodEarliestDate = p.overflowStart || p.start;
-                      const saldoAwal = Object.values(entries)
-                        .filter(e => e.date < periodEarliestDate)
-                        .reduce((s,e) => s + (e.sisaKas != null ? e.sisaKas : ((e.totalPenjualan||0)-(e.gaji||0)-(e.totalPengeluaran||0))), 0);
-                      const totalSisaKas = kasNetoPeriode + saldoAwal;
+                      const periodKey = year+'-'+month+'-'+pi;
+                      const saldoAwal = periodSaldoMap[periodKey] || 0;
+                      const totalSisaKas = totalPenjualan - totalGaji - totalPengeluaran;
+                      const sisaKasDenganSaldo = totalSisaKas + saldoAwal;
                       const totalDays = periodEntries.length;
-
                       const isPast = !isCurrentMonth || (isCurrentMonth && currentDay > p.payday);
                       const isCurrent = isCurrentMonth && ((p.payday===14 && currentDay>=1 && currentDay<=14) || (p.payday===28 && currentDay>=15 && currentDay<=28));
                       let statusClass, statusText;
                       if (isPast && !isCurrent) { statusClass='paid'; statusText='Selesai'; }
                       else if (isCurrent) { statusClass='pending'; statusText='Berjalan'; }
                       else { statusClass='future'; statusText='Belum'; }
-
-                      // Label tanggal periode (tampilkan overflow jika ada)
-                      const overflowLabel = overflowEntries.length>0
-                        ? ` (+tgl ${p.overflowDays[0]}–${p.overflowDays[p.overflowDays.length-1]} ${MO[p.prevMonth]})`
-                        : '';
+                      const overflowLabel = overflowEntries.length>0 ? ' (+tgl '+p.overflowDays[0]+'–'+p.overflowDays[p.overflowDays.length-1]+' '+MO[p.prevMonth]+')' : '';
 
                       return (
                         <div key={year+'-'+month+'-'+pi} className={"gajian-card"+(isCurrent?" active-period":"")}>
@@ -891,90 +759,40 @@
                             </div>
                           </div>
                           <div className="gajian-stats">
-                            <div className="gajian-stat">
-                              <div className="gajian-stat-label">Penjualan</div>
-                              <div className="gajian-stat-value" style={{color:"var(--text)"}}>{IDR(totalPenjualan)}</div>
-                            </div>
-                            <div className="gajian-stat" style={{background:"var(--red-bg)"}}>
-                              <div className="gajian-stat-label">Pengeluaran</div>
-                              <div className="gajian-stat-value" style={{color:"var(--red)"}}>{IDR(totalPengeluaran)}</div>
-                            </div>
-                            {saldoAwal !== 0 && (
-                              <div className="gajian-stat" style={{background:"var(--blue-bg)"}}>
-                                <div className="gajian-stat-label">Saldo Awal</div>
-                                <div className="gajian-stat-value" style={{color:"var(--blue)"}}>{IDR(saldoAwal)}</div>
-                              </div>
-                            )}
-                            <div className="gajian-stat" style={{background:"var(--green-bg)"}}>
-                              <div className="gajian-stat-label">Sisa Kas {saldoAwal!==0?"(+Saldo Awal)":""}</div>
-                              <div className="gajian-stat-value" style={{color:"var(--green)"}}>{IDR(totalSisaKas)}</div>
-                            </div>
+                            <div className="gajian-stat"><div className="gajian-stat-label">Penjualan</div><div className="gajian-stat-value" style={{color:"var(--text)"}}>{IDR(totalPenjualan)}</div></div>
+                            <div className="gajian-stat" style={{background:"var(--red-bg)",borderColor:"var(--red-border)"}}><div className="gajian-stat-label">Pengeluaran</div><div className="gajian-stat-value" style={{color:"var(--red)"}}>{IDR(totalPengeluaran)}</div></div>
+                            <div className="gajian-stat" style={{background:"var(--accent-bg)",borderColor:"var(--accent-border)"}}><div className="gajian-stat-label">Saldo Awal</div><div className="gajian-stat-value" style={{color:"var(--accent)"}}>{IDR(saldoAwal)}</div></div>
+                          </div>
+                          <div className="gajian-stats2">
+                            <div className="gajian-stat" style={{background:"var(--green-bg)",borderColor:"var(--green-border)"}}><div className="gajian-stat-label">Sisa Kas (+Saldo Awal)</div><div className="gajian-stat-value" style={{color:sisaKasDenganSaldo<0?"var(--red)":"var(--green)",fontSize:16}}>{IDR(sisaKasDenganSaldo)}</div></div>
+                            <div className="gajian-stat"><div className="gajian-stat-label">Kas Periode Ini</div><div className="gajian-stat-value" style={{color:totalSisaKas<0?"var(--red)":"var(--text)"}}>{IDR(totalSisaKas)}</div></div>
                           </div>
 
-                          {/* Overflow day rows (tgl 29-31 bulan lalu) */}
                           {overflowEntries.length>0 && (
                             <div style={{borderBottom:"1px dashed var(--border)",marginBottom:4,paddingBottom:4}}>
-                              <div style={{fontSize:10,fontWeight:700,color:"var(--orange)",letterSpacing:".06em",textTransform:"uppercase",padding:"4px 0 6px"}}>
-                                ⬆ Limpahan bulan {ML[p.prevMonth]}
-                              </div>
+                              <div style={{fontSize:10,fontWeight:700,color:"var(--orange)",letterSpacing:".06em",textTransform:"uppercase",padding:"4px 0 6px"}}>⬆ Limpahan bulan {ML[p.prevMonth]}</div>
                               {p.overflowDays.map(d => {
                                 const dd = String(d).padStart(2,'0');
-                                const dateStr = `${p.prevYear}-${String(p.prevMonth+1).padStart(2,'0')}-${dd}`;
-                                const entry = entries[dateStr];
-                                const dt = new Date(dateStr+'T00:00:00');
-                                const dayName = DAYS[dt.getDay()];
+                                const dateStr = p.prevYear+'-'+String(p.prevMonth+1).padStart(2,'0')+'-'+dd;
+                                const entry = entries[dateStr]; const dt = new Date(dateStr+'T00:00:00'); const dayName = DAYS[dt.getDay()];
                                 if (entry) {
                                   const items = PRODUCTS.filter(pr=>(entry.quantities?.[pr.id]||0)>0).map(pr=>pr.name.split(' ').slice(-1)[0]+' ×'+entry.quantities[pr.id]).join(', ');
                                   const dayExp = entry.totalPengeluaran||0;
-                                  return (
-                                    <div key={dateStr} className="gajian-day-row" style={{background:"rgba(255,169,77,0.04)"}}>
-                                      <div className="gajian-day-date">
-                                        {d} {MO[p.prevMonth]} <span className="day-name">{dayName}</span>
-                                        <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'JetBrains Mono',monospace"}}>{items}{dayExp>0&&<span style={{color:"var(--red)",fontSize:10}}> −{IDR(dayExp)}</span>}</div>
-                                      </div>
-                                      <div className="gajian-day-amount">{IDR(entry.gaji)}</div>
-                                    </div>
-                                  );
-                                } else {
-                                  return (
-                                    <div key={dateStr} className="gajian-day-row empty">
-                                      <div className="gajian-day-date">{d} {MO[p.prevMonth]} <span className="day-name">{dayName}</span></div>
-                                      <div className="gajian-day-amount">–</div>
-                                    </div>
-                                  );
-                                }
+                                  return (<div key={dateStr} className="gajian-day-row" style={{background:"rgba(232,163,77,.04)"}}><div className="gajian-day-date">{d} {MO[p.prevMonth]} <span className="day-name">{dayName}</span><div style={{fontSize:10,color:"var(--text3)",fontFamily:"'Space Mono',monospace"}}>{items}{dayExp>0&&<span style={{color:"var(--red)",fontSize:10}}> −{IDR(dayExp)}</span>}</div></div><div className="gajian-day-amount">{IDR(entry.gaji)}</div></div>);
+                                } else { return (<div key={dateStr} className="gajian-day-row empty"><div className="gajian-day-date">{d} {MO[p.prevMonth]} <span className="day-name">{dayName}</span></div><div className="gajian-day-amount">–</div></div>); }
                               })}
                             </div>
                           )}
 
-                          {/* Main day rows (tgl 1-14 atau 15-28) */}
                           {Array.from({length:p.endDay-p.startDay+1},(_,i)=>p.startDay+i).map(d => {
                             const dd = String(d).padStart(2,'0');
-                            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${dd}`;
-                            const entry = entries[dateStr];
-                            const dt = new Date(dateStr+'T00:00:00');
-                            const dayName = DAYS[dt.getDay()];
-
+                            const dateStr = year+'-'+String(month+1).padStart(2,'0')+'-'+dd;
+                            const entry = entries[dateStr]; const dt = new Date(dateStr+'T00:00:00'); const dayName = DAYS[dt.getDay()];
                             if (entry) {
                               const items = PRODUCTS.filter(pr=>(entry.quantities?.[pr.id]||0)>0).map(pr=>pr.name.split(' ').slice(-1)[0]+' ×'+entry.quantities[pr.id]).join(', ');
                               const dayExp = entry.totalPengeluaran||0;
-                              return (
-                                <div key={dateStr} className="gajian-day-row">
-                                  <div className="gajian-day-date">
-                                    {d} {MO[month]} <span className="day-name">{dayName}</span>
-                                    <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'JetBrains Mono',monospace"}}>{items}{dayExp>0&&<span style={{color:"var(--red)",fontSize:10}}> −{IDR(dayExp)}</span>}</div>
-                                  </div>
-                                  <div className="gajian-day-amount">{IDR(entry.gaji)}</div>
-                                </div>
-                              );
-                            } else {
-                              return (
-                                <div key={dateStr} className="gajian-day-row empty">
-                                  <div className="gajian-day-date">{d} {MO[month]} <span className="day-name">{dayName}</span></div>
-                                  <div className="gajian-day-amount">–</div>
-                                </div>
-                              );
-                            }
+                              return (<div key={dateStr} className="gajian-day-row"><div className="gajian-day-date">{d} {MO[month]} <span className="day-name">{dayName}</span><div style={{fontSize:10,color:"var(--text3)",fontFamily:"'Space Mono',monospace"}}>{items}{dayExp>0&&<span style={{color:"var(--red)",fontSize:10}}> −{IDR(dayExp)}</span>}</div></div><div className="gajian-day-amount">{IDR(entry.gaji)}</div></div>);
+                            } else { return (<div key={dateStr} className="gajian-day-row empty"><div className="gajian-day-date">{d} {MO[month]} <span className="day-name">{dayName}</span></div><div className="gajian-day-amount">–</div></div>); }
                           })}
                         </div>
                       );
@@ -983,11 +801,9 @@
                 })()}
               </>}
 
-              {/* ===== TAB: RIWAYAT ===== */}
               {page==="riwayat" && <>
                 <h1 className="page-title">Riwayat</h1>
                 <p className="page-sub">Data penjualan yang sudah tersimpan</p>
-
                 {sortedEntries.length===0 ? (
                   <div className="empty"><div className="empty-icon">📋</div>Belum ada data tersimpan.<br/>Mulai input di tab "Input Harian".</div>
                 ) : sortedEntries.map((e, i) => {
@@ -995,43 +811,25 @@
                   const totalExp = e.totalPengeluaran||0;
                   const sisaKas = e.sisaKas!=null ? e.sisaKas : (e.totalPenjualan-e.gaji-totalExp);
                   const isOpen = openDetail===i;
-
                   return (
                     <div key={e.date} className="history-item" onClick={()=>setOpenDetail(isOpen?null:i)}>
-                      <div className="history-item-header">
-                        <span className="history-date">{fmtDate(e.date)}</span>
-                        <span className="history-gaji">{IDR(sisaKas)}</span>
-                      </div>
+                      <div className="history-item-header"><span className="history-date">{fmtDate(e.date)}</span><span className="history-gaji">{IDR(sisaKas)}</span></div>
                       <div className="history-pills">
-                        {sold.length>0 ? sold.map(p=><span key={p.id} className="pill">{p.name} ×{e.quantities[p.id]}</span>) : <span className="pill" style={{color:"var(--text3)"}}>–</span>}
-                        {totalExp>0 && <span className="pill" style={{background:"var(--red-bg)",color:"var(--red)",borderColor:"rgba(255,107,107,0.2)"}}>-{IDR(totalExp)}</span>}
+                        {sold.length>0 ? sold.map(p=><span key={p.id} className="pill">{p.emoji} {p.name} ×{e.quantities[p.id]}</span>) : <span className="pill" style={{color:"var(--text3)"}}>–</span>}
+                        {totalExp>0 && <span className="pill" style={{background:"var(--red-bg)",color:"var(--red)",borderColor:"var(--red-border)"}}>-{IDR(totalExp)}</span>}
                       </div>
                       {isOpen && (
                         <div className="history-detail">
-                          <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--accent)",margin:"0 0 6px"}}>Penjualan & Gaji</div>
-                          {sold.length>0 ? sold.map(p=>(
-                            <div key={p.id} className="detail-row">
-                              <span>{p.name} ×{e.quantities[p.id]}</span>
-                              <span>{IDR(e.quantities[p.id]*p.gaji)}</span>
-                            </div>
-                          )) : <div className="detail-row"><span style={{color:"var(--text3)"}}>Tidak ada</span><span></span></div>}
+                          <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--accent)",margin:"0 0 8px"}}>Penjualan & Gaji</div>
+                          {sold.length>0 ? sold.map(p=>(<div key={p.id} className="detail-row"><span>{p.emoji} {p.name} ×{e.quantities[p.id]}</span><span>{IDR(e.quantities[p.id]*p.gaji)}</span></div>)) : <div className="detail-row"><span style={{color:"var(--text3)"}}>Tidak ada</span><span></span></div>}
                           <div className="detail-row total"><span>Total Gaji</span><span>{IDR(e.gaji)}</span></div>
-
                           {((e.expenses||[]).length>0 || totalExp>0) && <>
-                            <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--red)",margin:"12px 0 6px"}}>Pengeluaran</div>
-                            {(e.expenses||[]).map((x,xi)=>(
-                              <div key={xi} className="detail-row"><span>{x.desc||'Pengeluaran'}</span><span style={{color:"var(--red)"}}>{IDR(x.amount)}</span></div>
-                            ))}
-                            <div className="detail-row" style={{fontWeight:600}}><span>Total Pengeluaran</span><span style={{color:"var(--red)"}}>{IDR(totalExp)}</span></div>
+                            <div style={{fontSize:10,fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",color:"var(--red)",margin:"14px 0 8px"}}>Pengeluaran</div>
+                            {(e.expenses||[]).map((x,xi)=>(<div key={xi} className="detail-row"><span>{x.desc||'Pengeluaran'}</span><span style={{color:"var(--red)"}}>{IDR(x.amount)}</span></div>))}
+                            <div className="detail-row" style={{fontWeight:700}}><span>Total Pengeluaran</span><span style={{color:"var(--red)"}}>{IDR(totalExp)}</span></div>
                           </>}
-
-                          <div className="detail-row" style={{color:"var(--green)",fontWeight:700,borderTop:"2px solid var(--border)",marginTop:8,paddingTop:10,fontSize:14}}>
-                            <span>Sisa Kas</span><span>{IDR(sisaKas)}</span>
-                          </div>
-
-                          <button className="btn btn-danger" style={{width:"100%",marginTop:14,padding:"10px"}} onClick={(ev)=>{ev.stopPropagation();deleteEntry(e.date);}}>
-                            <Icon type="trash" size={14}/> Hapus Data Ini
-                          </button>
+                          <div className="detail-row" style={{color:"var(--green)",fontWeight:700,borderTop:"2px solid var(--border)",marginTop:8,paddingTop:10,fontSize:14}}><span>Sisa Kas</span><span>{IDR(sisaKas)}</span></div>
+                          <button className="btn btn-danger" style={{width:"100%",marginTop:14,padding:"10px"}} onClick={(ev)=>{ev.stopPropagation();deleteEntry(e.date);}}><Icon type="trash" size={14}/> Hapus Data Ini</button>
                         </div>
                       )}
                     </div>
@@ -1041,7 +839,6 @@
             </div>
           </div>
 
-          {/* MOBILE NAV */}
           <div className="mobile-nav"><div className="mobile-nav-inner">
             <button className={"mobile-nav-btn "+(page==="input"?"active":"")} onClick={()=>setPage("input")}><Icon type="coffee" size={20}/> Input</button>
             <button className={"mobile-nav-btn "+(page==="gajian"?"active":"")} onClick={()=>setPage("gajian")}><Icon type="dollar" size={20}/> Gajian</button>
