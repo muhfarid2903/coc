@@ -403,7 +403,7 @@ input[type="number"]{-moz-appearance:textfield}
       const sortedEntries=useMemo(()=>Object.values(entries).sort((a,b)=>b.date.localeCompare(a.date)),[entries]);
 
       if(syncStatus==="not_configured")return(
-        <div className="app"><div className="header"><div className="header-logo">W</div><div className="header-info"><div className="header-title">Warkop Jaya</div><div className="header-sub">Pencatatan Harian</div></div></div>
+        <div className="app"><div className="header"><div className="header-logo">W</div><div className="header-info"><div className="header-title">WarkopSaja</div><div className="header-sub">Pencatatan Harian</div></div></div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"70vh",padding:40,textAlign:"center",position:"relative",zIndex:1}}>
           <div style={{fontSize:52,marginBottom:20,opacity:.7}}>⚙️</div>
           <h2 style={{marginBottom:10,fontSize:22,fontWeight:700}}>Konfigurasi Firebase</h2>
@@ -411,7 +411,7 @@ input[type="number"]{-moz-appearance:textfield}
         </div></div>);
 
       if(loading)return(
-        <div className="app"><div className="header"><div className="header-logo">W</div><div className="header-info"><div className="header-title">Warkop Jaya</div><div className="header-sub">Pencatatan Harian</div></div></div>
+        <div className="app"><div className="header"><div className="header-logo">W</div><div className="header-info"><div className="header-title">WarkopSaja</div><div className="header-sub">Pencatatan Harian</div></div></div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"60vh",gap:16,color:"var(--text3)",position:"relative",zIndex:1}}>
           <div style={{width:36,height:36,border:"3px solid var(--border2)",borderTopColor:"var(--gold)",borderRadius:"50%",animation:"spin .7s linear infinite"}}></div>
           <div style={{fontSize:13}}>Menghubungkan...</div>
@@ -424,7 +424,7 @@ input[type="number"]{-moz-appearance:textfield}
         <div className="app">
           <div className="header">
             <div className="header-logo">W</div>
-            <div className="header-info"><div className="header-title">Warkop Jaya</div><div className="header-sub">{DAYS[today.getDay()]}, {today.getDate()} {ML[today.getMonth()]} {today.getFullYear()}</div></div>
+            <div className="header-info"><div className="header-title">WarkopSaja</div><div className="header-sub">{DAYS[today.getDay()]}, {today.getDate()} {ML[today.getMonth()]} {today.getFullYear()}</div></div>
             <div className="header-right"><SyncBadge/></div>
           </div>
 
