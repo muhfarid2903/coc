@@ -34,6 +34,12 @@
       --radius:14px;--radius-lg:18px;
     }
     html,body,#root{height:100%}
+    html{transition:background-color .35s ease}
+    body,.header,.sidebar,.mobile-nav,.card,.history-item,.gajian-card,.stat-card,
+    .qty-display,.expense-input,.expense-amount,.form-input,.date-input,.pill,
+    .theme-toggle,.nav-btn,.mobile-nav-btn,.summary-item,.gajian-stat,.day-total{
+      transition:background-color .35s ease,color .35s ease,border-color .35s ease;
+    }
     body{
       background:var(--bg);color:var(--text);
       font-family:'DM Sans',-apple-system,sans-serif;
@@ -431,6 +437,103 @@
     input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.8) sepia(.5) hue-rotate(350deg) saturate(2);opacity:.6;cursor:pointer}
     input[type="number"]{-moz-appearance:textfield}
 
+    .theme-toggle{
+      width:38px;height:38px;border-radius:11px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.02);color:var(--text2);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:16px;transition:all .3s cubic-bezier(.4,0,.2,1);
+    }
+    .theme-toggle:hover{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent);transform:rotate(-12deg) scale(1.05)}
+    .theme-toggle:active{transform:rotate(-12deg) scale(.95)}
+
+    .kas-badge{
+      display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;
+      background:var(--accent-bg);border:1px solid var(--accent-border);
+      font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);
+      transition:all .2s;
+    }
+    .kas-badge-label{font-size:10px;font-weight:700;color:var(--text3);font-family:'DM Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase}
+    .kas-badge-val.neg{color:var(--red)}
+    @media(max-width:600px){.kas-badge-label{display:none}.kas-badge{padding:6px 10px;font-size:12px}}
+
+    .posisi-kas{
+      background:linear-gradient(135deg,rgba(227,181,132,.12),rgba(20,16,10,.4));
+      border:1px solid var(--accent-border);border-radius:var(--radius-lg);
+      padding:22px;margin-bottom:18px;position:relative;overflow:hidden;
+      animation:fadeUp .4s cubic-bezier(.4,0,.2,1) both;
+      backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+      box-shadow:0 8px 28px rgba(0,0,0,.18);
+    }
+    .posisi-kas::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad-warm);opacity:.7}
+    .posisi-kas-label{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .posisi-kas-value{font-family:'Space Mono',monospace;font-size:34px;font-weight:700;color:var(--accent);letter-spacing:-.5px;line-height:1.1}
+    .posisi-kas-value.neg{color:var(--red)}
+    .posisi-kas-breakdown{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
+    .posisi-kas-item{display:flex;flex-direction:column;gap:4px}
+    .posisi-kas-item-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+    .posisi-kas-item-val{font-family:'Space Mono',monospace;font-size:13px;font-weight:700}
+    .posisi-kas-day{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);font-size:12px;font-family:'Space Mono',monospace}
+    .posisi-kas-day-item{display:flex;align-items:center;gap:6px}
+    .posisi-kas-day-val.pos{color:var(--green)}
+    .posisi-kas-day-val.neg{color:var(--red)}
+    .posisi-kas-day-val.none{color:var(--text3);font-style:italic}
+    @media(max-width:600px){.posisi-kas-breakdown{grid-template-columns:repeat(2,1fr)}.posisi-kas-value{font-size:28px}}
+
+    [data-theme="light"] .posisi-kas{background:linear-gradient(135deg,rgba(168,106,63,.1),rgba(239,229,210,.6));box-shadow:0 6px 20px rgba(120,85,55,.08)}
+
+    /* === Soft Sepia Light Theme (low-glare, warm parchment) === */
+    [data-theme="light"]{
+      --bg:#e8ddc9;--bg2:#efe5d2;--bg3:#e0d4bc;--bg4:#d4c5a8;
+      --border:rgba(120,85,55,.16);--border2:rgba(120,85,55,.26);
+      --text:#3a2a1c;--text2:#6b5640;--text3:#9a8770;
+      --accent:#a86a3f;--accent2:#8a5430;--accent3:#b88058;--accent-deep:#6b3f22;
+      --accent-bg:rgba(168,106,63,.09);--accent-border:rgba(168,106,63,.24);
+      --red:#b25a5a;--red-bg:rgba(178,90,90,.09);--red-border:rgba(178,90,90,.22);
+      --green:#5a8a5a;--green-bg:rgba(90,138,90,.09);--green-border:rgba(90,138,90,.22);
+      --blue:#5a7ba8;--blue-bg:rgba(90,123,168,.09);
+      --orange:#b07838;--orange-bg:rgba(176,120,56,.09);--orange-border:rgba(176,120,56,.22);
+      --purple:#8a6fa8;--purple-bg:rgba(138,111,168,.09);
+      --grad-warm:linear-gradient(135deg,#d4a878 0%,#b88058 45%,#8a5430 100%);
+      --grad-card:linear-gradient(180deg,rgba(245,235,215,.5),rgba(245,235,215,0));
+      --shadow:0 8px 28px rgba(120,85,55,.1),0 2px 6px rgba(120,85,55,.06);
+      --shadow-glow:0 0 0 1px var(--accent-border),0 8px 24px rgba(168,106,63,.14);
+    }
+    [data-theme="light"] .page-title{background:linear-gradient(135deg,#3a2a1c 20%,#6b3f22 60%,#a86a3f 100%);-webkit-background-clip:text;background-clip:text}
+    [data-theme="light"] .header-title{background:linear-gradient(180deg,var(--text),var(--accent-deep));-webkit-background-clip:text;background-clip:text}
+    [data-theme="light"] .card-title{text-shadow:none}
+    [data-theme="light"] .history-gaji,
+    [data-theme="light"] .gajian-total-value,
+    [data-theme="light"] .gajian-day-amount{color:var(--accent-deep)}
+    [data-theme="light"] .summary-item.gaji-box .summary-value{color:var(--accent-deep)}
+    [data-theme="light"] body{
+      background-image:
+        radial-gradient(ellipse 60% 40% at 15% -5%,rgba(168,106,63,.08) 0%,transparent 60%),
+        radial-gradient(ellipse 55% 40% at 85% 100%,rgba(138,84,48,.07) 0%,transparent 55%);
+    }
+    [data-theme="light"] body::before{opacity:.06;mix-blend-mode:multiply}
+    [data-theme="light"] .header{background:linear-gradient(180deg,rgba(232,221,201,.85),rgba(224,212,188,.7))}
+    [data-theme="light"] .sidebar{background:linear-gradient(180deg,rgba(239,229,210,.6),rgba(224,212,188,.4))}
+    [data-theme="light"] .mobile-nav{background:linear-gradient(180deg,rgba(232,221,201,.7),rgba(239,229,210,.95))}
+    [data-theme="light"] .card,
+    [data-theme="light"] .history-item,
+    [data-theme="light"] .gajian-card{background:linear-gradient(180deg,rgba(239,229,210,.85),rgba(232,221,201,.65))}
+    [data-theme="light"] .stat-card{background:linear-gradient(180deg,rgba(239,229,210,.8),rgba(224,212,188,.55))}
+    [data-theme="light"] .nav-btn:hover{background:rgba(168,106,63,.06);color:var(--text)}
+    [data-theme="light"] .nav-btn.active{background:linear-gradient(135deg,rgba(168,106,63,.13),rgba(168,106,63,.03))}
+    [data-theme="light"] .mobile-nav-btn.active{background:linear-gradient(180deg,rgba(168,106,63,.12),rgba(168,106,63,.03))}
+    [data-theme="light"] .qty-display{background:rgba(224,212,188,.5)}
+    [data-theme="light"] .expense-input,
+    [data-theme="light"] .expense-amount,
+    [data-theme="light"] .form-input,
+    [data-theme="light"] .date-input{background:rgba(232,221,201,.55)}
+    [data-theme="light"] .pill{background:rgba(232,221,201,.6)}
+    [data-theme="light"] td{border-bottom-color:rgba(120,85,55,.12)}
+    [data-theme="light"] .gajian-day-row{border-bottom-color:rgba(120,85,55,.12)}
+    [data-theme="light"] tr:hover td{background:rgba(168,106,63,.04)}
+    [data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator{filter:sepia(.5) hue-rotate(355deg) saturate(1.2);opacity:.55}
+    [data-theme="light"] .theme-toggle{background:rgba(232,221,201,.5)}
+
     @media(max-width:900px){
       .stats-row{grid-template-columns:repeat(2,1fr)}
       .sidebar{display:none}
@@ -649,6 +752,14 @@
       const [initialSaldo, setInitialSaldo] = useState(0);
       const [editingSaldo, setEditingSaldo] = useState(false);
       const [saldoInput, setSaldoInput] = useState('');
+      const [theme, setTheme] = useState(() => {
+        try { return localStorage.getItem('theme') || 'dark'; } catch(e) { return 'dark'; }
+      });
+
+      useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        try { localStorage.setItem('theme', theme); } catch(e) {}
+      }, [theme]);
 
       useEffect(() => {
         if (!firebaseReady || !db) { setLoading(false); return; }
@@ -740,6 +851,21 @@
         try { if(db && firebaseReady) await db.collection("entries").doc(date).delete(); showToast('Entri dihapus'); } catch(e) { showToast('Gagal: '+e.message); }
       }
 
+      const kasSummary = useMemo(() => {
+        const all = Object.values(entries);
+        const totalPenjualan = all.reduce((s,e)=>s+(e.totalPenjualan||0),0);
+        const totalGaji = all.reduce((s,e)=>s+(e.gaji||0),0);
+        const totalPengeluaran = all.reduce((s,e)=>s+(e.totalPengeluaran||0),0);
+        const kasSekarang = initialSaldo + totalPenjualan - totalGaji - totalPengeluaran;
+        const todayStr = todayISO();
+        const y = new Date(); y.setDate(y.getDate()-1);
+        const yestStr = y.toISOString().split('T')[0];
+        const tE = entries[todayStr], yE = entries[yestStr];
+        const todayKas = tE ? ((tE.totalPenjualan||0)-(tE.gaji||0)-(tE.totalPengeluaran||0)) : 0;
+        const yestKas = yE ? ((yE.totalPenjualan||0)-(yE.gaji||0)-(yE.totalPengeluaran||0)) : 0;
+        return { totalPenjualan, totalGaji, totalPengeluaran, kasSekarang, todayKas, yestKas, hasToday:!!tE, hasYest:!!yE };
+      }, [entries, initialSaldo]);
+
       const paydayInfo = useMemo(() => {
         const today = new Date(); const day = today.getDate(); const year = today.getFullYear(); const month = today.getMonth();
         const periods = getPayPeriods(year, month); let show=null, period=null;
@@ -783,7 +909,16 @@
           <div className="header">
             <div className="header-logo">☕</div>
             <div><div className="header-title">Warkopsaja</div><div className="header-sub">{today.getDate()} {ML[today.getMonth()]} {today.getFullYear()} · {DAYS[today.getDay()]}</div></div>
-            <div className="header-right"><SyncBadge/></div>
+            <div className="header-right">
+              <div className="kas-badge" title={"Saldo Awal "+IDR(initialSaldo)+" + Penjualan "+IDR(kasSummary.totalPenjualan)+" − Gaji "+IDR(kasSummary.totalGaji)+" − Pengeluaran "+IDR(kasSummary.totalPengeluaran)}>
+                <span className="kas-badge-label">💼 Kas</span>
+                <span className={"kas-badge-val"+(kasSummary.kasSekarang<0?" neg":"")}>{IDR(kasSummary.kasSekarang)}</span>
+              </div>
+              <button className="theme-toggle" onClick={()=>setTheme(theme==='dark'?'light':'dark')} title={theme==='dark'?'Mode terang':'Mode gelap'}>
+                {theme==='dark' ? '☀️' : '🌙'}
+              </button>
+              <SyncBadge/>
+            </div>
           </div>
 
           <div className="main-area">
@@ -798,6 +933,27 @@
               {page==="input" && <>
                 <h1 className="page-title">Input Harian</h1>
                 <p className="page-sub">Catat penjualan dan pengeluaran harian warkop</p>
+
+                <div className="posisi-kas">
+                  <div className="posisi-kas-label">💼 Kas Sekarang (Total Riil)</div>
+                  <div className={"posisi-kas-value"+(kasSummary.kasSekarang<0?" neg":"")}>{IDR(kasSummary.kasSekarang)}</div>
+                  <div className="posisi-kas-breakdown">
+                    <div className="posisi-kas-item"><div className="posisi-kas-item-label">Saldo Awal</div><div className="posisi-kas-item-val" style={{color:"var(--text2)"}}>{IDR(initialSaldo)}</div></div>
+                    <div className="posisi-kas-item"><div className="posisi-kas-item-label">+ Penjualan</div><div className="posisi-kas-item-val" style={{color:"var(--green)"}}>{IDR(kasSummary.totalPenjualan)}</div></div>
+                    <div className="posisi-kas-item"><div className="posisi-kas-item-label">− Gaji</div><div className="posisi-kas-item-val" style={{color:"var(--accent)"}}>{IDR(kasSummary.totalGaji)}</div></div>
+                    <div className="posisi-kas-item"><div className="posisi-kas-item-label">− Pengeluaran</div><div className="posisi-kas-item-val" style={{color:"var(--red)"}}>{IDR(kasSummary.totalPengeluaran)}</div></div>
+                  </div>
+                  <div className="posisi-kas-day">
+                    <div className="posisi-kas-day-item">
+                      <span style={{color:"var(--text3)"}}>Hari ini:</span>
+                      <span className={"posisi-kas-day-val "+(!kasSummary.hasToday?"none":kasSummary.todayKas>=0?"pos":"neg")}>{kasSummary.hasToday?(kasSummary.todayKas>=0?'+':'')+IDR(kasSummary.todayKas):'belum input'}</span>
+                    </div>
+                    <div className="posisi-kas-day-item">
+                      <span style={{color:"var(--text3)"}}>Kemarin:</span>
+                      <span className={"posisi-kas-day-val "+(!kasSummary.hasYest?"none":kasSummary.yestKas>=0?"pos":"neg")}>{kasSummary.hasYest?(kasSummary.yestKas>=0?'+':'')+IDR(kasSummary.yestKas):'tidak ada'}</span>
+                    </div>
+                  </div>
+                </div>
 
                 {paydayInfo && (
                   <div className={"payday-banner "+paydayInfo.show}>
