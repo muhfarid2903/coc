@@ -71,8 +71,14 @@ services:
     image: coc-api:latest
     container_name: coc-api
     restart: unless-stopped
+    # required:false — tanpa ini, deploy gagal total hanya karena deploy/.env
+    # belum dibuat. Padahal berkas itu cuma memegang frasa sandi guru: tanpa
+    # dia, situs dan permainannya tetap jalan penuh dan hanya dasbor guru yang
+    # terkunci. Kegagalan yang tepat di sini adalah dasbor terkunci, bukan
+    # seluruh situs mati.
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       TZ: Asia/Makassar
     volumes:
