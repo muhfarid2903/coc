@@ -43,7 +43,7 @@ riwayat 40 pertandingan terakhir.
 Semua data disimpan di `localStorage` peramban masing-masing pemain. Tidak ada
 data yang dikirim ke mana pun, dan tidak ada backend.
 
-## Menjalankan
+## Menjalankan Secara Lokal
 
 ```bash
 # cara paling sederhana
@@ -53,8 +53,25 @@ open index.html
 npx http-server -p 8080
 ```
 
-Untuk menerbitkannya, aktifkan GitHub Pages dari branch yang berisi berkas ini —
-situsnya statis sepenuhnya.
+## Deploy
+
+Tidak ada proses build dan tidak ada backend, jadi cukup sajikan isi repo apa
+adanya. Semua path aset bersifat relatif, sehingga situs tetap jalan meski
+disajikan dari sub-folder seperti `https://<user>.github.io/<repo>/`.
+
+**GitHub Pages** — paling praktis karena kodenya sudah di sini:
+
+1. Buka **Settings → Pages** di repositori ini.
+2. **Source**: pilih *Deploy from a branch*.
+3. **Branch**: pilih branch yang berisi berkas ini, folder **`/ (root)`**, lalu **Save**.
+4. Tunggu satu-dua menit; URL-nya muncul di halaman yang sama.
+
+Berkas `.nojekyll` di root mematikan pemrosesan Jekyll agar seluruh berkas
+disajikan apa adanya.
+
+**Alternatif** — Netlify, Vercel, atau Cloudflare Pages juga bisa: hubungkan
+repositori, kosongkan *build command*, dan set *publish directory* ke `.` (root).
+Di Netlify, folder ini bahkan bisa langsung diseret ke jendela *Deploy manually*.
 
 ## Struktur Berkas
 
