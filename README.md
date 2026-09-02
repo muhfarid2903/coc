@@ -91,7 +91,7 @@ Tunggu propagasi, lalu pastikan sudah benar: `dig +short contoh.com`
 
 ```bash
 sudo apt update && sudo apt install -y nginx git
-sudo git clone https://github.com/muhfarid2903/kaso-warkop.git /var/www/coc
+sudo git clone https://github.com/muhfarid2903/coc.git /var/www/coc
 sudo chown -R www-data:www-data /var/www/coc
 ```
 
