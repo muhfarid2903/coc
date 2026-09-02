@@ -78,6 +78,22 @@ Di Netlify, folder ini bahkan bisa langsung diseret ke jendela *Deploy manually*
 Berkas pendukung ada di folder `deploy/`. Contoh untuk Ubuntu/Debian; ganti
 `contoh.com` dengan domainmu.
 
+#### Cara cepat: satu skrip
+
+Skrip `deploy/setup-vps.sh` mengerjakan seluruh langkah di bawah sekaligus.
+Unduh, tinjau isinya, lalu jalankan:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/muhfarid2903/coc/main/deploy/setup-vps.sh -o setup-vps.sh
+less setup-vps.sh                      # tinjau dulu sebelum menjalankan
+sudo bash setup-vps.sh domainmu.com    # atau tanpa argumen untuk menyajikan lewat IP
+```
+
+Aman dijalankan berulang — pemanggilan berikutnya hanya memperbarui kode dan
+memuat ulang Nginx.
+
+Bagian di bawah menjelaskan langkah yang sama secara manual.
+
 **1. Arahkan domain ke VPS.** Di panel DNS domain, buat dua data:
 
 | Tipe | Nama | Nilai |
