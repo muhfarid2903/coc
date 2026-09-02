@@ -1,0 +1,51 @@
+# Menerbitkan situs statis ini ke GitHub Pages.
+#
+# Situsnya tidak punya proses build, jadi seluruh isi repo diunggah apa adanya
+# — sama seperti cara Nginx menyajikannya di VPS.
+#
+# Catatan: GitHub Pages hanya tersedia gratis untuk repositori publik.
+# Pada repositori privat, langkah deploy akan gagal kecuali akun memakai
+# langganan GitHub Pro, Team, atau Enterprise.
+
+name: Terbitkan ke GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Biarkan satu penerbitan berjalan sampai tuntas; jangan batalkan di tengah.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  terbitkan:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Ambil kode
+        uses: actions/checkout@v4
+
+      - name: Siapkan Pages
+        uses: actions/configure-pages@v5
+        with:
+          # Nyalakan Pages lewat API bila belum aktif, sehingga tidak perlu
+          # diatur manual lewat Settings.
+          enablement: true
+
+      - name: Kemas situs
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Terbitkan
+        id: deploy
+        uses: actions/deploy-pages@v4
