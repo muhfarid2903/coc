@@ -21,6 +21,13 @@
 #   docker compose up -d --force-recreate coc
 # (update.sh sudah menangani ini sendiri.)
 
+# Nama project Compose dikunci di sini. Tanpa ini, Compose memakai nama folder
+# induk berkas — yaitu "deploy" — persis sama dengan /opt/jadwal-belajar/deploy
+# di server yang sama, sehingga kedua situs terlihat sebagai satu project dan
+# `docker compose --remove-orphans` dari salah satunya bisa menghapus container
+# milik yang lain.
+name: coc
+
 services:
   coc:
     image: nginx:alpine
