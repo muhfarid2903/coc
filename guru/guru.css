@@ -1,0 +1,95 @@
+/* Dasbor guru dipakai di laptop, bukan HP — jadi lebarnya dilepas dari
+   --shell milik aplikasi siswa yang sengaja sempit seperti layar ponsel. */
+body.guru { padding: 0; }
+
+.gwrap {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+.ghead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 22px;
+}
+.gbrand { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.gbrand span { font-size: 24px; }
+.gbrand b { font-size: 19px; font-weight: 800; }
+.gbrand small { color: var(--txt3); font-size: 12px; }
+
+.gfoot { margin-top: 40px; text-align: center; }
+
+/* Kode kelas ditulis guru di papan tulis, jadi harus terbaca dari bangku
+   belakang: besar, monospace, berjarak lebar. */
+.kode {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: clamp(30px, 6vw, 46px);
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: var(--gold);
+  background: rgba(255, 197, 61, .08);
+  border: 1px dashed rgba(255, 197, 61, .4);
+  border-radius: var(--r-m);
+  padding: 14px 18px;
+  text-align: center;
+  user-select: all;
+}
+
+.gtabel { width: 100%; border-collapse: collapse; font-size: 14px; }
+.gtabel th, .gtabel td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line); }
+.gtabel th { color: var(--txt3); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.gtabel td.num, .gtabel th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.gtabel tbody tr:hover { background: rgba(255, 255, 255, .03); }
+.gscroll { overflow-x: auto; }
+
+/* Warna akurasi: hijau aman, kuning perlu diperhatikan, merah perlu
+   diulang di kelas. Ambangnya sama di tabel siswa dan tabel topik. */
+.ak { font-weight: 700; }
+.ak.baik { color: var(--green); }
+.ak.sedang { color: var(--gold); }
+.ak.kurang { color: var(--red); }
+.sunyi { color: var(--txt3); }
+
+.gbar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; min-width: 90px; }
+.gbar i { display: block; height: 100%; border-radius: 99px; background: var(--grad-gold); }
+
+.gkelas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+.gkelas .card { cursor: pointer; transition: transform .12s ease, border-color .12s ease; }
+.gkelas .card:hover { transform: translateY(-2px); border-color: var(--line2); }
+
+.gkolom { display: grid; grid-template-columns: 1fr; gap: 18px; }
+@media (min-width: 860px) { .gkolom.dua { grid-template-columns: 3fr 2fr; } }
+
+.gaksi { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+textarea.field { min-height: 130px; resize: vertical; font-family: inherit; line-height: 1.55; }
+select.field { appearance: none; cursor: pointer; }
+
+/* Atribut `hidden` di HTML hanya menang lewat `[hidden]{display:none}` di
+   stylesheet peramban, dan itu kalah oleh `display` yang dipasang kelas
+   .btn. Tanpa baris ini, tombol Keluar tetap terlihat di layar masuk. */
+[hidden] { display: none !important; }
+
+/* Sel aksi: dua tombol harus tetap sebaris. Kalau membungkus, tinggi baris
+   berlipat dan tabel 30 siswa jadi dua kali lebih panjang dari perlunya. */
+.gtabel td.aksi {
+  text-align: right;
+  white-space: nowrap;
+}
+.gtabel td.aksi .btn {
+  padding: 6px 10px;
+  font-size: 12px;
+  box-shadow: none;
+  margin-left: 6px;
+}
+.gtabel td.nowrap { white-space: nowrap; }
+.gtabel td.nama { min-width: 150px; }
+.gtabel td.nama small { font-size: 11px; }

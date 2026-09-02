@@ -5,6 +5,7 @@
   'use strict';
 
   var D = global.COC_DATA, Q = global.COC_Q, FX = global.COC_FX, S = global.COC_STORE;
+  var NET = global.COC_NET;
   var scr, tabbar, modal;
 
   var state = {
@@ -81,13 +82,93 @@
     if (!full) global.scrollTo(0, 0);
     hud();
     var map = { home: 'home', setup: 'home', bracket: 'home', result: 'home', champion: 'home',
-      howto: 'home', rank: 'rank', quest: 'quest', me: 'me' };
+      howto: 'home', masuk: 'home', rank: 'rank', quest: 'quest', me: 'me' };
     var tab = map[name] || state.tab;
     state.tab = tab;
     Array.prototype.forEach.call(tabbar.querySelectorAll('.tab'), function (b) {
       b.classList.toggle('on', b.dataset.tab === tab);
     });
   }
+
+  /* ============================================================
+     Layar: Masuk Kelas
+
+     Tiga langkah, sengaja dipisah: kode kelas -> pilih nama -> PIN.
+     Di lab komputer bersama, siswa bergantian tiap jam pelajaran, jadi
+     mengetik sesedikit mungkin lebih penting daripada satu formulir
+     panjang. Nama dipilih dari daftar, bukan diketik, supaya tidak ada
+     salah eja yang bikin profil kembar.
+     ============================================================ */
+  SCREENS.masuk = function () {
+    var m = state.masuk || (state.masuk = { langkah: 'kode' });
+
+    if (m.langkah === 'kode') {
+      scr.innerHTML =
+        '<div class="stack" style="padding-top:8px">' +
+          '<div class="center" style="padding:14px 0">' +
+            '<div style="font-size:56px;line-height:1">🏫</div>' +
+            '<h1 class="h1" style="margin-top:6px">Masuk Kelas</h1>' +
+            '<p class="sub" style="margin-top:4px">Ketik kode kelas dari gurumu untuk bertanding melawan teman sekelas.</p>' +
+          '</div>' +
+          '<div class="card stack">' +
+            '<div><span class="eyebrow">Kode Kelas</span></div>' +
+            '<input class="field kodein" id="kodeIn" maxlength="8" placeholder="ABC123" ' +
+              'autocomplete="off" autocapitalize="characters" spellcheck="false"/>' +
+            (m.galat ? '<p class="sub" style="color:var(--red)">' + esc(m.galat) + '</p>' : '') +
+          '</div>' +
+          '<button class="btn btn-lg btn-block" data-act="cekKelas"><span class="shine"></span>Cari Kelas 🔎</button>' +
+          '<button class="btn btn-ghost btn-sm btn-block" data-act="mainSendiri">Main sendiri dulu</button>' +
+        '</div>';
+      var k = $('kodeIn');
+      k.addEventListener('keydown', function (e) { if (e.key === 'Enter') ACT.cekKelas(); });
+      k.focus();
+      return;
+    }
+
+    if (m.langkah === 'nama') {
+      scr.innerHTML =
+        '<button class="btn btn-ghost btn-sm" data-act="masukLangkah" data-val="kode">‹ Ganti kode</button>' +
+        '<div class="sect"><h1 class="h1">' + esc(m.kelas.nama) + '</h1></div>' +
+        '<p class="sub" style="margin-top:-6px">Pilih namamu di daftar ini.</p>' +
+        (m.siswa.length ? '<div class="namagrid">' + m.siswa.map(function (sw, i) {
+            return '<button class="namapick" data-act="pilihNama" data-val="' + i + '">' +
+              '<span class="ava">' + sw.ava + '</span>' +
+              '<b>' + esc(sw.nama) + '</b>' +
+              '<small>' + (sw.sudahPin ? '🔒 punya PIN' : '✨ baru') + '</small></button>';
+          }).join('') + '</div>'
+        : '<div class="card center" style="padding:24px"><p class="sub">Belum ada nama di kelas ini. Minta gurumu menambahkan daftar siswa.</p></div>') +
+        '<button class="btn btn-ghost btn-sm btn-block" data-act="mainSendiri" style="margin-top:14px">Main sendiri dulu</button>';
+      return;
+    }
+
+    /* langkah 'pin' */
+    var sw = m.pilih;
+    scr.innerHTML =
+      '<button class="btn btn-ghost btn-sm" data-act="masukLangkah" data-val="nama">‹ Ganti nama</button>' +
+      '<div class="center" style="padding:18px 0 6px">' +
+        '<div style="font-size:52px;line-height:1">' + sw.ava + '</div>' +
+        '<h1 class="h1" style="margin-top:6px">' + esc(sw.nama) + '</h1>' +
+        '<p class="sub" style="margin-top:4px">' + esc(m.kelas.nama) + '</p>' +
+      '</div>' +
+      '<div class="card stack">' +
+        '<div><span class="eyebrow">' + (sw.sudahPin ? 'Masukkan PIN' : 'Buat PIN Baru') + '</span></div>' +
+        '<input class="field pinin" id="pinIn" inputmode="numeric" pattern="[0-9]*" maxlength="4" ' +
+          'placeholder="••••" autocomplete="off"/>' +
+        '<p class="sub">' + (sw.sudahPin
+          ? 'PIN 4 angka yang kamu buat waktu pertama masuk.'
+          : 'Pilih 4 angka yang gampang kamu ingat. PIN ini yang menjaga profilmu supaya tidak dipakai orang lain.') + '</p>' +
+        (m.galat ? '<p class="sub" style="color:var(--red)">' + esc(m.galat) + '</p>' : '') +
+        '<label class="cek"><input type="checkbox" id="ingatIn"/> ' +
+          '<span>Ini perangkatku sendiri — ingat aku</span></label>' +
+        '<p class="sub" style="margin-top:-4px">Jangan dicentang kalau ini komputer sekolah yang dipakai bergantian.</p>' +
+      '</div>' +
+      '<button class="btn btn-lg btn-block" data-act="masukKelas" style="margin-top:12px">' +
+        '<span class="shine"></span>' + (sw.sudahPin ? 'Masuk 🚀' : 'Buat PIN & Masuk 🚀') + '</button>';
+    var pi = $('pinIn');
+    pi.addEventListener('keydown', function (e) { if (e.key === 'Enter') ACT.masukKelas(); });
+    pi.addEventListener('input', function () { pi.value = pi.value.replace(/\D/g, ''); });
+    pi.focus();
+  };
 
   /* ============================================================
      Layar: Kenalan (nama & avatar)
@@ -120,10 +201,32 @@
   /* ============================================================
      Layar: Arena (beranda)
      ============================================================ */
+  /* Baris papan peringkat untuk layar beranda: teman sekelas kalau sudah
+     masuk kelas, lawan komputer kalau belum. Bentuk keluarannya sama,
+     sehingga rankList() dan podBox() tidak perlu tahu bedanya. */
+  function barisPapan() {
+    if (NET.mode === 'kelas' && NET.papan) {
+      return NET.papan.map(function (x) {
+        return { name: x.nama, ava: x.ava, xp: x.xp, me: x.aku };
+      });
+    }
+    return S.leaderboard();
+  }
+
+  function peringkatku(rows) {
+    for (var i = 0; i < rows.length; i++) if (rows[i].me) return i + 1;
+    return rows.length;
+  }
+
   SCREENS.home = function () {
     var p = S.p;
     var akurasi = p.totalAnswered ? Math.round(p.totalCorrect / p.totalAnswered * 100) : 0;
-    var rank = S.myRank();
+    var papan = barisPapan();
+    /* Sebelum papan kelas sempat termuat, peringkat sengaja dikosongkan
+       daripada menampilkan angka dari papan bot yang sama sekali tidak
+       ada hubungannya dengan kelasnya. */
+    var belumTahu = NET.mode === 'kelas' && !NET.papan;
+    var rank = belumTahu ? '–' : peringkatku(papan);
     var qs = S.quests();
     var siapKlaim = qs.list.filter(function (q) {
       var def = S.questDef(q.id); return def && !q.claimed && q.prog >= def.goal;
@@ -143,7 +246,7 @@
         '<div class="hero-stats">' +
           '<div class="hstat"><b>' + fmt(p.wins) + '</b><span>Menang</span></div>' +
           '<div class="hstat"><b>' + akurasi + '%</b><span>Akurasi</span></div>' +
-          '<div class="hstat"><b>#' + rank + '</b><span>Peringkat</span></div>' +
+          '<div class="hstat"><b>' + (belumTahu ? '–' : '#' + rank) + '</b><span>Peringkat</span></div>' +
         '</div>' +
       '</section>' +
 
@@ -160,12 +263,23 @@
 
       '<div class="sect"><h2 class="h2">📊 Papan Peringkat</h2>' +
         '<button class="link" data-act="tab" data-val="rank">Selengkapnya</button></div>' +
-      rankList(S.leaderboard().slice(0, 3), 1) +
+      rankList(papan.slice(0, 3), 1) +
 
       '<div class="sect"><h2 class="h2">📜 Pertandingan Terakhir</h2></div>' +
       historyList(p.history.slice(0, 3)) +
 
       '<button class="btn btn-ghost btn-block btn-sm" data-act="howto" style="margin-top:16px">❓ Cara Bermain</button>';
+
+    /* Segarkan papan kelas di latar. Teman sekelas bermain sepanjang jam
+       pelajaran, jadi peringkat yang ditampilkan tanpa ini akan tertinggal
+       selama satu sesi penuh. Digambar ulang hanya kalau urutannya benar-
+       benar berubah, supaya layar tidak berkedip tiap kali beranda dibuka. */
+    if (NET.mode === 'kelas') {
+      var sebelum = JSON.stringify(NET.papan);
+      NET.peringkat().then(function () {
+        if (state.screen === 'home' && JSON.stringify(NET.papan) !== sebelum) go('home');
+      });
+    }
   };
 
   function modeCard(id, icon, title, desc, grad, color, badge) {
@@ -283,11 +397,47 @@
      Layar: Peringkat
      ============================================================ */
   SCREENS.rank = function () {
+    /* Di dalam kelas, papan ini berisi teman sekelas sungguhan. Di luar
+       kelas ia tetap berisi lawan komputer — itu jauh lebih baik daripada
+       papan kosong bagi yang main sendiri. */
+    if (NET.mode === 'kelas') {
+      scr.innerHTML = kepalaPeringkat(NET.aku.kelas ? NET.aku.kelas.nama : 'Kelas') +
+        '<div class="card center" style="padding:26px"><p class="sub">Memuat papan peringkat kelas…</p></div>';
+      NET.peringkat().then(function (r) {
+        if (state.screen !== 'rank') return;
+        if (!r.ok) {
+          scr.innerHTML = kepalaPeringkat(NET.aku.kelas ? NET.aku.kelas.nama : 'Kelas') +
+            '<div class="card center" style="padding:22px">' +
+              '<p class="sub">Papan peringkat kelas belum bisa dimuat.<br>Periksa sambungan internetmu.</p>' +
+              '<button class="btn btn-sm" data-act="tab" data-val="rank" style="margin-top:12px">Coba Lagi</button>' +
+            '</div>';
+          return;
+        }
+        var rows = r.data.peringkat.map(function (x) {
+          return { name: x.nama, ava: x.ava, xp: x.xp, main: x.main, me: x.aku };
+        });
+        var top = rows.slice(0, 3);
+        scr.innerHTML = kepalaPeringkat(NET.aku.kelas ? NET.aku.kelas.nama : 'Kelas') +
+          '<div class="card" style="margin-top:14px">' +
+            '<div class="podium">' + podBox(top[1], 2) + podBox(top[0], 1) + podBox(top[2], 3) + '</div>' +
+          '</div>' +
+          '<div class="sect"><span class="eyebrow">Klasemen Lengkap</span></div>' +
+          rankList(rows, 1);
+      });
+      return;
+    }
+
     var rows = S.leaderboard();
     var top = rows.slice(0, 3);
     scr.innerHTML =
       '<div class="sect" style="margin-top:2px"><h1 class="h1">📊 Papan Peringkat</h1></div>' +
       '<p class="sub" style="margin-top:-6px">Poin pengalaman (XP) menentukan urutan.</p>' +
+      (NET.mode === 'tamu'
+        ? '<div class="card ajak" style="margin-top:12px">' +
+            '<p class="sub">Lawan-lawan ini komputer. Masuk kelas untuk bertanding melawan teman sekelasmu sungguhan.</p>' +
+            '<button class="btn btn-sm" data-act="keMasuk" style="margin-top:10px">🏫 Masuk Kelas</button>' +
+          '</div>'
+        : '') +
       '<div class="card" style="margin-top:14px">' +
         '<div class="podium">' +
           podBox(top[1], 2) + podBox(top[0], 1) + podBox(top[2], 3) +
@@ -296,6 +446,11 @@
       '<div class="sect"><span class="eyebrow">Klasemen Lengkap</span></div>' +
       rankList(rows, 1);
   };
+
+  function kepalaPeringkat(namaKelas) {
+    return '<div class="sect" style="margin-top:2px"><h1 class="h1">📊 Papan Peringkat</h1></div>' +
+      '<p class="sub" style="margin-top:-6px">' + esc(namaKelas) + ' — urutan berdasarkan XP.</p>';
+  }
 
   function podBox(r, no) {
     if (!r) return '<div class="pod"></div>';
@@ -312,6 +467,7 @@
   SCREENS.quest = function () {
     var qs = S.quests();
     scr.innerHTML =
+      (NET.mode === 'kelas' ? '<div id="tugasBox"></div>' : '') +
       '<div class="sect" style="margin-top:2px"><h1 class="h1">🎯 Misi Harian</h1></div>' +
       '<p class="sub" style="margin-top:-6px">Diperbarui otomatis setiap hari.</p>' +
       '<div style="margin-top:14px">' + questList(qs.list) + '</div>' +
@@ -326,7 +482,49 @@
         '<b>Eliminasi</b> membuang dua pilihan salah, <b>Tambah Waktu</b> menambah 6 detik. ' +
         'Pakai di saat yang tepat!</p>' +
       '</div>';
+
+    if (NET.mode === 'kelas') muatTugas();
   };
+
+  /* Tugas dari guru. Ditaruh di atas misi harian karena punya tenggat —
+     misi harian selalu bisa diulang besok, tugas tidak. */
+  function muatTugas() {
+    NET.tugas().then(function (r) {
+      var box = $('tugasBox');
+      if (!box || state.screen !== 'quest') return;
+      var list = (r.ok && r.data.tugas) || [];
+      if (!list.length) { box.innerHTML = ''; return; }
+      box.innerHTML =
+        '<div class="sect" style="margin-top:2px"><h1 class="h1">📋 Tugas dari Guru</h1></div>' +
+        '<div class="list" style="margin-top:10px">' + list.map(function (t) {
+          var top = D.topic(t.topic);
+          var lv = D.LEVELS[t.level - 1];
+          var selesai = Math.min(t.selesai, t.target);
+          var tuntas = selesai >= t.target;
+          var pct = Math.round(selesai / t.target * 100);
+          return '<button class="mode tugas' + (tuntas ? ' tuntas' : '') + '" ' +
+              'style="--mc:' + top.color + '" ' +
+              'data-act="kerjakanTugas" data-val="' + t.topic + '|' + t.level + '">' +
+            '<span class="mode-ic" style="background:' + top.grad + '">' + top.icon + '</span>' +
+            '<span class="mode-b">' +
+              '<h3>' + esc(top.name) + ' · ' + esc(lv ? lv.name : 'Tingkat ' + t.level) + '</h3>' +
+              '<p>' + (t.note ? esc(t.note) + ' · ' : '') +
+                selesai + '/' + t.target + ' selesai' +
+                (t.due ? ' · tenggat ' + esc(tanggalPendek(t.due)) : '') + '</p>' +
+              '<span class="mini-bar"><i style="width:' + pct + '%"></i></span>' +
+            '</span>' +
+            '<span class="mode-go">' + (tuntas ? '✅' : '›') + '</span>' +
+          '</button>';
+        }).join('') + '</div>';
+    });
+  }
+
+  function tanggalPendek(iso) {
+    var bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return iso;
+    return d.getDate() + ' ' + bulan[d.getMonth()];
+  }
 
   /* ============================================================
      Layar: Profil
@@ -350,6 +548,8 @@
         '<div style="margin-top:10px">' + xpBar(p.xp) + '</div>' +
       '</div>' +
 
+      kartuKelas() +
+
       '<div class="sect"><span class="eyebrow">Statistik</span></div>' +
       '<div class="statgrid">' +
         '<div class="sbox"><span>Pertandingan</span><b>' + fmt(p.played) + '</b></div>' +
@@ -369,8 +569,15 @@
 
       '<div class="sect"><span class="eyebrow">Pengaturan</span></div>' +
       '<div class="card stack">' +
-        '<label class="eyebrow" style="display:block">Nama Panggilan</label>' +
-        '<input class="field" id="nameEdit" maxlength="14" value="' + esc(p.name) + '"/>' +
+        /* Di dalam kelas, nama dikunci: papan peringkat dan dasbor guru
+           memakai nama dari daftar absen, dan mengizinkan siswa menggantinya
+           akan membuat gurunya tidak lagi mengenali siapa yang mana. */
+        (NET.mode === 'kelas'
+          ? '<label class="eyebrow" style="display:block">Nama Panggilan</label>' +
+            '<div class="field terkunci">' + esc(p.name) + ' 🔒</div>' +
+            '<p class="sub" style="margin-top:-4px">Nama diambil dari daftar kelas. Minta gurumu kalau mau diubah.</p>'
+          : '<label class="eyebrow" style="display:block">Nama Panggilan</label>' +
+            '<input class="field" id="nameEdit" maxlength="14" value="' + esc(p.name) + '"/>') +
         '<label class="eyebrow" style="display:block">Avatar</label>' +
         '<div class="avagrid">' + D.AVATARS.map(function (a) {
           return '<button class="avapick' + (a === p.ava ? ' on' : '') + '" data-act="ava2" data-val="' + a + '">' + a + '</button>';
@@ -382,11 +589,34 @@
         '<button class="btn btn-ghost btn-sm" data-act="sound">' + (FX.soundOn() ? '🔊 Suara: Nyala' : '🔇 Suara: Mati') + '</button>' +
         '<button class="btn btn-ghost btn-sm" data-act="howto">❓ Cara Bermain</button>' +
       '</div>' +
-      '<button class="btn btn-ghost btn-sm btn-block" data-act="reset" style="margin-top:10px;color:var(--red)">Hapus Semua Data</button>' +
+      (NET.mode === 'kelas'
+        ? '<button class="btn btn-ghost btn-sm btn-block" data-act="keluarKelas" style="margin-top:10px">🚪 Keluar dari Kelas</button>'
+        : '<button class="btn btn-ghost btn-sm btn-block" data-act="reset" style="margin-top:10px;color:var(--red)">Hapus Semua Data</button>') +
 
       '<div class="sect"><span class="eyebrow">Riwayat</span></div>' +
       historyList(p.history.slice(0, 10));
   };
+
+  /* Status keanggotaan kelas di layar Profil. Tiga keadaan: sudah di
+     kelas, ada server tapi belum masuk, dan tidak ada server sama sekali
+     (yang terakhir tidak menampilkan apa pun — tidak ada gunanya menawarkan
+     sesuatu yang tak tersedia). */
+  function kartuKelas() {
+    if (NET.mode === 'kelas' && NET.aku && NET.aku.kelas) {
+      return '<div class="card kelasbox" style="margin-top:12px">' +
+        '<div class="mode-b"><h3>🏫 ' + esc(NET.aku.kelas.nama) + '</h3>' +
+        '<p>Progresmu tersimpan di server. Papan peringkat berisi teman sekelasmu.</p></div>' +
+      '</div>';
+    }
+    if (NET.mode === 'tamu') {
+      return '<div class="card ajak" style="margin-top:12px">' +
+        '<div class="mode-b"><h3>🏫 Belum masuk kelas</h3>' +
+        '<p>Kalau gurumu memberi kode kelas, masuk supaya progresmu tersimpan dan kamu bisa bertanding melawan teman sekelas.</p></div>' +
+        '<button class="btn btn-sm" data-act="keMasuk" style="margin-top:10px">Masuk Kelas</button>' +
+      '</div>';
+    }
+    return '';
+  }
 
   /* ============================================================
      Layar: Cara bermain
@@ -714,13 +944,19 @@
     var permata = (hasil === 'win' && m.correct === m.qs.length) ? 1 : 0;
     if (solo) { xp = Math.round(xp * 0.5); koin = Math.round(koin * 0.5); permata = 0; }
 
+    /* Rerata waktu menjawab ikut dikirim: dasbor guru memakainya untuk
+       membedakan "belum paham" dari "paham tapi lambat". */
+    var rerataMs = m.log.length
+      ? Math.round(m.log.reduce(function (a, l) { return a + l.ms; }, 0) / m.log.length)
+      : null;
+
     var efek = S.record({
       result: solo ? 'solo' : hasil,
       mode: m.cfg.mode, topic: m.cfg.topic, level: m.cfg.level,
       myScore: m.my, opScore: m.op,
       correct: m.correct, total: m.qs.length,
       streak: m.best, fastest: m.fastest, fastCount: m.fast,
-      xp: xp, coin: koin, gem: permata
+      xp: xp, coin: koin, gem: permata, msAvg: rerataMs
     });
 
     var res = {
@@ -1037,6 +1273,81 @@
      ============================================================ */
   var ACT = {
     tab: function (v) { FX.sfx.tap(); go(v); },
+
+    /* ---- Masuk kelas ---- */
+    masukLangkah: function (v) {
+      state.masuk.langkah = v;
+      state.masuk.galat = '';
+      FX.sfx.tap();
+      go('masuk');
+    },
+    mainSendiri: function () {
+      FX.sfx.tap();
+      go(S.p.name ? 'home' : 'onboard');
+    },
+    cekKelas: function () {
+      var kode = ($('kodeIn').value || '').trim().toUpperCase();
+      if (kode.length < 4) { toast('Kode kelas minimal 4 karakter'); return; }
+      var m = state.masuk;
+      m.galat = '';
+      toast('Mencari kelas…');
+      NET.cekKelas(kode).then(function (r) {
+        if (!r.ok) { m.galat = r.pesan || 'Kelas tidak ditemukan.'; go('masuk'); return; }
+        m.kode = r.data.kelas.kode;
+        m.kelas = r.data.kelas;
+        m.siswa = r.data.siswa;
+        m.langkah = 'nama';
+        FX.sfx.tap();
+        go('masuk');
+      });
+    },
+    pilihNama: function (v) {
+      var m = state.masuk;
+      m.pilih = m.siswa[Number(v)];
+      m.galat = '';
+      m.langkah = 'pin';
+      FX.sfx.tap();
+      go('masuk');
+    },
+    masukKelas: function () {
+      var m = state.masuk;
+      var pin = ($('pinIn').value || '').trim();
+      if (!/^\d{4}$/.test(pin)) { toast('PIN harus 4 angka'); return; }
+      var ingat = $('ingatIn') && $('ingatIn').checked;
+      toast('Menghubungkan…');
+      NET.masuk(m.kode, m.pilih.nama, pin, m.pilih.ava, ingat).then(function (r) {
+        if (!r.ok) { m.galat = r.pesan || 'Gagal masuk.'; go('masuk'); return; }
+        pakaiProfilServer(r.data.profil, r.data.aku);
+        state.masuk = null;
+        FX.sfx.level();
+        go('home');
+        toast('Halo, ' + S.p.name + '! Kamu di ' + (NET.aku.kelas ? NET.aku.kelas.nama : 'kelas'));
+      });
+    },
+    keluarKelas: function () {
+      dialog('Keluar dari kelas?',
+        '<p>Progresmu sudah tersimpan di server dan akan kembali begitu kamu masuk lagi. ' +
+        'Data di perangkat ini dibersihkan supaya tidak terbawa ke siswa berikutnya.</p>',
+        [{ label: 'Batal', cls: 'btn btn-ghost' },
+         { label: 'Keluar', cls: 'btn', fn: function () {
+            NET.keluar().then(function () {
+              S.reset();
+              state.masuk = null;
+              go('masuk');
+              toast('Sudah keluar. Giliran berikutnya!');
+            });
+         } }]);
+    },
+    keMasuk: function () { FX.sfx.tap(); state.masuk = { langkah: 'kode' }; go('masuk'); },
+    kerjakanTugas: function (v) {
+      var bagi = String(v).split('|');
+      state.sel = { topic: bagi[0], level: Number(bagi[1]) || 1 };
+      FX.sfx.tap();
+      /* Langsung ke arena dengan topik dan tingkat sesuai tugas. Mode duel
+         dipilih supaya tugas tetap terasa pertandingan, bukan PR. */
+      go('mm', { topic: state.sel.topic, level: state.sel.level, mode: 'duel',
+        rival: lawanAcak(state.sel.level) });
+    },
     howto: function () { FX.sfx.tap(); go('howto'); },
 
     ava: function (v, el) {
@@ -1062,9 +1373,14 @@
       FX.sfx.tap();
     },
     saveProfile: function () {
-      var v = ($('nameEdit').value || '').trim();
-      if (v.length < 2) { toast('Nama minimal 2 huruf'); return; }
-      S.p.name = v.slice(0, 14);
+      /* Di dalam kelas medan nama tidak dirender sama sekali, jadi yang
+         tersimpan hanya avatar. */
+      var el = $('nameEdit');
+      if (el) {
+        var v = (el.value || '').trim();
+        if (v.length < 2) { toast('Nama minimal 2 huruf'); return; }
+        S.p.name = v.slice(0, 14);
+      }
       S.save(); FX.sfx.coin();
       go('me'); toast('Profil tersimpan');
     },
@@ -1171,6 +1487,27 @@
     }
   };
 
+  /* Memasang profil milik siswa yang baru masuk.
+
+     Kalau server belum punya profilnya (siswa baru), profil lokal WAJIB
+     dikosongkan lebih dulu. Tanpa itu, di lab komputer bersama siswa
+     berikutnya akan mewarisi XP, lencana, dan riwayat milik siswa
+     sebelumnya yang masih tertinggal di localStorage. */
+  function pakaiProfilServer(profil, aku) {
+    if (profil && profil.data) {
+      S.adopsi(profil.data);
+    } else {
+      S.reset();
+    }
+    if (aku) {
+      if (!S.p.name) S.p.name = aku.nama;
+      if (aku.ava) S.p.ava = aku.ava;
+      S.save();
+    }
+    FX.setSound(S.p.sound !== false);
+    hud();
+  }
+
   /* ============================================================
      Mulai
      ============================================================ */
@@ -1230,7 +1567,30 @@
     FX.setSound(S.p.sound !== false);
     pasangPendengar();
     hud();
+
+    /* Layar pertama digambar dari data lokal supaya aplikasi langsung
+       terlihat, tanpa menunggu jaringan sekolah. Pemeriksaan sesi jalan
+       di belakangnya dan baru mengubah layar kalau memang perlu. */
     go(S.p.name ? 'home' : 'onboard');
+
+    NET.mulai().then(function (profilServer) {
+      if (NET.mode === 'kelas') {
+        pakaiProfilServer(profilServer ? { data: profilServer } : null, NET.aku);
+        go('home');
+      } else if (NET.mode === 'tamu' && !S.p.name) {
+        /* Ada server, dan pemain ini belum punya apa-apa: tawarkan masuk
+           kelas lebih dulu. Yang sudah main sendiri tidak diganggu — bagi
+           mereka pintu masuk kelas ada di layar Profil. */
+        state.masuk = { langkah: 'kode' };
+        go('masuk');
+      }
+      /* mode 'luring': tidak ada server sama sekali (mis. GitHub Pages).
+         Aplikasi berjalan persis seperti sebelum ada API. */
+    });
+
+    /* Simpanan terakhir saat tab ditutup, supaya pertandingan yang baru
+       saja selesai tidak hilang gara-gara timer 1,2 detik belum jatuh. */
+    global.addEventListener('pagehide', function () { NET.dorongSekarang(S.p); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

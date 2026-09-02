@@ -40,18 +40,103 @@ Enam tingkatan (Perunggu → Perak → Emas → Platina → Berlian → Sang Jua
 sembilan lencana, misi harian yang berganti tiap hari, papan peringkat, dan
 riwayat 40 pertandingan terakhir.
 
-Semua data disimpan di `localStorage` peramban masing-masing pemain. Tidak ada
-data yang dikirim ke mana pun, dan tidak ada backend.
+Tanpa kelas, semua data hidup di `localStorage` peramban masing-masing dan
+tidak dikirim ke mana pun. Di dalam kelas, profil ikut tersimpan di server
+sekolah sendiri sehingga tidak hilang saat ganti perangkat — lihat
+[Mode Kelas](#mode-kelas) di bawah.
+
+## Mode Kelas
+
+Selain dimainkan sendiri, COC bisa dipakai satu kelas sekaligus. Yang berubah
+saat mode ini menyala:
+
+| Tanpa kelas | Di dalam kelas |
+| --- | --- |
+| Papan peringkat berisi 12 lawan komputer | Papan peringkat berisi teman sekelas sungguhan |
+| Progres hilang kalau ganti perangkat atau hapus data peramban | Progres tersimpan di server, ikut ke perangkat mana pun |
+| Guru tidak melihat apa pun | Guru melihat siapa berlatih, akurasinya, dan materi mana yang lemah |
+| Tidak ada tugas | Guru bisa memberi tugas bertenggat, progresnya terhitung sendiri |
+
+Mode kelas **tidak wajib**. Kalau server API tidak ada — misalnya versi yang
+disajikan GitHub Pages — aplikasi berjalan persis seperti sebelumnya, dan
+tombol masuk kelas tidak ditawarkan sama sekali.
+
+### Cara siswa masuk
+
+1. Guru menulis kode kelas enam karakter di papan tulis.
+2. Siswa membuka aplikasi, mengetik kode itu, lalu **memilih namanya dari
+   daftar** — bukan mengetiknya, supaya tidak ada salah eja yang membuat
+   profil kembar.
+3. Siswa membuat PIN 4 angka sendiri saat pertama masuk, dan memakai PIN itu
+   seterusnya.
+
+Ada centang **"Ini perangkatku sendiri — ingat aku"**. Kalau tidak dicentang,
+sesi hanya berumur sehari; ini bawaannya, karena di lab komputer yang dipakai
+bergantian sesi yang awet berarti siswa berikutnya membuka aplikasi dan
+langsung menjadi orang lain. Tombol **Keluar dari Kelas** di layar Profil juga
+membersihkan data di perangkat itu, bukan sekadar menutup sesi.
+
+Kalau siswa lupa PIN-nya, guru meresetnya dari dasbor; siswa lalu membuat PIN
+baru saat masuk berikutnya. PIN yang salah delapan kali mengunci nama itu
+selama 15 menit.
+
+### Dasbor guru
+
+Ada di `/guru`, terkunci satu frasa sandi, dan menampilkan per kelas:
+
+- **Kode kelas** dalam huruf besar, siap disalin ke papan tulis.
+- **Tabel siswa** — XP, jumlah pertandingan, akurasi berwarna, dan kapan
+  terakhir aktif. Siswa yang belum pernah masuk ditandai.
+- **Penguasaan materi** — akurasi rata-rata kelas per topik, diurutkan dari
+  yang paling sering salah, jadi materi yang perlu diulang langsung terlihat.
+- **Tugas** — pilih topik, tingkat, berapa kali harus dimainkan, dan tenggat.
+  Progresnya dihitung dari pertandingan yang benar-benar cocok topik dan
+  tingkatnya, dan hanya yang dimainkan setelah tugas dibuat.
+
+Menambah siswa dilakukan dengan menempel daftar nama dari absen, satu nama per
+baris. Pakai nama panggilan saja — server sengaja tidak punya kolom nama
+lengkap, NIS, atau email, sehingga data pribadi siswa yang tersimpan seminimal
+mungkin.
+
+### Menyalakan mode kelas di server
+
+API-nya satu container Node tanpa dependensi (`node:sqlite` bawaan), berjalan
+di sebelah situs statisnya pada origin yang sama.
+
+```bash
+# 1. Buat frasa sandi guru di mesin sendiri — frasanya tidak ikut tersimpan
+node server/hash-passphrase.js
+
+# 2. Salin barisnya ke deploy/.env di server
+echo 'SANDI_GURU_SCRYPT=<tempel di sini>' | sudo tee /opt/coc/deploy/.env
+
+# 3. Nyalakan
+docker compose -f /opt/coc/deploy/docker-compose.yml up -d --build
+```
+
+Basis datanya satu berkas SQLite di `deploy/data/coc.db`. Itu satu-satunya
+yang perlu di-backup, dan `deploy/.gitignore` menjaganya supaya tidak pernah
+ikut masuk git bersama seluruh data siswa di dalamnya.
+
+Tanpa `deploy/.env`, situs dan permainannya tetap jalan penuh — hanya seluruh
+jalur `/api/guru` yang menolak, dan dasbornya terkunci.
 
 ## Menjalankan Secara Lokal
 
 ```bash
-# cara paling sederhana
+# cara paling sederhana — tanpa mode kelas
 open index.html
 
 # atau lewat server statis apa pun
 npx http-server -p 8080
+
+# lengkap dengan API kelas dan dasbor guru (butuh Node 24+)
+node server/dev.js     # situs di :8080, dasbor di :8080/guru/
 ```
+
+`server/dev.js` menirukan susunan produksi: berkas statis dan `/api` pada satu
+origin, seperti yang dilakukan Traefik di server. Basis data ujinya ditulis ke
+`server/dev-data/` dan tidak pernah bercampur dengan data sungguhan.
 
 ## Deploy
 
@@ -148,6 +233,11 @@ js/questions.js     pabrik soal + penjelasan jawaban
 js/fx.js            efek suara (WebAudio), getaran, konfeti
 js/store.js         profil, misi harian, papan peringkat (localStorage)
 js/app.js           alur layar, mesin duel, bagan turnamen
+js/net.js           penghubung ke API kelas (aman bila server tidak ada)
+
+server/             API kelas — Node tanpa dependensi, SQLite bawaan
+guru/               dasbor guru (halaman terpisah di /guru)
+deploy/             berkas untuk menjalankannya di VPS
 ```
 
 ## Catatan Teknis

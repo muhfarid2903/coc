@@ -586,3 +586,82 @@ img,svg{display:block;max-width:100%}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
     transition-duration:.01ms!important}
 }
+
+/* ============================================================
+   Masuk kelas, tugas, dan status keanggotaan
+   ============================================================ */
+
+/* Kode kelas dan PIN ditulis di papan tulis lalu disalin anak-anak, jadi
+   dibuat besar, monospace, dan berjarak — supaya B/8 dan 0/O tidak
+   tertukar saat mengetik. Pembangkit kodenya sendiri sudah membuang
+   huruf yang mirip (lihat ABJAD di server/db.js). */
+.field.kodein,
+.field.pinin {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: .28em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.field.pinin { letter-spacing: .5em; }
+
+.field.terkunci {
+  display: flex;
+  align-items: center;
+  color: var(--txt2);
+  background: rgba(255, 255, 255, .04);
+}
+
+/* Daftar nama sekelas. Target sentuh dibuat lega karena dipakai di HP
+   sambil berdiri, dan tiga kolom masih memuat satu kelas 30 anak dalam
+   dua layar gulir. */
+.namagrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.namapick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-m);
+  background: var(--grad-card);
+  color: var(--txt);
+  cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.namapick:hover { border-color: var(--line2); transform: translateY(-2px); }
+.namapick:active { transform: translateY(0); }
+.namapick .ava { font-size: 28px; line-height: 1.1; }
+.namapick b { font-size: 13px; font-weight: 700; }
+.namapick small { font-size: 10px; color: var(--txt3); }
+
+.cek {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--txt2);
+  cursor: pointer;
+}
+.cek input { width: 17px; height: 17px; accent-color: var(--gold); flex: none; }
+
+/* Ajakan masuk kelas: sengaja tidak semencolok tombol utama, karena
+   main sendiri tetap pilihan yang sah. */
+.ajak {
+  border-color: rgba(77, 124, 255, .35);
+  background: linear-gradient(180deg, rgba(77, 124, 255, .12), rgba(77, 124, 255, .03));
+}
+.kelasbox {
+  border-color: rgba(46, 230, 160, .3);
+  background: linear-gradient(180deg, rgba(46, 230, 160, .1), rgba(46, 230, 160, .02));
+}
+
+/* Tugas memakai kerangka .mode, hanya bar progresnya yang perlu ruang. */
+.mode.tugas .mini-bar { margin-top: 8px; }
+.mode.tugas.tuntas { opacity: .62; }
