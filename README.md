@@ -73,51 +73,57 @@ disajikan apa adanya.
 repositori, kosongkan *build command*, dan set *publish directory* ke `.` (root).
 Di Netlify, folder ini bahkan bisa langsung diseret ke jendela *Deploy manually*.
 
-### VPS Sendiri (Nginx + HTTPS)
+### VPS Sendiri
 
-Berkas pendukung ada di folder `deploy/`. Contoh untuk Ubuntu/Debian; ganti
-`contoh.com` dengan domainmu.
+Berkas pendukung ada di folder `deploy/`.
 
-**1. Arahkan domain ke VPS.** Di panel DNS domain, buat dua data:
+#### Cara yang dipakai sekarang: di belakang Traefik (Coolify)
 
-| Tipe | Nama | Nilai |
-| --- | --- | --- |
-| `A` | `@` | alamat IP VPS |
-| `A` | `www` | alamat IP VPS |
+VPS `balanglompo.com` menjalankan Coolify, dan container `coolify-proxy`
+(Traefik) yang memegang port 80/443 sekaligus mengurus sertifikat Let's
+Encrypt. Jadi situs ini dijalankan sebagai container `nginx:alpine` biasa yang
+**tidak membuka port ke host** — Traefik yang mengarahkan trafik ke sana lewat
+label di `deploy/docker-compose.yml`. Polanya sama dengan `jadwal-belajar` dan
+`jurnal-balanglompo` di server yang sama.
 
-Tunggu propagasi, lalu pastikan sudah benar: `dig +short contoh.com`
-
-**2. Pasang Nginx dan ambil kodenya.**
+Karena situs ini tanpa proses build, direktori hasil `git clone` dipasang
+langsung sebagai akar web (read-only), sehingga memperbarui cukup `git pull`.
 
 ```bash
-sudo apt update && sudo apt install -y nginx git
+# pasang sekali
+git clone https://github.com/muhfarid2903/coc.git /opt/coc
+docker compose -f /opt/coc/deploy/docker-compose.yml up -d
+
+# memperbarui setelah ada perubahan
+bash /opt/coc/deploy/update.sh
+```
+
+DNS sudah beres sendiri: ada data wildcard `*.balanglompo.com` yang mengarah ke
+IP VPS, jadi subdomain baru langsung hidup tanpa menambah data DNS. Sertifikat
+diterbitkan otomatis oleh Traefik saat permintaan HTTPS pertama masuk.
+
+Domainnya ditulis di label `Host(...)` dalam `deploy/docker-compose.yml`; untuk
+memindahkannya, ubah nilai itu lalu `docker compose up -d --force-recreate`.
+
+#### Kalau VPS-nya kosong: Nginx langsung di host
+
+Bila tidak ada Traefik atau proxy lain yang memegang port 80, situs ini bisa
+disajikan Nginx host apa adanya. Konfigurasi di `deploy/nginx.conf` ditujukan
+untuk dalam container, jadi tambahkan sendiri `server_name domainmu.com;` dan
+ganti `root` menjadi lokasi clone, lalu:
+
+```bash
+sudo apt update && sudo apt install -y nginx git certbot python3-certbot-nginx
 sudo git clone https://github.com/muhfarid2903/coc.git /var/www/coc
-sudo chown -R www-data:www-data /var/www/coc
-```
-
-**3. Pasang konfigurasi situs.**
-
-```bash
 sudo cp /var/www/coc/deploy/nginx.conf /etc/nginx/sites-available/coc
-sudo sed -i 's/contoh\.com/domainmu.com/g' /etc/nginx/sites-available/coc
+sudo $EDITOR /etc/nginx/sites-available/coc      # server_name + root
 sudo ln -s /etc/nginx/sites-available/coc /etc/nginx/sites-enabled/
-sudo rm -f /etc/nginx/sites-enabled/default   # lewati bila masih dipakai situs lain
 sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d domainmu.com
 ```
 
-**4. Nyalakan HTTPS.** Certbot mengurus sertifikat, mengubah berkas konfigurasi
-di atas untuk menambah blok HTTPS, sekaligus memasang pembaruan otomatis.
-
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-sudo certbot --nginx -d domainmu.com -d www.domainmu.com
-```
-
-**5. Memperbarui situs setelah ada perubahan.**
-
-```bash
-sudo bash /var/www/coc/deploy/update.sh
-```
+Arahkan lebih dulu data `A` domainmu ke IP VPS, dan pastikan dengan
+`dig +short domainmu.com`.
 
 #### Alternatif: Caddy
 

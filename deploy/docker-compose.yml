@@ -1,0 +1,51 @@
+# Hosting statis untuk coc.balanglompo.com di VPS.
+#
+# VPS itu menjalankan Coolify, dan Traefik (container `coolify-proxy`) yang
+# memegang port 80/443 sekaligus mengurus sertifikat Let's Encrypt. Jadi
+# container ini TIDAK boleh membuka port ke host — ia hanya bicara HTTP di
+# port 80 lewat jaringan `coolify`, dan Traefik yang meneruskan trafik ke
+# sini berdasarkan label di bawah. Polanya sama dengan jadwal-belajar dan
+# jurnal-balanglompo yang sudah jalan di server itu.
+#
+# Direktori induk (hasil git clone) dipasang read-only sebagai akar web, dan
+# situs ini tidak punya proses build, jadi memperbarui cukup `git pull` —
+# tanpa rebuild dan tanpa restart container.
+#
+#   pasang : git clone https://github.com/muhfarid2903/coc.git /opt/coc
+#            cd /opt/coc/deploy && docker compose up -d
+#   update : bash /opt/coc/deploy/update.sh
+#
+# PENTING: nginx.conf dipasang sebagai bind mount berkas tunggal, yang terikat
+# inode. `git pull` menulis inode baru, sehingga container tetap membaca versi
+# lama dan `nginx -s reload` tidak menolong. Setiap kali nginx.conf berubah:
+#   docker compose up -d --force-recreate coc
+# (update.sh sudah menangani ini sendiri.)
+
+services:
+  coc:
+    image: nginx:alpine
+    container_name: coc
+    restart: unless-stopped
+    volumes:
+      - ../:/srv/site:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - coolify
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: coolify
+      # HTTP hanya untuk tantangan ACME dan pengalihan ke HTTPS.
+      traefik.http.routers.coc-http.entrypoints: http
+      traefik.http.routers.coc-http.rule: Host(`coc.balanglompo.com`)
+      traefik.http.routers.coc-http.middlewares: coc-redirect
+      traefik.http.middlewares.coc-redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.coc-redirect.redirectscheme.permanent: 'true'
+      traefik.http.routers.coc.entrypoints: https
+      traefik.http.routers.coc.rule: Host(`coc.balanglompo.com`)
+      traefik.http.routers.coc.tls: 'true'
+      traefik.http.routers.coc.tls.certresolver: letsencrypt
+      traefik.http.services.coc.loadbalancer.server.port: '80'
+
+networks:
+  coolify:
+    external: true
