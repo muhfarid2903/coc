@@ -34,12 +34,13 @@ jobs:
       - name: Ambil kode
         uses: actions/checkout@v4
 
+      # Prasyarat sekali saja: Settings -> Pages -> Source: "GitHub Actions".
+      # Langkah ini tidak bisa menyalakan Pages sendiri — GITHUB_TOKEN bawaan
+      # Actions tidak punya izin membuat situs Pages (butuh hak admin), jadi
+      # `enablement: true` selalu gagal dengan "Resource not accessible by
+      # integration".
       - name: Siapkan Pages
         uses: actions/configure-pages@v5
-        with:
-          # Nyalakan Pages lewat API bila belum aktif, sehingga tidak perlu
-          # diatur manual lewat Settings.
-          enablement: true
 
       - name: Kemas situs
         uses: actions/upload-pages-artifact@v3
