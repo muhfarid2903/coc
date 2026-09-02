@@ -73,6 +73,65 @@ disajikan apa adanya.
 repositori, kosongkan *build command*, dan set *publish directory* ke `.` (root).
 Di Netlify, folder ini bahkan bisa langsung diseret ke jendela *Deploy manually*.
 
+### VPS Sendiri (Nginx + HTTPS)
+
+Berkas pendukung ada di folder `deploy/`. Contoh untuk Ubuntu/Debian; ganti
+`contoh.com` dengan domainmu.
+
+**1. Arahkan domain ke VPS.** Di panel DNS domain, buat dua data:
+
+| Tipe | Nama | Nilai |
+| --- | --- | --- |
+| `A` | `@` | alamat IP VPS |
+| `A` | `www` | alamat IP VPS |
+
+Tunggu propagasi, lalu pastikan sudah benar: `dig +short contoh.com`
+
+**2. Pasang Nginx dan ambil kodenya.**
+
+```bash
+sudo apt update && sudo apt install -y nginx git
+sudo git clone https://github.com/muhfarid2903/kaso-warkop.git /var/www/coc
+sudo chown -R www-data:www-data /var/www/coc
+```
+
+**3. Pasang konfigurasi situs.**
+
+```bash
+sudo cp /var/www/coc/deploy/nginx.conf /etc/nginx/sites-available/coc
+sudo sed -i 's/contoh\.com/domainmu.com/g' /etc/nginx/sites-available/coc
+sudo ln -s /etc/nginx/sites-available/coc /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default   # lewati bila masih dipakai situs lain
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**4. Nyalakan HTTPS.** Certbot mengurus sertifikat, mengubah berkas konfigurasi
+di atas untuk menambah blok HTTPS, sekaligus memasang pembaruan otomatis.
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d domainmu.com -d www.domainmu.com
+```
+
+**5. Memperbarui situs setelah ada perubahan.**
+
+```bash
+sudo bash /var/www/coc/deploy/update.sh
+```
+
+#### Alternatif: Caddy
+
+Kalau lebih suka yang ringkas, Caddy mengurus HTTPS sepenuhnya otomatis.
+Seluruh `Caddyfile` yang dibutuhkan hanya ini:
+
+```caddyfile
+domainmu.com, www.domainmu.com {
+    root * /var/www/coc
+    encode gzip
+    file_server
+}
+```
+
 ## Struktur Berkas
 
 ```
