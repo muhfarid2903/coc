@@ -196,8 +196,21 @@ function siswa(id) {
   return db.prepare('SELECT * FROM students WHERE id = ?').get(id) || null;
 }
 
+/* Urutan nama.
+
+   Banyak kelas memakai nomor absen sebagai identitas siswa, dan urutan
+   teks biasa menyusunnya jadi 1, 10, 11, ... 2, 20 — kacau persis di
+   tempat yang paling sering dilihat: daftar pilih nama dan tabel guru.
+
+   CAST ke INTEGER menyelesaikannya tanpa merusak kelas bernama biasa:
+   nama non-angka semuanya jadi 0, lalu diurutkan menurut abjad seperti
+   sebelumnya. Kelas campuran menaruh nama lebih dulu, baru nomor. */
+const URUT_NAMA = 'CAST(name AS INTEGER), name COLLATE NOCASE';
+
 function siswaDiKelas(classId) {
-  return db.prepare('SELECT * FROM students WHERE class_id = ? ORDER BY name COLLATE NOCASE').all(classId);
+  return db.prepare(
+    'SELECT * FROM students WHERE class_id = ? ORDER BY ' + URUT_NAMA
+  ).all(classId);
 }
 
 function cariSiswa(classId, nama) {
@@ -279,7 +292,7 @@ function peringkatKelas(classId) {
       FROM students s
       LEFT JOIN profiles p ON p.student_id = s.id
      WHERE s.class_id = ?
-     ORDER BY xp DESC, s.name COLLATE NOCASE
+     ORDER BY xp DESC, CAST(s.name AS INTEGER), s.name COLLATE NOCASE
   `).all(classId);
 }
 
@@ -304,7 +317,7 @@ function ringkasKelas(classId) {
           FROM matches GROUP BY student_id
       ) a ON a.student_id = s.id
      WHERE s.class_id = ?
-     ORDER BY xp DESC, s.name COLLATE NOCASE
+     ORDER BY xp DESC, CAST(s.name AS INTEGER), s.name COLLATE NOCASE
   `).all(classId);
 
   /* Agregat per topik: inilah alasan tabel `matches` ada. Guru butuh tahu
@@ -379,7 +392,7 @@ function rekapTugas(classId, assignmentId) {
       FROM students s
       CROSS JOIN assignments a
      WHERE s.class_id = ? AND a.id = ?
-     ORDER BY selesai DESC, s.name COLLATE NOCASE
+     ORDER BY selesai DESC, CAST(s.name AS INTEGER), s.name COLLATE NOCASE
   `).all(classId, assignmentId);
 }
 
