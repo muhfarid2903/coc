@@ -20,8 +20,18 @@ if [ ! -d "$SITUS" ]; then
 fi
 
 if [ ! -t 0 ]; then
-    echo "Perlu terminal untuk mengetik frasa sandi." >&2
-    echo "Pakai: ssh -t root@SERVER 'bash $SITUS/deploy/setup-guru.sh'" >&2
+    cat >&2 <<PESAN
+Perlu terminal sungguhan untuk mengetik frasa sandi tanpa gema.
+
+Yang kamu pakai sekarang tidak menyediakannya. Prompt bash di dalam
+Claude Code, pipa, dan cron semuanya begitu — di situ "ssh -t" pun tidak
+menolong, karena yang kurang adalah terminal di sisi kamu, bukan di server.
+
+Buka aplikasi Terminal sendiri (Terminal.app, iTerm, atau Windows
+Terminal), lalu jalankan:
+
+  ssh -t root@SERVER 'bash $SITUS/deploy/setup-guru.sh'
+PESAN
     exit 1
 fi
 
