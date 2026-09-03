@@ -98,21 +98,45 @@ baris. Pakai nama panggilan saja — server sengaja tidak punya kolom nama
 lengkap, NIS, atau email, sehingga data pribadi siswa yang tersimpan seminimal
 mungkin.
 
+### Mengelola kelas dari baris perintah
+
+Selain lewat dasbor, ada `server/kelas.js` yang bicara langsung ke SQLite.
+Ia **tidak** memerlukan frasa sandi guru — menyiapkan kelas di awal tahun jadi
+tidak perlu menunggu dasbornya terbuka, dan orang yang membantu menyiapkan
+data tidak perlu dititipi frasa sandi. Keamanannya bersandar pada akses ke
+servernya sendiri, yang toh sudah cukup untuk membaca berkas basis datanya.
+
+```bash
+docker exec -i coc-api node kelas.js daftar
+docker exec -i coc-api node kelas.js buat "Kelas 7"
+docker exec -i coc-api node kelas.js siswa J2EE3Q < absen.txt
+docker exec -i coc-api node kelas.js lihat J2EE3Q
+docker exec -i coc-api node kelas.js ganti-nama J2EE3Q "7-05" "7-05 Bilqis"
+docker exec -i coc-api node kelas.js reset-pin J2EE3Q "7-05"
+```
+
+Impor namanya membuang nomor urut di depan (`1. Ahmad`, `12 Bilqis`), karena
+daftar yang disalin dari absen hampir selalu membawanya.
+
+`ganti-nama` aman dipakai kapan saja: profil, riwayat pertandingan, progres
+tugas, dan PIN semuanya tertaut ke id siswa, bukan namanya. Jadi kelas boleh
+dimulai dengan nomor absen saja dan diberi nama panggilan belakangan tanpa ada
+yang hilang.
+
 ### Menyalakan mode kelas di server
 
 API-nya satu container Node tanpa dependensi (`node:sqlite` bawaan), berjalan
 di sebelah situs statisnya pada origin yang sama.
 
 ```bash
-# 1. Buat frasa sandi guru di mesin sendiri — frasanya tidak ikut tersimpan
-node server/hash-passphrase.js
-
-# 2. Salin barisnya ke deploy/.env di server
-echo 'SANDI_GURU_SCRYPT=<tempel di sini>' | sudo tee /opt/coc/deploy/.env
-
-# 3. Nyalakan
-docker compose -f /opt/coc/deploy/docker-compose.yml up -d --build
+# Cara termudah: satu perintah, dijalankan di server dengan terminal sungguhan.
+# Frasa sandinya diketik dua kali tanpa gema, hash-nya ditulis ke deploy/.env
+# dengan izin 600, container dijalankan ulang, lalu hasilnya diperiksa.
+ssh -t root@SERVER 'bash /opt/coc/deploy/setup-guru.sh'
 ```
+
+Kalau lebih suka manual, `node server/hash-passphrase.js` mencetak satu baris
+`SANDI_GURU_SCRYPT=…` untuk ditempel sendiri ke `deploy/.env`.
 
 Basis datanya satu berkas SQLite di `deploy/data/coc.db`. Itu satu-satunya
 yang perlu di-backup, dan `deploy/.gitignore` menjaganya supaya tidak pernah
