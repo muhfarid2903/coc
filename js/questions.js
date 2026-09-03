@@ -6,12 +6,48 @@
 (function (global) {
   'use strict';
 
+  /* ---------- sumber keacakan ----------
+     Seluruh pabrik soal menarik angka acak lewat satu pintu ini, bukan
+     Math.random langsung. Dengan begitu satu angka semai bisa membuat
+     sepuluh soal yang sama persis di perangkat mana pun — syarat mutlak
+     untuk mengadu dua siswa: skor tidak berarti apa-apa kalau soalnya
+     berbeda.
+
+     mulberry32 dipilih karena muat dalam enam baris, tidak menyimpan
+     keadaan di luar closure-nya, dan sebarannya cukup rata untuk soal
+     matematika. Ini bukan keacakan kriptografis, dan memang tidak perlu. */
+  var acak = Math.random;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /* Ubah teks semai apa pun menjadi bilangan 32-bit. Semai dari server
+     berupa teks (mis. "d3f1a90c"), jadi perlu diringkas dulu. */
+  function keAngka(semai) {
+    if (typeof semai === 'number') return semai | 0;
+    var h = 2166136261, t = String(semai);
+    for (var i = 0; i < t.length; i++) {
+      h ^= t.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h | 0;
+  }
+
+  function semaikan(semai) { acak = mulberry32(keAngka(semai)); }
+  function bebaskan() { acak = Math.random; }
+
   /* ---------- utilitas ---------- */
-  function ri(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+  function ri(a, b) { return Math.floor(acak() * (b - a + 1)) + a; }
   function pick(a) { return a[ri(0, a.length - 1)]; }
   function shuffle(a) {
     for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
+      var j = Math.floor(acak() * (i + 1));
       var t = a[i]; a[i] = a[j]; a[j] = t;
     }
     return a;
@@ -34,8 +70,8 @@
     spread = Math.max(2, Math.round(spread || Math.abs(correct) * 0.15) || 3);
     while (out.length < count && guard++ < 300) {
       var step = ri(1, spread);
-      var v = correct + (Math.random() < 0.5 ? -step : step);
-      if (Math.random() < 0.22) v = correct + (Math.random() < 0.5 ? -1 : 1) * ri(spread + 1, spread * 3);
+      var v = correct + (acak() < 0.5 ? -step : step);
+      if (acak() < 0.22) v = correct + (acak() < 0.5 ? -1 : 1) * ri(spread + 1, spread * 3);
       if (v === correct) continue;
       if (correct >= 0 && v < 0) continue;
       if (out.indexOf(v) !== -1) continue;
@@ -57,7 +93,7 @@
     var step = Math.max(500, Math.round(correct * 0.08 / mag) * mag || mag);
     var out = [], guard = 0;
     while (out.length < count && guard++ < 200) {
-      var v = correct + (Math.random() < 0.5 ? -1 : 1) * ri(1, 4) * step;
+      var v = correct + (acak() < 0.5 ? -1 : 1) * ri(1, 4) * step;
       if (v === correct || v <= 0 || out.indexOf(v) !== -1) continue;
       out.push(v);
     }
@@ -110,7 +146,7 @@
   function genKilat(d) {
     var a, b, c, v, t, e;
     if (d <= 1) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         a = ri(4, 25); b = ri(3, 20); v = a + b;
         t = a + ' + ' + b; e = a + ' + ' + b + ' = ' + v;
       } else {
@@ -162,7 +198,7 @@
       t = a + 'x + ' + b + ' = ' + c + 'x + ' + dd;
       e = 'Pindahkan: ' + (a - c) + 'x = ' + dd + ' − ' + b + ' = ' + ((a - c) * x) + ', jadi x = ' + x;
     } else {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         x = ri(2, 10); a = ri(2, 7); b = ri(1, 9); c = a * (x + b);
         t = a + '(x + ' + b + ') = ' + c;
         e = 'x + ' + b + ' = ' + c + ' ÷ ' + a + ' = ' + (x + b) + ', jadi x = ' + x;
@@ -288,7 +324,7 @@
         explain: p + '% × ' + n + ' = ' + fmt(p / 100) + ' × ' + n + ' = ' + v };
     }
     if (d === 2) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         b = pick([2, 3, 4, 5]); n = b * ri(4, 20); v = n / b;
         return { text: '1/' + b + ' dari ' + n + ' = ?', correct: v, dis: near(v, 3, Math.max(2, v * 0.4)),
           explain: n + ' ÷ ' + b + ' = ' + v };
@@ -299,7 +335,7 @@
         explain: p + '/100 × ' + n + ' = ' + v };
     }
     if (d === 3) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         b = pick([5, 6, 7, 8, 9, 10, 12]); a = ri(1, b - 2);
         var a2 = ri(1, b - a - 1);
         var num = a + a2, den = b, g = gcd(num, den);
@@ -316,7 +352,7 @@
         explain: 'Bagi pembilang dan penyebut dengan ' + k + ': ' + (s1 * k) + '÷' + k + ' = ' + s1 + ', ' + (s2 * k) + '÷' + k + ' = ' + s2 };
     }
     if (d === 4) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         var harga = pick([80, 120, 150, 200, 240, 300, 400]) * 1000;
         var dis1 = pick([10, 15, 20, 25, 30, 40]);
         v = harga - harga * dis1 / 100;
@@ -335,7 +371,7 @@
           ' = ' + nu + '/' + de + (gg > 1 ? ' = ' + res : '') };
     }
     /* d === 5 */
-    if (Math.random() < 0.5) {
+    if (acak() < 0.5) {
       var modal = pick([150, 200, 250, 400, 500]) * 1000;
       var untung = pick([12, 15, 20, 25, 30]);
       v = modal + modal * untung / 100;
@@ -552,5 +588,19 @@
     return out;
   }
 
-  global.COC_Q = { one: one, pack: pack, fmt: fmt, ri: ri, pick: pick, shuffle: shuffle };
+  /* Satu set soal yang bisa diulang. Tanpa `semai`, hasilnya acak seperti
+     dulu; dengan `semai`, dua perangkat mendapat sepuluh soal identik.
+     Keadaan acaknya selalu dikembalikan ke Math.random setelah selesai,
+     supaya set bersemai tidak diam-diam menentukan set berikutnya. */
+  function packSemai(n, topic, level, semai) {
+    if (semai == null) return pack(n, topic, level);
+    semaikan(semai);
+    try { return pack(n, topic, level); }
+    finally { bebaskan(); }
+  }
+
+  global.COC_Q = {
+    one: one, pack: pack, packSemai: packSemai, fmt: fmt,
+    ri: ri, pick: pick, shuffle: shuffle
+  };
 })(window);

@@ -56,10 +56,48 @@ saat mode ini menyala:
 | Progres hilang kalau ganti perangkat atau hapus data peramban | Progres tersimpan di server, ikut ke perangkat mana pun |
 | Guru tidak melihat apa pun | Guru melihat siapa berlatih, akurasinya, dan materi mana yang lemah |
 | Tidak ada tugas | Guru bisa memberi tugas bertenggat, progresnya terhitung sendiri |
+| Duel melawan bot | Duel langsung melawan teman sekelas, soal yang sama |
+| — | Sesi kelas serentak: satu kelas, satu soal, satu detik yang sama |
 
 Mode kelas **tidak wajib**. Kalau server API tidak ada — misalnya versi yang
 disajikan GitHub Pages — aplikasi berjalan persis seperti sebelumnya, dan
 tombol masuk kelas tidak ditawarkan sama sekali.
+
+### Lawan orang, bukan bot
+
+Di dalam kelas, bot dihapus sepenuhnya. Ada dua bentuk pertandingan melawan
+manusia, dan keduanya bertumpu pada satu hal yang sama.
+
+**Soal bersemai.** Dulu tiap perangkat membangkitkan soalnya sendiri secara
+acak, jadi dua siswa tidak pernah mendapat soal yang sama — dan skor mereka
+tidak bisa diadu dengan cara apa pun. Sekarang seluruh pabrik soal menarik
+angka acak lewat satu pintu yang bisa disemai, sehingga satu angka semai
+menghasilkan sepuluh soal yang sama persis di perangkat mana pun. Tidak ada
+soal yang dikirim lewat jaringan; yang dikirim hanya semainya.
+
+**Duel Langsung** — dua siswa sekelas yang memilih topik dan tingkat sama
+dipasangkan saat itu juga. Keduanya menjawab dengan iramanya sendiri, dan bar
+tarik-tambang di layar bergerak mengikuti skor lawan yang sungguhan. Server
+yang memutuskan menang-kalah setelah keduanya tuntas — kalau tidak, dua siswa
+bisa sama-sama melihat dirinya menang karena masing-masing hanya tahu skor
+lawan sampai paket terakhir yang sempat sampai.
+
+**Sesi Kelas Serentak** — guru menyiapkan sesi, siswa menekan *Gabung*, lalu
+seluruh kelas mengerjakan soal yang sama pada detik yang sama, dengan papan
+peringkat muncul di antara soal. Jamnya dijalankan server, bukan masing-masing
+peramban: jam di tiap ponsel tidak pernah cukup seragam untuk membuat satu
+kelas benar-benar serentak. Panel guru bisa ditayangkan di proyektor.
+
+Turnamen 8 Besar seluruh bagannya melawan komputer, jadi ia disembunyikan di
+dalam kelas — di luar kelas tetap ada seperti semula.
+
+Peristiwa langsungnya lewat **SSE**, bukan WebSocket: Node tidak punya server
+WebSocket bawaan, dan memakainya berarti menambah dependensi npm pertama di
+proyek ini. Semua yang perlu didorong ke siswa searah saja, dan `EventSource`
+menyambung ulang sendiri saat wifi sekolah putus sebentar.
+
+Kalau lawan menutup tab atau koneksinya putus, pemain yang bertahan diberi
+tahu dan duelnya ditutup — bukan dibiarkan menunggu selamanya.
 
 ### Cara siswa masuk
 
@@ -258,6 +296,7 @@ js/fx.js            efek suara (WebAudio), getaran, konfeti
 js/store.js         profil, misi harian, papan peringkat (localStorage)
 js/app.js           alur layar, mesin duel, bagan turnamen
 js/net.js           penghubung ke API kelas (aman bila server tidak ada)
+js/live.js          aliran peristiwa duel langsung dan sesi kelas (SSE)
 
 server/             API kelas — Node tanpa dependensi, SQLite bawaan
 guru/               dasbor guru (halaman terpisah di /guru)

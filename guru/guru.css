@@ -93,3 +93,15 @@ select.field { appearance: none; cursor: pointer; }
 .gtabel td.nowrap { white-space: nowrap; }
 .gtabel td.nama { min-width: 150px; }
 .gtabel td.nama small { font-size: 11px; }
+
+/* Angka peserta saat menunggu sesi mulai: dibaca guru dari depan kelas
+   sambil menunggu anak-anak membuka aplikasi, jadi dibuat besar. */
+.sesi-besar {
+  font-size: 56px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.1;
+  color: var(--green);
+  margin-top: 6px;
+}
+.center { text-align: center; }

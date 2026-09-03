@@ -665,3 +665,12 @@ img,svg{display:block;max-width:100%}
 /* Tugas memakai kerangka .mode, hanya bar progresnya yang perlu ruang. */
 .mode.tugas .mini-bar { margin-top: 8px; }
 .mode.tugas.tuntas { opacity: .62; }
+
+/* Spanduk sesi kelas: sengaja lebih menyala daripada kartu mode biasa,
+   karena sesi punya jam yang berdetak dan siswa yang ketinggalan tidak
+   bisa mengejar. */
+.mode.sesi-spanduk {
+  border-color: rgba(46, 230, 160, .45);
+  background: linear-gradient(180deg, rgba(46, 230, 160, .16), rgba(46, 230, 160, .04));
+  margin-bottom: 14px;
+}

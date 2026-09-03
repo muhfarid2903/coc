@@ -15,6 +15,7 @@
 const http = require('node:http');
 const crypto = require('node:crypto');
 const DB = require('./db');
+const LIVE = require('./live');
 
 const PORT = Number(process.env.PORT) || 8080;
 const COOKIE_SISWA = 'coc_siswa';
@@ -245,6 +246,14 @@ const server = http.createServer(async (req, res) => {
     if (jalur.startsWith('/api/guru/')) {
       if (!sesiGuru(req)) return kirim(res, 401, { error: 'Perlu masuk sebagai guru.' });
 
+      // Aliran peristiwa untuk dasbor: peserta bergabung, papan berubah.
+      // Ditangani sebelum apa pun yang memakai kirim(), karena SSE tidak
+      // boleh punya Content-Length.
+      if (jalur === '/api/guru/live' && M === 'GET') {
+        LIVE.pasangAliran(LIVE.kGuru(), res);
+        return;
+      }
+
       if (jalur === '/api/guru/kelas' && M === 'GET') {
         return kirim(res, 200, { kelas: DB.daftarKelas() });
       }
@@ -299,6 +308,29 @@ const server = http.createServer(async (req, res) => {
         if (!b.topic) return kirim(res, 400, { error: 'Topik belum dipilih.' });
         return kirim(res, 200, { tugas: DB.buatTugas(id, b) });
       }
+      /* ---- Sesi kelas serentak ---- */
+      if ((m = jalur.match(/^\/api\/guru\/kelas\/(\d+)\/sesi$/))) {
+        const id = Number(m[1]);
+        if (!DB.kelas(id)) return kirim(res, 404, { error: 'Kelas tidak ada.' });
+        if (M === 'GET') return kirim(res, 200, LIVE.keadaanSesi(id) || { sesi: null });
+        if (M === 'POST') {
+          const b = await bacaBody(req);
+          const idSekelas = DB.siswaDiKelas(id).map((x) => x.id);
+          const r = LIVE.buatSesi(id, b, idSekelas);
+          return kirim(res, r.error ? 409 : 200, r);
+        }
+        if (M === 'DELETE') return kirim(res, 200, LIVE.akhiriSesi(id));
+      }
+      if ((m = jalur.match(/^\/api\/guru\/kelas\/(\d+)\/sesi\/(mulai|lanjut)$/)) && M === 'POST') {
+        const id = Number(m[1]);
+        if (m[2] === 'mulai') {
+          const r = LIVE.mulaiSesi(id);
+          return kirim(res, r.error ? 409 : 200, r);
+        }
+        LIVE.majuSesi(id);
+        return kirim(res, 200, LIVE.keadaanSesi(id) || {});
+      }
+
       if ((m = jalur.match(/^\/api\/guru\/tugas\/(\d+)$/)) && M === 'DELETE') {
         DB.hapusTugas(Number(m[1]));
         return kirim(res, 200, { ok: true });
@@ -316,6 +348,57 @@ const server = http.createServer(async (req, res) => {
     const sesi = sesiSiswa(req);
     if (!sesi) return kirim(res, 401, { error: 'Belum masuk.' });
     const { siswa } = sesi;
+
+    /* Aliran peristiwa langsung. Harus sebelum rute lain yang memakai
+       kirim(), karena SSE menulis kepalanya sendiri dan tidak boleh
+       membawa Content-Length. */
+    if (jalur === '/api/live' && M === 'GET') {
+      LIVE.pasangAliran(LIVE.kSiswa(siswa.id), res);
+      DB.tandaiAktif(siswa.id);
+      return;
+    }
+
+    /* ---- Duel langsung ---- */
+    if (jalur === '/api/duel/antre' && M === 'POST') {
+      const b = await bacaBody(req);
+      const r = LIVE.antre(siswa, String(b.topik || 'campuran'), Number(b.tingkat) || 2, Number(b.jumlah) || 10);
+      const sekelas = DB.siswaDiKelas(siswa.class_id).map((x) => x.id);
+      return kirim(res, 200, Object.assign(r, {
+        online: LIVE.onlineSekelas(siswa.class_id, sekelas, siswa.id)
+      }));
+    }
+    if (jalur === '/api/duel/batal' && M === 'POST') {
+      LIVE.batalAntre(siswa.id);
+      return kirim(res, 200, { ok: true });
+    }
+    if (jalur === '/api/duel/jawab' && M === 'POST') {
+      const b = await bacaBody(req);
+      const r = LIVE.jawabDuel(siswa.id, b);
+      return kirim(res, r.error ? 409 : 200, r);
+    }
+    if (jalur === '/api/duel/selesai' && M === 'POST') {
+      const b = await bacaBody(req);
+      const r = LIVE.selesaiDuel(siswa.id, b);
+      return kirim(res, r.error ? 409 : 200, r);
+    }
+    if (jalur === '/api/duel/keluar' && M === 'POST') {
+      LIVE.keluarDuel(siswa.id);
+      return kirim(res, 200, { ok: true });
+    }
+
+    /* ---- Sesi kelas ---- */
+    if (jalur === '/api/sesi' && M === 'GET') {
+      return kirim(res, 200, LIVE.keadaanSesi(siswa.class_id) || { sesi: null });
+    }
+    if (jalur === '/api/sesi/gabung' && M === 'POST') {
+      const r = LIVE.gabungSesi(siswa);
+      return kirim(res, r.error ? 409 : 200, r);
+    }
+    if (jalur === '/api/sesi/jawab' && M === 'POST') {
+      const b = await bacaBody(req);
+      const r = LIVE.jawabSesi(siswa.id, siswa.class_id, b);
+      return kirim(res, r.error ? 409 : 200, r);
+    }
 
     if (jalur === '/api/aku' && M === 'GET') {
       DB.tandaiAktif(siswa.id);

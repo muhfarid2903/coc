@@ -97,6 +97,12 @@
     minta('GET', '/guru/kelas').then(function (r) {
       if (r.status === 401) return layarMasuk('');
       if (!r.ok) return pesanGalat(r.pesan);
+      /* Aliran baru dipasang di sini, bukan saat boot. EventSource yang
+         dibalas 401 gagal permanen — ia tidak menyambung ulang seperti
+         saat koneksi putus biasa. Memasangnya sebelum guru masuk berarti
+         alirannya mati untuk seterusnya, dan panel sesi tidak pernah
+         bergerak sepanjang sesi berlangsung. */
+      pasangAliran();
       tampil.kelas = r.data.kelas;
       layarKelas();
     });
@@ -184,6 +190,7 @@
             '<div class="kode">' + esc(k.code) + '</div>' +
             '<p class="sub">Tulis kode ini di papan tulis. Siswa memasukkannya di aplikasi, memilih namanya, lalu membuat PIN 4 angka sendiri.</p>' +
           '</div>' +
+          '<div class="card stack" id="kotakSesi"></div>' +
           kartuTopik(d.topik) +
           kartuTambahSiswa() +
           kartuTugas(d.tugas) +
@@ -193,6 +200,7 @@
     $('btnBalik').addEventListener('click', muatKelas);
     $('btnHapusKelas').addEventListener('click', hapusKelas);
     pasangAksiDetail();
+    muatSesi(k.id);
   }
 
   function tabelSiswa(siswa) {
@@ -212,7 +220,11 @@
           '<td class="num">' + s.xp + '</td>' +
           '<td class="num">' + s.main + '</td>' +
           '<td class="num">' + selAkurasi(s.benar, s.soal) + '</td>' +
-          '<td class="nowrap">' + waktuLalu(s.terakhir) + '</td>' +
+          /* last_seen, bukan waktu pertandingan terakhir. Siswa yang
+             baru saja membuka aplikasi tapi belum sempat bermain tadinya
+             tertulis "belum pernah" — guru membacanya sebagai anak yang
+             tidak pernah muncul sama sekali. */
+          '<td class="nowrap">' + waktuLalu(s.last_seen) + '</td>' +
           '<td class="aksi">' +
             /* Reset PIN hanya berarti bagi siswa yang sudah punya PIN.
                Menampilkannya untuk yang belum pernah masuk cuma menambah
@@ -408,12 +420,160 @@
       '<p class="sub">' + esc(pesan || 'Terjadi gangguan.') + '</p></div>';
   }
 
+  /* ---------- Aliran peristiwa langsung ----------
+     Dasbor perlu tahu saat siswa bergabung dan saat papan berubah, tanpa
+     guru menekan muat ulang di depan kelas. EventSource menyambung ulang
+     sendiri kalau wifi sekolah putus sebentar. */
+  var sumber = null;
+
+  function pasangAliran() {
+    if (sumber || !global.EventSource) return;
+    try { sumber = new global.EventSource('/api/guru/live', { withCredentials: true }); }
+    catch (e) { return; }
+
+    ['sesi-peserta', 'sesi-mulai', 'sesi-soal', 'sesi-papan', 'sesi-usai', 'sesi-ada']
+      .forEach(function (jenis) {
+        sumber.addEventListener(jenis, function (e) {
+          var d = {};
+          try { d = JSON.parse(e.data || '{}'); } catch (err) { return; }
+          /* Hanya menanggapi kelas yang sedang dibuka — guru bisa punya
+             beberapa kelas sekaligus. */
+          if (!tampil.detail || d.kelas !== tampil.detail.kelas.id) return;
+          /* Keadaan ditarik ulang dari server, bukan disusun dari isi
+             peristiwanya. Menyalin potongan keadaan ke variabel lokal di
+             sini sekali sempat membuat panel macet di "Soal 1 dari 4":
+             ada bidang yang diperbarui di satu tempat tapi dibaca dari
+             tempat lain. Peristiwanya jarang — beberapa per menit — jadi
+             satu permintaan tambahan jauh lebih murah daripada dua salinan
+             keadaan yang bisa berbeda. */
+          muatSesi(tampil.detail.kelas.id);
+        });
+      });
+  }
+
+  var liveSesi = { sesi: null, papan: [], peserta: 0, soalKe: -1, tahap: null };
+
+  function muatSesi(classId) {
+    return minta('GET', '/guru/kelas/' + classId + '/sesi').then(function (r) {
+      liveSesi.sesi = (r.ok && r.data.sesi) || null;
+      liveSesi.papan = (r.ok && r.data.papan) || [];
+      liveSesi.peserta = liveSesi.sesi ? liveSesi.sesi.peserta : 0;
+      liveSesi.soalKe = liveSesi.sesi ? liveSesi.sesi.soalKe : -1;
+      liveSesi.tahap = liveSesi.sesi ? liveSesi.sesi.tahap : null;
+      gambarSesi();
+    });
+  }
+
+  function gambarSesi() {
+    var kotak = $('kotakSesi');
+    if (!kotak || !tampil.detail) return;
+    kotak.innerHTML = isiSesi();
+    pasangAksiSesi();
+  }
+
+  function isiSesi() {
+    var id = tampil.detail.kelas.id;
+    var s = liveSesi.sesi;
+
+    if (!s || s.tahap === 'usai') {
+      var opsiTopik = D.TOPICS.map(function (t) {
+        return '<option value="' + t.id + '">' + t.icon + ' ' + t.name + '</option>';
+      }).join('');
+      var opsiLevel = D.LEVELS.map(function (l) {
+        return '<option value="' + l.d + '"' + (l.d === 2 ? ' selected' : '') + '>' + l.d + ' · ' + l.name + '</option>';
+      }).join('');
+      return '<span class="eyebrow">Sesi Kelas Serentak</span>' +
+        (s && s.tahap === 'usai' && liveSesi.papan.length
+          ? '<p class="sub" style="margin-top:6px">Sesi terakhir sudah selesai.</p>' + papanHtml(liveSesi.papan) + '<hr style="border:0;border-top:1px solid var(--line);margin:12px 0"/>'
+          : '<p class="sub" style="margin-top:6px">Seluruh kelas mengerjakan soal yang sama pada saat yang sama. Tayangkan halaman ini di proyektor.</p>') +
+        '<select class="field" id="sTopik" style="margin-top:10px">' + opsiTopik + '</select>' +
+        '<select class="field" id="sLevel" style="margin-top:8px">' + opsiLevel + '</select>' +
+        '<div class="gaksi" style="margin-top:8px">' +
+          '<input class="field" id="sJumlah" type="number" min="3" max="20" value="10" style="width:80px"/>' +
+          '<span class="sub">soal</span>' +
+          '<input class="field" id="sDetik" type="number" min="6" max="60" value="20" style="width:80px"/>' +
+          '<span class="sub">detik per soal</span>' +
+        '</div>' +
+        '<button class="btn btn-sm" id="btnBuatSesi" style="margin-top:10px">▶ Siapkan Sesi</button>';
+    }
+
+    if (s.tahap === 'menunggu') {
+      return '<span class="eyebrow">Sesi Kelas — menunggu siswa</span>' +
+        '<div class="sesi-besar">' + liveSesi.peserta + '</div>' +
+        '<p class="sub center">siswa sudah gabung</p>' +
+        '<p class="sub" style="margin-top:10px">' + D.topic(s.topik).icon + ' ' + esc(D.topic(s.topik).name) +
+          ' · ' + s.jumlah + ' soal · ' + Math.round(s.batasMs / 1000) + ' detik per soal</p>' +
+        '<p class="sub">Minta siswa membuka aplikasi dan menekan <b>Gabung</b> di beranda.</p>' +
+        '<div class="gaksi" style="margin-top:10px">' +
+          '<button class="btn btn-sm" id="btnMulaiSesi">Mulai Sekarang</button>' +
+          '<button class="btn btn-ghost btn-sm" id="btnAkhiriSesi" style="color:var(--red)">Batalkan</button>' +
+        '</div>';
+    }
+
+    return '<span class="eyebrow">Sesi Kelas — berjalan</span>' +
+      '<p class="sub" style="margin-top:6px">Soal <b>' + (liveSesi.soalKe + 1) + '</b> dari ' + s.jumlah +
+        ' · ' + liveSesi.peserta + ' siswa</p>' +
+      papanHtml(liveSesi.papan) +
+      '<div class="gaksi" style="margin-top:10px">' +
+        '<button class="btn btn-ghost btn-sm" id="btnLanjutSesi">Soal Berikutnya ›</button>' +
+        '<button class="btn btn-ghost btn-sm" id="btnAkhiriSesi" style="color:var(--red)">Akhiri</button>' +
+      '</div>';
+  }
+
+  function papanHtml(papan) {
+    if (!papan || !papan.length) return '<p class="sub" style="margin-top:10px">Belum ada skor.</p>';
+    return '<table class="gtabel" style="margin-top:10px"><tbody>' +
+      papan.slice(0, 12).map(function (r, i) {
+        return '<tr>' +
+          '<td style="width:1%" class="sunyi">' + (i + 1) + '</td>' +
+          '<td>' + r.ava + ' ' + esc(r.nama) + '</td>' +
+          '<td class="num sunyi">' + r.benar + ' benar</td>' +
+          '<td class="num"><b>' + r.skor + '</b></td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  function pasangAksiSesi() {
+    var id = tampil.detail.kelas.id;
+    var b;
+    if ((b = $('btnBuatSesi'))) b.addEventListener('click', function () {
+      minta('POST', '/guru/kelas/' + id + '/sesi', {
+        topic: $('sTopik').value,
+        level: Number($('sLevel').value),
+        jumlah: Number($('sJumlah').value) || 10,
+        batasMs: (Number($('sDetik').value) || 20) * 1000
+      }).then(function (r) {
+        if (!r.ok) { toast(r.pesan || 'Gagal membuat sesi'); return; }
+        toast('Sesi disiapkan — minta siswa menekan Gabung');
+        muatSesi(id);
+      });
+    });
+    if ((b = $('btnMulaiSesi'))) b.addEventListener('click', function () {
+      minta('POST', '/guru/kelas/' + id + '/sesi/mulai').then(function (r) {
+        if (!r.ok) { toast(r.pesan || 'Gagal memulai'); return; }
+        muatSesi(id);
+      });
+    });
+    if ((b = $('btnLanjutSesi'))) b.addEventListener('click', function () {
+      minta('POST', '/guru/kelas/' + id + '/sesi/lanjut').then(function () { muatSesi(id); });
+    });
+    if ((b = $('btnAkhiriSesi'))) b.addEventListener('click', function () {
+      minta('DELETE', '/guru/kelas/' + id + '/sesi').then(function () {
+        toast('Sesi diakhiri');
+        muatSesi(id);
+      });
+    });
+  }
+
   /* ---------- Mulai ---------- */
   function boot() {
     isi = $('isi');
     toastEl = $('toast');
     $('btnKeluar').addEventListener('click', function () {
-      minta('POST', '/guru/keluar').then(function () { layarMasuk(''); });
+      minta('POST', '/guru/keluar').then(function () {
+        if (sumber) { sumber.close(); sumber = null; }
+        layarMasuk('');
+      });
     });
     muatKelas();
   }
