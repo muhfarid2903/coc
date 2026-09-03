@@ -41,6 +41,9 @@ Pengelola kelas COC
   lihat <kode>                    tampilkan siswa di satu kelas
   siswa <kode>                    tambah siswa; nama dibaca dari stdin,
                                   satu nama per baris
+  ganti-nama <kode> "<lama>" "<baru>"
+                                  ganti nama siswa; progres, riwayat, dan
+                                  PIN-nya ikut utuh
   reset-pin <kode> "<nama>"       kosongkan PIN satu siswa
   hapus-siswa <kode> "<nama>"     keluarkan siswa beserta seluruh progresnya
   hapus-kelas <kode>              hapus kelas beserta seluruh isinya
@@ -141,6 +144,18 @@ async function jalan() {
       if (dilewati.length) {
         console.log(`${dilewati.length} dilewati karena namanya sudah ada: ${dilewati.join(', ')}`);
       }
+      return;
+    }
+
+    case 'ganti-nama': {
+      const k = kelasWajib(argv[1]);
+      const s = DB.cariSiswa(k.id, argv[2] || '');
+      if (!s) keluar(`Tidak ada siswa bernama "${argv[2]}" di ${k.name}.`);
+      const baru = (argv[3] || '').trim();
+      if (!baru) keluar('Nama baru kosong.\n  node kelas.js ganti-nama KODE "01" "01 Ahmad"');
+      const hasil = DB.ubahNamaSiswa(s.id, baru);
+      if (!hasil) keluar(`Gagal — "${baru}" sudah dipakai siswa lain di ${k.name}.`);
+      console.log(`"${s.name}" sekarang bernama "${hasil.name}". Progresnya utuh.`);
       return;
     }
 

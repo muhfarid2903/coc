@@ -226,6 +226,21 @@ function resetPin(id) {
   db.prepare('UPDATE students SET pin_hash = NULL WHERE id = ?').run(id);
 }
 
+/* Ganti nama tanpa menyentuh apa pun yang lain. Profil, riwayat
+   pertandingan, dan progres tugas semuanya tertaut ke id siswa, bukan ke
+   namanya — jadi kelas yang dimulai dengan nomor absen saja bisa diberi
+   nama panggilan belakangan tanpa ada yang hilang. */
+function ubahNamaSiswa(id, nama) {
+  const bersih = String(nama).trim().slice(0, 20);
+  if (!bersih) return null;
+  try {
+    db.prepare('UPDATE students SET name = ? WHERE id = ?').run(bersih, id);
+    return siswa(id);
+  } catch (e) {
+    return null; // bentrok dengan nama lain di kelas yang sama
+  }
+}
+
 function setAva(id, ava) {
   db.prepare('UPDATE students SET ava = ? WHERE id = ?').run(String(ava).slice(0, 8), id);
 }
@@ -427,7 +442,7 @@ function sapuSesi() {
 module.exports = {
   db, now, pinOk, setPin, resetPin,
   buatKelas, kelas, kelasByKode, daftarKelas, ubahKelas, hapusKelas,
-  tambahSiswa, siswa, siswaDiKelas, cariSiswa, setAva, hapusSiswa, tandaiAktif,
+  tambahSiswa, siswa, siswaDiKelas, cariSiswa, ubahNamaSiswa, setAva, hapusSiswa, tandaiAktif,
   profil, simpanProfil, catatMain, peringkatKelas, ringkasKelas,
   buatTugas, hapusTugas, tugasKelas, progresTugas, rekapTugas,
   buatSesi, sesi, hapusSesi, sapuSesi
