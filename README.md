@@ -40,18 +40,165 @@ Enam tingkatan (Perunggu → Perak → Emas → Platina → Berlian → Sang Jua
 sembilan lencana, misi harian yang berganti tiap hari, papan peringkat, dan
 riwayat 40 pertandingan terakhir.
 
-Semua data disimpan di `localStorage` peramban masing-masing pemain. Tidak ada
-data yang dikirim ke mana pun, dan tidak ada backend.
+Tanpa kelas, semua data hidup di `localStorage` peramban masing-masing dan
+tidak dikirim ke mana pun. Di dalam kelas, profil ikut tersimpan di server
+sekolah sendiri sehingga tidak hilang saat ganti perangkat — lihat
+[Mode Kelas](#mode-kelas) di bawah.
+
+## Mode Kelas
+
+Selain dimainkan sendiri, COC bisa dipakai satu kelas sekaligus. Yang berubah
+saat mode ini menyala:
+
+| Tanpa kelas | Di dalam kelas |
+| --- | --- |
+| Papan peringkat berisi 12 lawan komputer | Papan peringkat berisi teman sekelas sungguhan |
+| Progres hilang kalau ganti perangkat atau hapus data peramban | Progres tersimpan di server, ikut ke perangkat mana pun |
+| Guru tidak melihat apa pun | Guru melihat siapa berlatih, akurasinya, dan materi mana yang lemah |
+| Tidak ada tugas | Guru bisa memberi tugas bertenggat, progresnya terhitung sendiri |
+| Duel melawan bot | Duel langsung melawan teman sekelas, soal yang sama |
+| — | Sesi kelas serentak: satu kelas, satu soal, satu detik yang sama |
+
+Mode kelas **tidak wajib**. Kalau server API tidak ada — misalnya versi yang
+disajikan GitHub Pages — aplikasi berjalan persis seperti sebelumnya, dan
+tombol masuk kelas tidak ditawarkan sama sekali.
+
+### Lawan orang, bukan bot
+
+Di dalam kelas, bot dihapus sepenuhnya. Ada dua bentuk pertandingan melawan
+manusia, dan keduanya bertumpu pada satu hal yang sama.
+
+**Soal bersemai.** Dulu tiap perangkat membangkitkan soalnya sendiri secara
+acak, jadi dua siswa tidak pernah mendapat soal yang sama — dan skor mereka
+tidak bisa diadu dengan cara apa pun. Sekarang seluruh pabrik soal menarik
+angka acak lewat satu pintu yang bisa disemai, sehingga satu angka semai
+menghasilkan sepuluh soal yang sama persis di perangkat mana pun. Tidak ada
+soal yang dikirim lewat jaringan; yang dikirim hanya semainya.
+
+**Duel Langsung** — dua siswa sekelas yang memilih topik dan tingkat sama
+dipasangkan saat itu juga. Keduanya menjawab dengan iramanya sendiri, dan bar
+tarik-tambang di layar bergerak mengikuti skor lawan yang sungguhan. Server
+yang memutuskan menang-kalah setelah keduanya tuntas — kalau tidak, dua siswa
+bisa sama-sama melihat dirinya menang karena masing-masing hanya tahu skor
+lawan sampai paket terakhir yang sempat sampai.
+
+**Sesi Kelas Serentak** — guru menyiapkan sesi, siswa menekan *Gabung*, lalu
+seluruh kelas mengerjakan soal yang sama pada detik yang sama, dengan papan
+peringkat muncul di antara soal. Jamnya dijalankan server, bukan masing-masing
+peramban: jam di tiap ponsel tidak pernah cukup seragam untuk membuat satu
+kelas benar-benar serentak. Panel guru bisa ditayangkan di proyektor.
+
+Turnamen 8 Besar seluruh bagannya melawan komputer, jadi ia disembunyikan di
+dalam kelas — di luar kelas tetap ada seperti semula.
+
+Peristiwa langsungnya lewat **SSE**, bukan WebSocket: Node tidak punya server
+WebSocket bawaan, dan memakainya berarti menambah dependensi npm pertama di
+proyek ini. Semua yang perlu didorong ke siswa searah saja, dan `EventSource`
+menyambung ulang sendiri saat wifi sekolah putus sebentar.
+
+Kalau lawan menutup tab atau koneksinya putus, pemain yang bertahan diberi
+tahu dan duelnya ditutup — bukan dibiarkan menunggu selamanya.
+
+### Cara siswa masuk
+
+1. Guru menulis kode kelas enam karakter di papan tulis.
+2. Siswa membuka aplikasi, mengetik kode itu, lalu **memilih namanya dari
+   daftar** — bukan mengetiknya, supaya tidak ada salah eja yang membuat
+   profil kembar.
+3. Siswa membuat PIN 4 angka sendiri saat pertama masuk, dan memakai PIN itu
+   seterusnya.
+
+Ada centang **"Ini perangkatku sendiri — ingat aku"**. Kalau tidak dicentang,
+sesi hanya berumur sehari; ini bawaannya, karena di lab komputer yang dipakai
+bergantian sesi yang awet berarti siswa berikutnya membuka aplikasi dan
+langsung menjadi orang lain. Tombol **Keluar dari Kelas** di layar Profil juga
+membersihkan data di perangkat itu, bukan sekadar menutup sesi.
+
+Kalau siswa lupa PIN-nya, guru meresetnya dari dasbor; siswa lalu membuat PIN
+baru saat masuk berikutnya. PIN yang salah delapan kali mengunci nama itu
+selama 15 menit.
+
+### Dasbor guru
+
+Ada di `/guru`, terkunci satu frasa sandi, dan menampilkan per kelas:
+
+- **Kode kelas** dalam huruf besar, siap disalin ke papan tulis.
+- **Tabel siswa** — XP, jumlah pertandingan, akurasi berwarna, dan kapan
+  terakhir aktif. Siswa yang belum pernah masuk ditandai.
+- **Penguasaan materi** — akurasi rata-rata kelas per topik, diurutkan dari
+  yang paling sering salah, jadi materi yang perlu diulang langsung terlihat.
+- **Tugas** — pilih topik, tingkat, berapa kali harus dimainkan, dan tenggat.
+  Progresnya dihitung dari pertandingan yang benar-benar cocok topik dan
+  tingkatnya, dan hanya yang dimainkan setelah tugas dibuat.
+
+Menambah siswa dilakukan dengan menempel daftar nama dari absen, satu nama per
+baris. Pakai nama panggilan saja — server sengaja tidak punya kolom nama
+lengkap, NIS, atau email, sehingga data pribadi siswa yang tersimpan seminimal
+mungkin.
+
+### Mengelola kelas dari baris perintah
+
+Selain lewat dasbor, ada `server/kelas.js` yang bicara langsung ke SQLite.
+Ia **tidak** memerlukan frasa sandi guru — menyiapkan kelas di awal tahun jadi
+tidak perlu menunggu dasbornya terbuka, dan orang yang membantu menyiapkan
+data tidak perlu dititipi frasa sandi. Keamanannya bersandar pada akses ke
+servernya sendiri, yang toh sudah cukup untuk membaca berkas basis datanya.
+
+```bash
+docker exec -i coc-api node kelas.js daftar
+docker exec -i coc-api node kelas.js buat "Kelas 7"
+docker exec -i coc-api node kelas.js siswa J2EE3Q < absen.txt
+docker exec -i coc-api node kelas.js lihat J2EE3Q
+docker exec -i coc-api node kelas.js ganti-nama J2EE3Q "7-05" "7-05 Bilqis"
+docker exec -i coc-api node kelas.js reset-pin J2EE3Q "7-05"
+```
+
+Impor namanya membuang nomor urut di depan (`1. Ahmad`, `12 Bilqis`), karena
+daftar yang disalin dari absen hampir selalu membawanya.
+
+`ganti-nama` aman dipakai kapan saja: profil, riwayat pertandingan, progres
+tugas, dan PIN semuanya tertaut ke id siswa, bukan namanya. Jadi kelas boleh
+dimulai dengan nomor absen saja dan diberi nama panggilan belakangan tanpa ada
+yang hilang.
+
+### Menyalakan mode kelas di server
+
+API-nya satu container Node tanpa dependensi (`node:sqlite` bawaan), berjalan
+di sebelah situs statisnya pada origin yang sama.
+
+```bash
+# Cara termudah: satu perintah, dijalankan di server dengan terminal sungguhan.
+# Frasa sandinya diketik dua kali tanpa gema, hash-nya ditulis ke deploy/.env
+# dengan izin 600, container dijalankan ulang, lalu hasilnya diperiksa.
+ssh -t root@SERVER 'bash /opt/coc/deploy/setup-guru.sh'
+```
+
+Kalau lebih suka manual, `node server/hash-passphrase.js` mencetak satu baris
+`SANDI_GURU_SCRYPT=…` untuk ditempel sendiri ke `deploy/.env`.
+
+Basis datanya satu berkas SQLite di `deploy/data/coc.db`. Itu satu-satunya
+yang perlu di-backup, dan `deploy/.gitignore` menjaganya supaya tidak pernah
+ikut masuk git bersama seluruh data siswa di dalamnya.
+
+Tanpa `deploy/.env`, situs dan permainannya tetap jalan penuh — hanya seluruh
+jalur `/api/guru` yang menolak, dan dasbornya terkunci.
 
 ## Menjalankan Secara Lokal
 
 ```bash
-# cara paling sederhana
+# cara paling sederhana — tanpa mode kelas
 open index.html
 
 # atau lewat server statis apa pun
 npx http-server -p 8080
+
+# lengkap dengan API kelas dan dasbor guru (butuh Node 24+)
+node server/dev.js     # situs di :8080, dasbor di :8080/guru/
 ```
+
+`server/dev.js` menirukan susunan produksi: berkas statis dan `/api` pada satu
+origin, seperti yang dilakukan Traefik di server. Basis data ujinya ditulis ke
+`server/dev-data/` dan tidak pernah bercampur dengan data sungguhan.
 
 ## Deploy
 
@@ -148,6 +295,12 @@ js/questions.js     pabrik soal + penjelasan jawaban
 js/fx.js            efek suara (WebAudio), getaran, konfeti
 js/store.js         profil, misi harian, papan peringkat (localStorage)
 js/app.js           alur layar, mesin duel, bagan turnamen
+js/net.js           penghubung ke API kelas (aman bila server tidak ada)
+js/live.js          aliran peristiwa duel langsung dan sesi kelas (SSE)
+
+server/             API kelas — Node tanpa dependensi, SQLite bawaan
+guru/               dasbor guru (halaman terpisah di /guru)
+deploy/             berkas untuk menjalankannya di VPS
 ```
 
 ## Catatan Teknis

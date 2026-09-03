@@ -8,12 +8,18 @@
 # jurnal-balanglompo yang sudah jalan di server itu.
 #
 # Direktori induk (hasil git clone) dipasang read-only sebagai akar web, dan
-# situs ini tidak punya proses build, jadi memperbarui cukup `git pull` —
-# tanpa rebuild dan tanpa restart container.
+# situsnya tidak punya proses build — jadi mengubah HTML/CSS/JS cukup
+# `git pull`, tanpa rebuild dan tanpa restart container. Yang perlu dibangun
+# ulang hanya container API, dan itu pun hanya kalau isi server/ berubah.
 #
 #   pasang : git clone https://github.com/muhfarid2903/coc.git /opt/coc
 #            cd /opt/coc/deploy && docker compose up -d
 #   update : bash /opt/coc/deploy/update.sh
+#
+# Rahasia ada di deploy/.env yang hanya hidup di server dan tidak masuk git:
+#   SANDI_GURU_SCRYPT=<garam>:<hash>   dibuat oleh server/hash-passphrase.js
+# Tanpa berkas itu, situs dan permainannya tetap jalan penuh — hanya dasbor
+# guru yang terkunci dan API menolak seluruh jalur /api/guru.
 #
 # PENTING: nginx.conf dipasang sebagai bind mount berkas tunggal, yang terikat
 # inode. `git pull` menulis inode baru, sehingga container tetap membaca versi
@@ -51,7 +57,45 @@ services:
       traefik.http.routers.coc.rule: Host(`coc.balanglompo.com`)
       traefik.http.routers.coc.tls: 'true'
       traefik.http.routers.coc.tls.certresolver: letsencrypt
+      # priority rendah: router API di bawah punya angka lebih tinggi, jadi
+      # /api mendarat di sana dan sisanya jatuh ke situs statis ini.
+      traefik.http.routers.coc.priority: '1'
       traefik.http.services.coc.loadbalancer.server.port: '80'
+
+  # API kelas: identitas siswa, sinkron progres, papan peringkat sekelas,
+  # dan dasbor guru. Satu origin dengan situsnya, hanya dibedakan prefiks
+  # /api — sehingga cookie sesi cukup SameSite=Lax dan tidak perlu CORS.
+  coc-api:
+    build:
+      context: ../server
+    image: coc-api:latest
+    container_name: coc-api
+    restart: unless-stopped
+    # required:false — tanpa ini, deploy gagal total hanya karena deploy/.env
+    # belum dibuat. Padahal berkas itu cuma memegang frasa sandi guru: tanpa
+    # dia, situs dan permainannya tetap jalan penuh dan hanya dasbor guru yang
+    # terkunci. Kegagalan yang tepat di sini adalah dasbor terkunci, bukan
+    # seluruh situs mati.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      TZ: Asia/Makassar
+    volumes:
+      # SQLite hidup di sini, di luar image dan di luar git. Inilah satu-
+      # satunya direktori yang perlu di-backup.
+      - ./data:/data
+    networks:
+      - coolify
+    labels:
+      traefik.enable: 'true'
+      traefik.docker.network: coolify
+      traefik.http.routers.coc-api.entrypoints: https
+      traefik.http.routers.coc-api.rule: Host(`coc.balanglompo.com`) && PathPrefix(`/api`)
+      traefik.http.routers.coc-api.priority: '10'
+      traefik.http.routers.coc-api.tls: 'true'
+      traefik.http.routers.coc-api.tls.certresolver: letsencrypt
+      traefik.http.services.coc-api.loadbalancer.server.port: '8080'
 
 networks:
   coolify:
