@@ -1,11 +1,12 @@
 # COC — Clash of Champions Matematika
 
-Teka-teki rantai operasi berbasis web: telusuri rantainya mundur, tentukan
-nilai awal yang membuat hasil akhirnya pas. Dibuat dengan HTML, CSS, dan
-JavaScript murni — tanpa proses build, tanpa dependensi, tanpa server. Cukup
-buka `index.html` di peramban.
+Dua teka-teki matematika berbasis web: **Rantai Operasi** — telusuri rantainya
+mundur, tentukan nilai awal yang membuat hasil akhirnya pas — dan **Jumlahkan
+Semua**, menjumlahkan seluruh isi papan angka yang makin rumit tiap ronde.
+Dibuat dengan HTML, CSS, dan JavaScript murni — tanpa proses build, tanpa
+dependensi, tanpa server. Cukup buka `index.html` di peramban.
 
-## Cara Bermain
+## Rantai Operasi
 
 Satu permainan berisi **3 soal**. Tiap soal adalah sebuah rantai operasi hitung
 yang berujung pada satu nilai akhir:
@@ -48,7 +49,7 @@ separuh lebarnya, padahal justru rantai itu yang perlu dibaca ujung ke ujung.
 Jawabannya selalu bilangan bulat, jadi papan angkanya tidak punya tombol koma
 maupun garis pecahan.
 
-## Tingkat Kesulitan
+### Tingkat kesulitan
 
 Soal dibangkitkan secara acak, jadi tidak pernah habis. Yang naik dua-duanya:
 rantainya makin panjang dan operasinya makin beragam.
@@ -66,6 +67,46 @@ dua kuadrat berturut-turut membuat angkanya meledak, dan akar dari angka besar
 bukan lagi hitungan yang bisa dikejar di kepala.
 
 Setiap soal yang selesai menampilkan telusuran majunya sebagai pembahasan.
+
+## Jumlahkan Semua
+
+Satu permainan berisi **3 ronde**, mengikuti lembar Clash of Champions yang jadi
+acuannya. Tiap ronde menampilkan satu papan angka, dan yang dicari **jumlah
+seluruh isinya** — semua sel, tanpa kecuali.
+
+| Ronde | Papan | Isi tiap sel |
+| --- | --- | --- |
+| 1 | kisi persegi | satu angka 0–9 |
+| 2 | sarang lebah | satu angka 0–9 |
+| 3 | sarang lebah | **hitungan** — `√25 + √36`, `1² + 3²`, `\|−21\|`, `105 ÷ 7` |
+
+Ronde 3 memaksa tiap sel dikerjakan dulu sebelum bisa dijumlahkan, jadi yang
+diuji bukan cuma stamina menjumlah tapi juga akar, pangkat, dan nilai mutlak.
+
+Aturan nyawa dan penilaiannya sama persis dengan Rantai Operasi: 3 nyawa per
+ronde, **1.000** untuk ronde yang jumlahnya benar ditambah **250** untuk tiap
+nyawa yang masih utuh, tertinggi **5.250** satu permainan. Alur dua layarnya
+juga sama — papan dulu, **SUBMIT**, baru papan angka.
+
+### Tingkat kesulitan
+
+| Tingkat | Ronde 1 | Ronde 2 | Ronde 3 | Nilai sel ronde 3 |
+| --- | --- | --- | --- | --- |
+| **EASY** | 6×6 = 36 sel | 23 sel | 8 sel | sampai 50 |
+| **MEDIUM** | 8×8 = 64 sel | 39 sel | 11 sel | sampai 120 |
+| **HARD** | 10×10 = 100 sel | 53 sel | 14 sel | sampai 210 |
+
+Papannya selalu muat utuh di layar tanpa perlu digulir — ukuran selnya dihitung
+dari banyaknya baris, sampai papan HARD sepuluh baris pun tetap masuk di layar
+HP mendatar. Menjumlahkan sambil menggeser layar terlalu mudah membuat satu
+baris terlewat atau terhitung dua kali.
+
+Sarang lebahnya beraturan: baris berselang-seling, baris genap bergeser setengah
+sel. Lembar aslinya memakai tautan segi enam dan segi lima yang tidak beraturan;
+bentuk selnya bukan bagian dari aturan main — yang dijumlahkan tetap semua sel.
+
+Setiap ronde yang selesai menampilkan **jumlah per barisnya** sebagai pembahasan,
+jadi yang salah bisa langsung melihat di baris mana hitungannya meleset.
 
 ## Progres Pemain
 
@@ -108,9 +149,18 @@ lewat satu pintu yang bisa disemai: satu angka semai menghasilkan rantai yang
 sama persis di perangkat mana pun. Tidak ada soal yang dikirim lewat jaringan;
 yang dikirim hanya semainya.
 
-**Jalannya sesi.** Guru menyiapkan sesi, siswa menekan *Gabung*, lalu seluruh
-kelas mengerjakan rantai yang sama pada detik yang sama, dengan papan peringkat
-muncul di antara soal. Panel guru bisa ditayangkan di proyektor.
+**Jalannya sesi.** Guru memilih permainannya dan tingkatnya, siswa menekan
+*Gabung*, lalu seluruh kelas mengerjakan soal yang sama pada detik yang sama,
+dengan papan peringkat muncul di antara soal. Panel guru bisa ditayangkan di
+proyektor.
+
+Sesi tidak menunggu jamnya habis kalau semua sudah menjawab — jawaban terakhir
+yang masuk langsung menutup soalnya. Yang sedang terputus tidak ikut ditunggu,
+supaya satu anak yang menutup tabnya tidak menahan seluruh kelas.
+
+Satu sesi dicatat sebagai satu permainan di profil tiap siswa, jadi XP, lencana,
+misi, riwayat, dan rekap guru ikut terisi. Yang hanya menonton tanpa menjawab
+sekali pun tidak dicatat.
 
 Berbeda dari permainan sendiri, sesi kelas **punya hitung mundur** — batasnya
 disetel guru, bawaannya 90 detik per rantai. Tanpa jam, satu siswa yang diam
@@ -151,11 +201,11 @@ Ada di `/guru`, terkunci satu frasa sandi, dan menampilkan per kelas:
 - **Kode kelas** dalam huruf besar, siap disalin ke papan tulis.
 - **Tabel siswa** — XP, jumlah permainan, akurasi berwarna, dan kapan
   terakhir aktif. Siswa yang belum pernah masuk ditandai.
-- **Penguasaan per tingkat** — persentase rantai yang berhasil dipecahkan di
-  tiap tingkat, jadi terlihat di sebelah mana kelasnya mulai tersendat.
-- **Tugas** — pilih tingkat, berapa kali harus dimainkan, dan tenggat.
-  Progresnya dihitung dari permainan yang benar-benar cocok tingkatnya, dan
-  hanya yang dimainkan setelah tugas dibuat.
+- **Penguasaan per permainan** — persentase soal yang berhasil diselesaikan di
+  tiap permainan dan tingkat, jadi terlihat di sebelah mana kelasnya tersendat.
+- **Tugas** — pilih permainan, tingkat, berapa kali harus dimainkan, dan
+  tenggat. Progresnya dihitung dari permainan yang benar-benar cocok permainan
+  dan tingkatnya, dan hanya yang dimainkan setelah tugas dibuat.
 
 Menambah siswa dilakukan dengan menempel daftar nama dari absen, satu nama per
 baris. Pakai nama panggilan saja — server sengaja tidak punya kolom nama
@@ -338,6 +388,7 @@ index.html          kerangka halaman
 css/style.css       seluruh gaya tampilan
 js/data.js          tingkatan pemain, tingkat kesulitan, misi, lencana
 js/threads.js       pabrik rantai operasi + telusuran jawabannya
+js/grid.js          pabrik papan Jumlahkan Semua + jumlah per barisnya
 js/fx.js            efek suara (WebAudio), getaran, konfeti
 js/store.js         profil, misi harian, papan peringkat (localStorage)
 js/app.js           alur layar dan mesin permainan
@@ -358,7 +409,7 @@ deploy/             berkas untuk menjalankannya di VPS
 - Efek suara dibangkitkan lewat WebAudio — tidak ada berkas audio yang perlu diunduh.
 - Satu-satunya sumber daya eksternal adalah Google Fonts; bila diblokir, tampilan
   otomatis memakai huruf sistem.
-- Pintasan papan ketik saat bermain. Di layar rantai: `←` `→` menggeser
-  rantainya, `Enter` membuka papan angka. Di layar papan angka: `0`–`9`
-  mengetik, `Backspace` menghapus, `Enter` mengirim, `Esc` kembali ke rantai.
+- Pintasan papan ketik saat bermain. Di layar soal: `←` `→` menggeser rantai
+  (Rantai Operasi), `Enter` membuka papan angka. Di layar papan angka: `0`–`9`
+  mengetik, `Backspace` menghapus, `Enter` mengirim, `Esc` kembali ke soal.
   Sesudah dijawab, `Enter` melanjutkan ke soal berikutnya.

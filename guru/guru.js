@@ -43,6 +43,23 @@
   }
 
   /* ---------- Rumus tampilan bersama ---------- */
+  /* Kembar dengan GAME di js/app.js. Dasbor tidak memuat app.js, jadi
+     nama-namanya diulang di sini — kalau di sana bertambah, di sini juga. */
+  var GAME = [
+    { id: 'rantai', icon: '🧮', nama: 'Rantai Operasi' },
+    { id: 'jumlah', icon: '🔢', nama: 'Jumlahkan Semua' }
+  ];
+  function namaGame(id) {
+    for (var i = 0; i < GAME.length; i++) if (GAME[i].id === id) return GAME[i].nama;
+    return id || 'Rantai Operasi';
+  }
+  function opsiGame(terpilih) {
+    return GAME.map(function (g) {
+      return '<option value="' + g.id + '"' + (g.id === terpilih ? ' selected' : '') + '>' +
+        g.icon + ' ' + g.nama + '</option>';
+    }).join('');
+  }
+
   function akurasi(benar, soal) { return soal ? Math.round(benar / soal * 100) : null; }
 
   function selAkurasi(benar, soal) {
@@ -243,17 +260,17 @@
      melihat kelasnya mulai tersendat di sebelah mana. */
   function kartuTingkat(tingkat) {
     if (!tingkat || !tingkat.length) {
-      return '<div class="card"><span class="eyebrow">Penguasaan per Tingkat</span>' +
+      return '<div class="card"><span class="eyebrow">Penguasaan per Permainan</span>' +
         '<p class="sub" style="margin-top:8px">Belum ada data. Muncul setelah siswa mulai bermain.</p></div>';
     }
     return '<div class="card">' +
-      '<span class="eyebrow">Penguasaan per Tingkat</span>' +
-      '<p class="sub" style="margin:6px 0 12px">Persentase rantai yang berhasil dipecahkan.</p>' +
+      '<span class="eyebrow">Penguasaan per Permainan</span>' +
+      '<p class="sub" style="margin:6px 0 12px">Persentase soal yang berhasil diselesaikan.</p>' +
       '<table class="gtabel"><tbody>' +
       tingkat.map(function (t) {
         var a = akurasi(t.benar, t.soal);
         return '<tr>' +
-          '<td>' + esc(D.levelName(t.level)) +
+          '<td>' + esc(namaGame(t.game)) + ' · ' + esc(D.levelName(t.level)) +
             '<br><small class="sunyi">' + t.main + ' permainan</small></td>' +
           '<td style="width:40%"><div class="gbar"><i style="width:' + (a || 0) + '%"></i></div></td>' +
           '<td class="num">' + selAkurasi(t.benar, t.soal) + '</td>' +
@@ -281,7 +298,7 @@
       ((tugas && tugas.length)
         ? '<table class="gtabel"><tbody>' + tugas.map(function (t) {
             return '<tr>' +
-              '<td>Rantai ' + esc(D.levelName(t.level)) +
+              '<td>' + esc(namaGame(t.topic)) + ' · ' + esc(D.levelName(t.level)) +
                 '<br><small class="sunyi">' + t.target + '× main' +
                 (t.due ? ' · tenggat ' + esc(t.due) : '') +
                 (t.note ? '<br>' + esc(t.note) : '') + '</small></td>' +
@@ -292,6 +309,7 @@
           }).join('') + '</tbody></table>'
         : '<p class="sub">Belum ada tugas.</p>') +
       '<hr style="border:0;border-top:1px solid var(--line);margin:4px 0"/>' +
+      '<select class="field" id="tGame">' + opsiGame('rantai') + '</select>' +
       '<select class="field" id="tLevel">' + opsiLevel + '</select>' +
       '<div class="gaksi">' +
         '<input class="field" id="tTarget" type="number" min="1" max="20" value="3" style="width:90px"/>' +
@@ -322,6 +340,7 @@
 
     $('btnBuatTugas').addEventListener('click', function () {
       minta('POST', '/guru/kelas/' + id + '/tugas', {
+        topic: $('tGame').value,
         level: Number($('tLevel').value),
         target: Number($('tTarget').value) || 1,
         due: $('tDue').value || null,
@@ -374,7 +393,7 @@
       isi.innerHTML =
         '<button class="btn btn-ghost btn-sm" id="btnBalikDetail">‹ Kembali ke kelas</button>' +
         '<h2 class="h2" style="margin:14px 0 4px">Rekap Tugas</h2>' +
-        '<p class="sub">Rantai ' + esc(D.levelName(t.level)) +
+        '<p class="sub">' + esc(namaGame(t.topic)) + ' · ' + esc(D.levelName(t.level)) +
           ' · ' + t.target + '× main' + (t.due ? ' · tenggat ' + esc(t.due) : '') + '</p>' +
         '<div class="statgrid" style="margin:16px 0">' +
           '<div class="sbox"><span>Tuntas</span><b>' + sudah + ' / ' + r.data.rekap.length + '</b></div>' +
@@ -473,7 +492,8 @@
         (s && s.tahap === 'usai' && liveSesi.papan.length
           ? '<p class="sub" style="margin-top:6px">Sesi terakhir sudah selesai.</p>' + papanHtml(liveSesi.papan) + '<hr style="border:0;border-top:1px solid var(--line);margin:12px 0"/>'
           : '<p class="sub" style="margin-top:6px">Seluruh kelas mengerjakan soal yang sama pada saat yang sama. Tayangkan halaman ini di proyektor.</p>') +
-        '<select class="field" id="sLevel" style="margin-top:10px">' + opsiLevel + '</select>' +
+        '<select class="field" id="sGame" style="margin-top:10px">' + opsiGame('rantai') + '</select>' +
+        '<select class="field" id="sLevel" style="margin-top:8px">' + opsiLevel + '</select>' +
         '<div class="gaksi" style="margin-top:8px">' +
           '<input class="field" id="sJumlah" type="number" min="3" max="20" value="3" style="width:80px"/>' +
           '<span class="sub">rantai</span>' +
@@ -490,7 +510,7 @@
       return '<span class="eyebrow">Sesi Kelas — menunggu siswa</span>' +
         '<div class="sesi-besar">' + liveSesi.peserta + '</div>' +
         '<p class="sub center">siswa sudah gabung</p>' +
-        '<p class="sub" style="margin-top:10px">Rantai ' + esc(D.levelName(s.tingkat)) +
+        '<p class="sub" style="margin-top:10px">' + esc(namaGame(s.topik)) + ' · ' + esc(D.levelName(s.tingkat)) +
           ' · ' + s.jumlah + ' soal · ' + Math.round(s.batasMs / 1000) + ' detik per soal</p>' +
         '<p class="sub">Minta siswa membuka aplikasi dan menekan <b>Gabung</b> di beranda.</p>' +
         '<div class="gaksi" style="margin-top:10px">' +
@@ -527,6 +547,7 @@
     var b;
     if ((b = $('btnBuatSesi'))) b.addEventListener('click', function () {
       minta('POST', '/guru/kelas/' + id + '/sesi', {
+        topic: $('sGame').value,
         level: Number($('sLevel').value),
         jumlah: Number($('sJumlah').value) || 3,
         batasMs: (Number($('sDetik').value) || 90) * 1000

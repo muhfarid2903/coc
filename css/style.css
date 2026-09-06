@@ -652,6 +652,42 @@ img,svg{display:block;max-width:100%}
 }
 @keyframes tanya{0%,100%{opacity:.55}50%{opacity:1}}
 
+/* ---------- Papan "Jumlahkan Semua" ----------
+
+   Ukuran selnya datang dari JavaScript lewat --sel, dihitung dari
+   banyaknya baris: papan HARD sepuluh baris harus tetap muat di layar
+   HP mendatar yang tingginya cuma ~380 piksel. --lebar melebarkan sel
+   untuk ronde berisi hitungan, yang teksnya jauh lebih panjang. */
+.papan{display:flex;flex-direction:column;align-items:center;
+  --sel:34px;--lebar:1}
+.pbaris{display:flex;justify-content:center}
+.psel{
+  flex:none;display:grid;place-items:center;
+  width:calc(var(--sel) * var(--lebar));height:var(--sel);
+  font-family:'Cinzel',serif;font-weight:700;font-variant-numeric:tabular-nums;
+  font-size:calc(var(--sel) * .5);line-height:1;color:#10202b;
+}
+
+/* Kisi persegi: bidang putih bergaris tipis, seperti lembar aslinya. */
+.papan.kisi{
+  background:linear-gradient(180deg,#fdfefe,#e4ecf1);
+  padding:clamp(3px,.7vmin,7px);border-radius:6px;
+  box-shadow:0 0 0 2px var(--sv3),0 4px 12px rgba(0,0,0,.55);
+}
+.papan.kisi .psel{box-shadow:inset 0 0 0 1px rgba(16,32,43,.16)}
+
+/* Sarang lebah: tiap sel segi enam, baris bertumpuk seperempat tinggi
+   supaya bertautan, dan baris genap bergeser setengah sel. */
+.papan.sarang .psel{
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+  background:linear-gradient(180deg,#fdfefe,#dce7ee 60%,#c2d0d9);
+  margin:0 1px;
+  font-size:calc(var(--sel) * .42);
+}
+.papan.sarang .pbaris{margin-top:calc(var(--sel) * -.25)}
+.papan.sarang .pbaris:first-child{margin-top:0}
+.papan.sarang .pbaris.geser{margin-left:calc(var(--sel) * var(--lebar) * .5)}
+
 /* High score di beranda, seperti papan di layar pembuka acuan. */
 .hiscore{
   margin-top:14px;padding:clamp(9px,1.5vmin,14px);border-radius:12px;text-align:center;

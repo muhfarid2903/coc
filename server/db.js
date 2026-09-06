@@ -378,13 +378,13 @@ function ringkasKelas(classId) {
      ORDER BY xp DESC, CAST(s.name AS INTEGER), s.name COLLATE NOCASE
   `).all(classId);
 
-  /* Agregat per tingkat: inilah alasan tabel `matches` ada. Guru butuh
-     tahu di tingkat mana kelasnya mulai tersendat, bukan sekadar siapa
-     yang rajin. Dulu dikelompokkan per topik; sejak soalnya berbentuk
-     rantai operasi, tingkat kesulitanlah satu-satunya sumbu yang
-     tersisa — dan ia justru lebih terbaca. */
+  /* Agregat per permainan dan tingkat: inilah alasan tabel `matches` ada.
+     Guru butuh tahu di permainan dan tingkat mana kelasnya mulai
+     tersendat, bukan sekadar siapa yang rajin. Kolom `topic` menyimpan id
+     permainannya. */
   const tingkat = db.prepare(`
-    SELECT m.level,
+    SELECT m.topic AS game,
+           m.level,
            COUNT(*)       AS main,
            SUM(m.correct) AS benar,
            SUM(m.total)   AS soal,
@@ -392,8 +392,8 @@ function ringkasKelas(classId) {
       FROM matches m
       JOIN students s ON s.id = m.student_id
      WHERE s.class_id = ?
-     GROUP BY m.level
-     ORDER BY m.level
+     GROUP BY m.topic, m.level
+     ORDER BY m.topic, m.level
   `).all(classId);
 
   const harian = db.prepare(`

@@ -306,6 +306,7 @@ const server = http.createServer(async (req, res) => {
         if (!DB.kelas(id)) return kirim(res, 404, { error: 'Kelas tidak ada.' });
         const b = await bacaBody(req);
         if (!b.level) return kirim(res, 400, { error: 'Tingkat belum dipilih.' });
+        b.topic = b.topic === 'jumlah' ? 'jumlah' : 'rantai';
         return kirim(res, 200, { tugas: DB.buatTugas(id, b) });
       }
       /* ---- Sesi kelas serentak ---- */

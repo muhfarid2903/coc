@@ -4,7 +4,8 @@
 (function (global) {
   'use strict';
 
-  var D = global.COC_DATA, Q = global.COC_Q, FX = global.COC_FX, S = global.COC_STORE;
+  var D = global.COC_DATA, Q = global.COC_Q, G = global.COC_GRID;
+  var FX = global.COC_FX, S = global.COC_STORE;
   var NET = global.COC_NET;
   var LIVE = global.COC_LIVE;
   var scr, tabbar, modal, topbar;
@@ -12,16 +13,47 @@
   var state = {
     screen: 'home',
     tab: 'home',
-    sel: { level: 2 },
+    sel: { game: 'rantai', level: 2 },
     match: null
   };
 
   /* ---------- pembantu ---------- */
-  /* Sejak topik dihapus, kolom `topic` di server diisi tetap dengan ini.
-     Kolomnya sengaja tidak dimigrasi: kueri pencocokan tugas memakainya,
-     dan menghapus kolom pada basis data yang sudah berisi kelas sungguhan
-     tidak membeli apa pun. */
-  var TOPIK = 'rantai';
+  /* Dua permainan. Id-nya tinggal di kolom `topic` yang sejak dulu ada di
+     basis data — dulu diisi tetap 'rantai' waktu permainannya cuma satu.
+     Kueri progres tugas sudah mencocokkan `topic` DAN `level`, jadi ia
+     langsung bekerja untuk dua permainan tanpa satu baris pun berubah. */
+  var GAME = {
+    rantai: {
+      id: 'rantai', icon: '🧮', nama: 'Rantai Operasi',
+      ringkas: '3 rantai operasi · 3 nyawa tiap rantai',
+      ajakan: 'Telusuri operasi, hitung mundur, tentukan nilai yang tepat!',
+      satuan: 'rantai',
+      aturan: [
+        'Dalam satu permainan ada <b>3 soal</b> yang harus kamu selesaikan.',
+        'Tiap soal berisi rantai operasi hitung dan satu nilai akhir. Kamu mencari <b>nilai awal</b> yang membuat hasil akhirnya pas.',
+        'Operasinya dijalankan <b>berurutan</b> dari awal sampai akhir. Aturan urutan operasi matematika tidak berlaku di sini.',
+        'Tiap soal kamu punya <b>3 nyawa</b>, berkurang satu setiap kali menjawab salah.',
+        'Soal berganti kalau jawabanmu benar atau nyawamu habis.'
+      ]
+    },
+    jumlah: {
+      id: 'jumlah', icon: '🔢', nama: 'Jumlahkan Semua',
+      ringkas: '3 ronde · papan angka makin rumit',
+      ajakan: 'Jumlahkan semua angka di papan!',
+      satuan: 'ronde',
+      aturan: [
+        'Dalam satu permainan ada <b>3 ronde</b> yang harus kamu selesaikan.',
+        'Tiap ronde menampilkan satu papan angka. Yang dicari <b>jumlah seluruh isinya</b> — semua sel, tanpa kecuali.',
+        'Ronde 1 kisi persegi, ronde 2 sarang lebah, ronde 3 sarang lebah berisi <b>hitungan</b> yang harus dikerjakan dulu sebelum dijumlahkan.',
+        'Tiap ronde kamu punya <b>3 nyawa</b>, berkurang satu setiap kali jumlahmu salah.',
+        'Ronde berganti kalau jumlahmu benar atau nyawamu habis.'
+      ]
+    }
+  };
+
+  function gameKini() { return GAME[state.sel.game] || GAME.rantai; }
+
+  function namaGame(id) { return (GAME[id] || GAME.rantai).nama; }
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -266,10 +298,14 @@
 
       '<div class="hiscore"><span>HIGH SCORE-MU</span><b>' + fmt(p.high || 0) + '</b></div>' +
 
-      '<div class="modes" style="margin-top:12px">' +
-        modeCard('main', '🧮', 'Mulai Bermain', '3 rantai operasi · 3 nyawa tiap rantai',
+      '<div class="sect"><span class="eyebrow">Pilih Permainan</span></div>' +
+      '<div class="modes">' +
+        modeCard('rantai', GAME.rantai.icon, GAME.rantai.nama, GAME.rantai.ringkas,
           'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cdeefb,#7fd3f0 50%,#42aad4)',
           '#5ad0e6', '') +
+        modeCard('jumlah', GAME.jumlah.icon, GAME.jumlah.nama, GAME.jumlah.ringkas,
+          'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#f8e5ad,#e8b84b 50%,#b7862a)',
+          '#e8b84b', '<span class="badge badge-hot">Baru</span>') +
       '</div>' +
 
       '<div class="sect"><h2 class="h2">🎯 Misi Hari Ini</h2>' +
@@ -313,13 +349,13 @@
     return '<button class="mode sesi-spanduk" style="--mc:#77c341" data-act="gabungSesi">' +
       '<span class="mode-ic" style="background:radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#b6e88a,#77c341 50%,#4b8f1c)">🏫</span>' +
       '<span class="mode-b"><h3>Sesi Kelas — gabung sekarang</h3>' +
-      '<p>' + D.levelName(state.sesiAda.tingkat) + ' · ' + state.sesiAda.jumlah +
-      ' rantai · seluruh kelas bersamaan</p></span>' +
+      '<p>' + esc(namaGame(state.sesiAda.topik)) + ' · ' + D.levelName(state.sesiAda.tingkat) +
+      ' · seluruh kelas bersamaan</p></span>' +
       '<span class="mode-go">›</span></button>';
   }
 
   function modeCard(id, icon, title, desc, grad, color, badge) {
-    return '<button class="mode" data-act="' + id + '" style="--mc:' + color + '">' +
+    return '<button class="mode" data-act="main" data-val="' + id + '" style="--mc:' + color + '">' +
       '<span class="mode-ic" style="background:' + grad + '">' + icon + '</span>' +
       '<span class="mode-b"><h3>' + title + badge + '</h3><p>' + desc + '</p></span>' +
       '<span class="mode-go">›</span></button>';
@@ -366,8 +402,8 @@
     return '<div class="list">' + rows.map(function (h) {
       return '<div class="item">' +
         '<span class="rank-no">' + (h.result === 'win' ? '🏅' : '💤') + '</span>' +
-        '<div class="item-b"><h4>' + D.levelName(h.level) + '</h4>' +
-        '<p>' + h.correct + '/' + h.total + ' rantai · ' + waktuLalu(h.t) + '</p></div>' +
+        '<div class="item-b"><h4>' + esc(namaGame(h.topic)) + ' · ' + D.levelName(h.level) + '</h4>' +
+        '<p>' + h.correct + '/' + h.total + ' benar · ' + waktuLalu(h.t) + '</p></div>' +
         '<b class="mono" style="font-size:13px;color:' +
           (h.result === 'win' ? 'var(--green)' : 'var(--txt2)') + '">' + fmt(h.me) + '</b>' +
       '</div>';
@@ -385,16 +421,9 @@
   /* ============================================================
      Layar: Persiapan (pilih tingkat, lalu aturan main)
      ============================================================ */
-  var ATURAN = [
-    'Dalam satu permainan ada <b>3 soal</b> yang harus kamu selesaikan.',
-    'Tiap soal berisi rantai operasi hitung dan satu nilai akhir. Kamu mencari <b>nilai awal</b> yang membuat hasil akhirnya pas.',
-    'Operasinya dijalankan <b>berurutan</b> dari awal sampai akhir. Aturan urutan operasi matematika tidak berlaku di sini.',
-    'Tiap soal kamu punya <b>3 nyawa</b>, berkurang satu setiap kali menjawab salah.',
-    'Soal berganti kalau jawabanmu benar atau nyawamu habis.'
-  ];
-
   SCREENS.setup = function () {
     var lv = D.levelName(state.sel.level);
+    var g = gameKini();
     scr.innerHTML =
       '<button class="btn btn-ghost btn-sm" data-act="tab" data-val="home">\u2039 Kembali</button>' +
 
@@ -407,18 +436,18 @@
       '</div>' +
 
       '<div class="card card-gold" style="margin-top:14px;text-align:center">' +
-        '<div style="font-size:38px">\ud83e\uddee</div>' +
-        '<h1 class="h1" style="margin-top:2px">LEVEL ' + lv + '</h1>' +
-        '<p class="sub">Telusuri operasi, hitung mundur, tentukan nilai yang tepat!</p>' +
+        '<div style="font-size:38px">' + g.icon + '</div>' +
+        '<h1 class="h1" style="margin-top:2px">' + esc(g.nama) + ' \u00b7 ' + lv + '</h1>' +
+        '<p class="sub">' + esc(g.ajakan) + '</p>' +
       '</div>' +
 
       '<div class="sect"><span class="eyebrow">Aturan Main</span></div>' +
       '<ol class="aturan">' +
-        ATURAN.map(function (a) { return '<li>' + a + '</li>'; }).join('') +
+        g.aturan.map(function (a) { return '<li>' + a + '</li>'; }).join('') +
       '</ol>' +
 
       '<button class="btn btn-lg btn-block" data-act="start" style="margin-top:18px">' +
-        '<span class="shine"></span>Mulai \ud83e\uddee</button>';
+        '<span class="shine"></span>Mulai ' + g.icon + '</button>';
   };
 
   /* ============================================================
@@ -534,10 +563,11 @@
           var pct = Math.round(selesai / t.target * 100);
           return '<button class="mode tugas' + (tuntas ? ' tuntas' : '') + '" ' +
               'style="--mc:#5ad0e6" ' +
-              'data-act="kerjakanTugas" data-val="' + t.level + '">' +
-            '<span class="mode-ic" style="background:radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cdeefb,#7fd3f0 50%,#42aad4)">🧮</span>' +
+              'data-act="kerjakanTugas" data-val="' + esc(t.topic) + '|' + t.level + '">' +
+            '<span class="mode-ic" style="background:radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cdeefb,#7fd3f0 50%,#42aad4)">' +
+              (GAME[t.topic] || GAME.rantai).icon + '</span>' +
             '<span class="mode-b">' +
-              '<h3>Rantai ' + esc(D.levelName(t.level)) + '</h3>' +
+              '<h3>' + esc(namaGame(t.topic)) + ' · ' + esc(D.levelName(t.level)) + '</h3>' +
               '<p>' + (t.note ? esc(t.note) + ' · ' : '') +
                 selesai + '/' + t.target + ' selesai' +
                 (t.due ? ' · tenggat ' + esc(tanggalPendek(t.due)) : '') + '</p>' +
@@ -690,15 +720,24 @@
   function poinRantai(sisaNyawa) { return 1000 + 250 * sisaNyawa; }
 
   /* cfg: { level, semai } */
+  /* Satu set soal, permainan mana pun. Dengan semai dari server seluruh
+     kelas membangkitkan soal yang sama persis di perangkat masing-masing —
+     tidak ada soal yang dikirim lewat jaringan, dan skornya jadi
+     sebanding. */
+  function bikinSoal(game, level, semai) {
+    if (game === 'jumlah') {
+      return semai != null ? G.packSemai(level, semai) : G.pack(level);
+    }
+    return semai != null
+      ? Q.packSemai(SOAL_PER_MAIN, level, semai)
+      : Q.pack(SOAL_PER_MAIN, level);
+  }
+
   function mulaiMain(cfg) {
+    if (!GAME[cfg.game]) cfg.game = 'rantai';
     state.match = {
       cfg: cfg,
-      /* Dengan semai dari server, seluruh kelas membangkitkan rantai yang
-         sama persis di perangkat masing-masing — tidak ada soal yang
-         dikirim lewat jaringan, dan skornya jadi sebanding. */
-      qs: cfg.semai
-        ? Q.packSemai(SOAL_PER_MAIN, cfg.level, cfg.semai)
-        : Q.pack(SOAL_PER_MAIN, cfg.level),
+      qs: bikinSoal(cfg.game, cfg.level, cfg.semai),
       i: 0,
       my: 0,
       nyawa: NYAWA,
@@ -763,6 +802,15 @@
     });
   }
 
+  /* Kedua permainan dijawab dengan satu bilangan bulat, jadi
+     pencocokannya cukup satu. Titik ribuan yang ikut terketik tidak boleh
+     membuat jawaban yang benar dianggap salah. */
+  function cocokJawab(ketikan, q) {
+    var a = String(ketikan == null ? '' : ketikan).trim().replace(/\./g, '');
+    if (!a || !/^\d+$/.test(a)) return false;
+    return parseInt(a, 10) === parseInt(q.ketik, 10);
+  }
+
   function catPlakat(ketikan) {
     var el = $('plateVal');
     if (!el) return;
@@ -810,6 +858,36 @@
     '</div>';
   }
 
+  /* ============================================================
+     Papan "Jumlahkan Semua"
+
+     Ukuran selnya dihitung dari banyaknya baris, bukan dipatok: papan
+     HARD sepuluh baris harus tetap muat di layar HP mendatar yang
+     tingginya cuma ~380 piksel, sementara papan EASY enam baris boleh
+     bernapas. Sarang lebahnya bertumpuk seperempat tinggi sel supaya
+     barisnya bertautan, dan baris genap bergeser setengah sel.
+     ============================================================ */
+  function papanHtml(q) {
+    var sarang = q.bentuk === 'sarang';
+    var baris = q.baris.length;
+    /* Sel sarang lebah bertumpuk, jadi tinggi efektif tiap barisnya cuma
+       tiga perempat — ia boleh lebih besar untuk jumlah baris yang sama. */
+    var muat = (sarang ? 62 : 47) / baris;
+    var v = Math.min(sarang ? 12 : 10, muat);
+    var lebar = q.ekspresi ? 2.6 : 1;
+    var gaya = '--sel:clamp(17px,' + v.toFixed(2) + 'vmin,54px);--lebar:' + lebar;
+
+    return '<div class="papan ' + (sarang ? 'sarang' : 'kisi') + '" style="' + gaya + '">' +
+      q.baris.map(function (r, i) {
+        return '<div class="pbaris' + (sarang && i % 2 ? ' geser' : '') + '">' +
+          r.map(function (c) {
+            return '<span class="psel">' + esc(c.teks) + '</span>';
+          }).join('') +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+
   function nyawaHtml(sisa) {
     var s = '';
     for (var i = 0; i < NYAWA; i++) s += '<i' + (i < sisa ? ' class="on"' : '') + '>❤</i>';
@@ -833,7 +911,24 @@
      lebar layar — padahal justru rantai itu yang perlu dibaca dari ujung
      ke ujung, dan tiap operasi yang muat sekaligus berarti satu langkah
      lebih sedikit yang harus diingat di kepala. */
+  function tombolSubmit(ada) {
+    if (!ada) return '';
+    return '<button class="btn btn-lg" data-act="' +
+      (state.screen === 'sesi' ? 'submitSesi' : 'submit') +
+      '"><span class="shine"></span>SUBMIT</button>';
+  }
+
+  /* Layar pertama sebuah soal. Rantai operasi digulir mendatar dengan
+     sepasang tombol geser; papan "Jumlahkan Semua" selalu muat utuh,
+     jadi ia tidak perlu tombol apa pun untuk dilihat seluruhnya. */
   function telusurHtml(q, adaSubmit) {
+    if (q.bentuk) {
+      return '<div class="thread-kolom">' +
+        '<p class="ask">Jumlahkan semua angka pada papan berikut!</p>' +
+        papanHtml(q) +
+        tombolSubmit(adaSubmit) +
+      '</div>';
+    }
     return '<div class="thread-kolom">' +
       '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
       '<div class="thread-baris">' +
@@ -841,10 +936,7 @@
         rantaiHtml(q) +
         '<button class="geser" data-act="geser" data-val="kanan" aria-label="Geser rantai ke kanan">\u203a</button>' +
       '</div>' +
-      (adaSubmit
-        ? '<button class="btn btn-lg" data-act="' + (state.screen === 'sesi' ? 'submitSesi' : 'submit') +
-          '"><span class="shine"></span>SUBMIT</button>'
-        : '') +
+      tombolSubmit(adaSubmit) +
     '</div>';
   }
 
@@ -852,7 +944,7 @@
      mundurnya — lalu setel tombol gesernya. */
   function pasangGeser() {
     var th = $('thread');
-    if (!th) return;
+    if (!th) return;   /* papan "Jumlahkan Semua" tidak digulir */
     th.scrollLeft = th.scrollWidth;
     th.addEventListener('scroll', catGeser, { passive: true });
     catGeser();
@@ -893,7 +985,8 @@
     scr.innerHTML =
       '<div class="arena">' +
         '<div class="row">' +
-          '<span class="round-tag">Soal ' + (m.i + 1) + '/' + m.qs.length + '</span>' +
+          '<span class="round-tag">' + (GAME[m.cfg.game] || GAME.rantai).satuan.toUpperCase() +
+            ' ' + (m.i + 1) + '/' + m.qs.length + '</span>' +
           '<span class="spacer"></span>' +
           nyawaHtml(m.nyawa) +
           '<span class="round-tag" id="scMe">Skor ' + fmt(m.my) + '</span>' +
@@ -907,7 +1000,7 @@
         '</div>' +
 
         (mengetik
-          ? '<button class="bulat" data-act="kembaliTelusur" aria-label="Kembali ke rantai">\u2190</button>'
+          ? '<button class="bulat" data-act="kembaliTelusur" aria-label="Kembali ke soal">\u2190</button>'
           : '') +
         '<div id="post"></div>' +
       '</div>';
@@ -926,7 +1019,7 @@
     if (!m || m.lock) return;
 
     var q = m.qs[m.i];
-    var benar = Q.cocok(ketikan, q);
+    var benar = cocokJawab(ketikan, q);
 
     /* Salah tapi nyawa masih ada: soalnya belum berakhir. Plakat
        dikosongkan supaya siswa langsung bisa mengetik tebakan
@@ -972,7 +1065,8 @@
       '<div class="explain" style="margin-top:12px">' +
         (benar
           ? '<b>Tepat!</b> '
-          : '<b>Nyawamu habis.</b> Nilai awalnya <b>' + esc(q.answer) + '</b>. ') +
+          : '<b>Nyawamu habis.</b> ' +
+            (q.bentuk ? 'Jumlahnya <b>' : 'Nilai awalnya <b>') + esc(q.answer) + '</b>. ') +
         esc(q.explain) +
       '</div>' +
       '<button class="btn btn-block" data-act="next" style="margin-top:10px">' +
@@ -1032,7 +1126,7 @@
 
     var efek = S.record({
       result: hasil,
-      mode: 'rantai', topic: TOPIK, level: m.cfg.level,
+      mode: m.cfg.game, topic: m.cfg.game, level: m.cfg.level,
       myScore: m.my, opScore: 0,
       correct: m.correct, total: m.qs.length,
       streak: m.best, fastest: 0,
@@ -1059,8 +1153,8 @@
         '<div class="verdict-ic">' + (res.hasil === 'win' ? '🏅' : '💪') + '</div>' +
         '<h2>' + (res.hasil === 'win' ? 'SEMUA TERPECAHKAN!' : 'BELUM TUNTAS') + '</h2>' +
         '<p>' + (res.hasil === 'win'
-          ? 'Ketiga rantai berhasil kamu telusuri mundur.'
-          : 'Ada rantai yang belum tertaklukkan. Coba lagi, ya.') + '</p>' +
+          ? 'Ketiga soal berhasil kamu selesaikan.'
+          : 'Ada soal yang belum tertaklukkan. Coba lagi, ya.') + '</p>' +
         '<div class="stars">' + [0, 1, 2].map(function (i) {
           return '<span class="' + (i < res.bintang ? 'lit' : '') + '">★</span>';
         }).join('') + '</div>' +
@@ -1074,7 +1168,7 @@
 
       '<div class="sect"><span class="eyebrow">Rincian</span></div>' +
       '<div class="statgrid">' +
-        '<div class="sbox"><span>Rantai Terpecahkan</span><b>' + res.correct + '/' + res.total + '</b></div>' +
+        '<div class="sbox"><span>Terpecahkan</span><b>' + res.correct + '/' + res.total + '</b></div>' +
         '<div class="sbox"><span>Nyawa Utuh</span><b>' + res.utuh + '/' + res.total + '</b></div>' +
         '<div class="sbox"><span>Tingkat</span><b>' + D.levelName(res.cfg.level) + '</b></div>' +
         '<div class="sbox"><span>Rerata Waktu</span><b>' + fmt(res.rerata) + ' dtk</b></div>' +
@@ -1094,12 +1188,15 @@
 
       '<div class="sect"><span class="eyebrow">Ulasan Rantai</span></div>' +
       '<div class="review">' + res.log.map(function (l, i) {
+        var judul = l.q.bentuk
+          ? esc(l.q.judul) + ' · ' + l.q.sel + ' sel'
+          : esc(l.q.ops.map(function (o) { return o.label; }).join(' ')) + ' → ' + fmt(l.q.akhir);
+        var kunci = l.q.bentuk ? 'Jumlahnya' : 'Nilai awal';
         return '<div class="rev"><i>' + (l.ok ? '✅' : '❌') + '</i><div class="rev-b">' +
-          '<b>' + (i + 1) + '. ' + esc(l.q.ops.map(function (o) { return o.label; }).join(' ')) +
-            ' → ' + fmt(l.q.akhir) + '</b>' +
+          '<b>' + (i + 1) + '. ' + judul + '</b>' +
           '<span>' + (l.ok
-            ? 'Nilai awal <em>' + esc(l.q.answer) + '</em> · sisa nyawa ' + l.sisa
-            : 'Nyawa habis · nilai awalnya <em>' + esc(l.q.answer) + '</em>') +
+            ? kunci + ' <em>' + esc(l.q.answer) + '</em> · sisa nyawa ' + l.sisa
+            : 'Nyawa habis · ' + kunci.toLowerCase() + ' <em>' + esc(l.q.answer) + '</em>') +
           ' · ' + fmt(Math.round(l.ms / 100) / 10) + ' dtk</span></div></div>';
       }).join('') + '</div>' +
 
@@ -1193,9 +1290,11 @@
     },
     keMasuk: function () { FX.sfx.tap(); state.masuk = { langkah: 'kode' }; go('masuk'); },
     kerjakanTugas: function (v) {
-      state.sel.level = Number(v) || 1;
+      var bagi = String(v).split('|');
+      state.sel.game = GAME[bagi[0]] ? bagi[0] : 'rantai';
+      state.sel.level = Number(bagi[1]) || 1;
       FX.sfx.tap();
-      mulaiMain({ level: state.sel.level });
+      mulaiMain({ game: state.sel.game, level: state.sel.level });
     },
     howto: function () { FX.sfx.tap(); go('howto'); },
 
@@ -1250,10 +1349,14 @@
       ]);
     },
 
-    main: function () { FX.sfx.tap(); go('setup'); },
+    main: function (v) {
+      if (GAME[v]) state.sel.game = v;
+      FX.sfx.tap();
+      go('setup');
+    },
     level: function (v) { state.sel.level = parseInt(v, 10); FX.sfx.tap(); SCREENS.setup(); },
 
-    start: function () { mulaiMain({ level: state.sel.level }); },
+    start: function () { mulaiMain({ game: state.sel.game, level: state.sel.level }); },
 
     gabungSesi: function () {
       FX.sfx.tap();
@@ -1278,7 +1381,7 @@
              lihat catatSesi(). */
           terbaik: 0, utuh: 0, dijawab: 0, hadir: 0, ms: 0, mulaiPada: 0, dicatat: false,
           nyawa: NYAWA, langkah: 'telusur',
-          qs: jalan ? Q.packSemai(info.jumlah, info.tingkat, info.semai) : null,
+          qs: jalan ? bikinSoal(info.topik, info.tingkat, info.semai) : null,
           ketik: '',
           papan: r.data.papan || [], raf: 0
         };
@@ -1335,7 +1438,7 @@
       var q = S2.qs && S2.qs[S2.soalKe];
       if (!q) return;
 
-      var benar = Q.cocok(v, q);
+      var benar = cocokJawab(v, q);
 
       /* Nyawanya bekerja persis seperti di permainan sendiri: salah berarti
          kehilangan satu dan boleh mencoba lagi. Bedanya hanya jam guru yang
@@ -1386,7 +1489,7 @@
 
     ulang: function () {
       var c = state.lastRes && state.lastRes.cfg;
-      mulaiMain({ level: c ? c.level : state.sel.level });
+      mulaiMain({ game: c ? c.game : state.sel.game, level: c ? c.level : state.sel.level });
     },
 
     /* Geser rantai. Satu tekanan memindahkan hampir satu layar penuh,
@@ -1486,8 +1589,9 @@
           '<div><h2 class="h1">Sesi Kelas</h2>' +
           '<p class="sub">Kamu sudah gabung. Menunggu gurumu memulai…</p></div>' +
           '<div class="card">' +
-            '<p class="sub"><b>' + D.levelName(S2.info.tingkat) + '</b> · ' +
-            S2.info.jumlah + ' rantai · seluruh kelas mengerjakan soal yang sama.</p>' +
+            '<p class="sub"><b>' + esc(namaGame(S2.info.topik)) + ' · ' +
+            D.levelName(S2.info.tingkat) + '</b> · ' + S2.info.jumlah +
+            ' soal · seluruh kelas mengerjakan soal yang sama.</p>' +
           '</div>' +
           '<button class="btn btn-ghost btn-block" data-act="keluarSesi">Keluar</button>' +
         '</div>';
@@ -1569,7 +1673,8 @@
     scr.innerHTML =
       '<div class="arena">' +
         '<div class="row">' +
-          '<span class="round-tag">Soal ' + (S2.soalKe + 1) + '/' + S2.info.jumlah + '</span>' +
+          '<span class="round-tag">' + (GAME[S2.info.topik] || GAME.rantai).satuan.toUpperCase() +
+            ' ' + (S2.soalKe + 1) + '/' + S2.info.jumlah + '</span>' +
           '<span class="spacer"></span>' +
           nyawaHtml(S2.nyawa) +
           '<span class="round-tag" id="scMe">' + fmt(S2.skor) + '</span>' +
@@ -1648,7 +1753,7 @@
       state.sesiAda = d;
       if (!state.sesi) return;               // tidak ikut gabung
       state.sesi.info = d;
-      state.sesi.qs = Q.packSemai(d.jumlah, d.tingkat, d.semai);
+      state.sesi.qs = bikinSoal(d.topik, d.tingkat, d.semai);
       state.sesi.ketik = '';
       state.sesi.tahap = 'jeda';
       state.sesi.soalKe = -1;
@@ -1726,7 +1831,8 @@
 
     var efek = S.record({
       result: hasil,
-      mode: 'sesi', topic: TOPIK, level: tingkat,
+      mode: 'sesi', topic: GAME[S2.info && S2.info.topik] ? S2.info.topik : 'rantai',
+      level: tingkat,
       myScore: S2.skor, opScore: 0,
       correct: S2.benar, total: jumlah,
       streak: S2.terbaik, fastest: 0,

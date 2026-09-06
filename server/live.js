@@ -126,10 +126,9 @@ function buatSesi(classId, opsi, daftarIdSekelas) {
   const s = {
     id: idBaru(),
     classId,
-    /* Topik sudah tidak ada sejak soal berbentuk rantai operasi. Medannya
-       ditinggal supaya bentuk pesan sesi tidak berubah bagi peramban yang
-       belum sempat memuat ulang. */
-    topic: 'rantai',
+    /* Permainan mana yang dikerjakan sekelas. Medan ini dulu bernama
+       topik soal; sejak ada dua permainan ia menyimpan id permainannya. */
+    topic: opsi.topic === 'jumlah' ? 'jumlah' : 'rantai',
     level: Number(opsi.level) || 2,
     jumlah: Math.max(3, Math.min(Number(opsi.jumlah) || 3, 20)),
     batasMs: Math.max(15000, Math.min(Number(opsi.batasMs) || 90000, 300000)),
