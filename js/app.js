@@ -59,6 +59,16 @@
   function hud() {
     $('hudCoin').textContent = fmt(S.p.coin);
     $('hudGem').textContent = fmt(S.p.gem);
+
+    /* Beranda tidak lagi memajang misi, jadi hadiah yang sudah bisa
+       diambil perlu penanda lain — kalau tidak, ia menunggu tanpa ada
+       yang tahu sampai tab Misi kebetulan dibuka. */
+    var siap = S.quests().list.filter(function (q) {
+      var def = S.questDef(q.id);
+      return def && !q.claimed && q.prog >= def.goal;
+    }).length;
+    var tab = tabbar && tabbar.querySelector('[data-tab="quest"]');
+    if (tab) tab.classList.toggle('ada-hadiah', siap > 0);
   }
 
   function tierChip(xp) {
@@ -213,39 +223,18 @@
 
   /* ============================================================
      Layar: Arena (beranda)
+
+     Sengaja hanya tiga hal: siapa kamu, skor tertinggimu, dan tombol
+     main. Misi, papan peringkat, dan riwayat dulu ikut menumpuk di sini,
+     padahal ketiganya sudah punya tabnya sendiri di bawah — di beranda
+     mereka cuma pengulangan yang mendorong tombol mainnya ke bawah
+     lipatan layar.
      ============================================================ */
-  /* Baris papan peringkat untuk layar beranda: teman sekelas kalau sudah
-     masuk kelas, penghuni papan bawaan kalau belum. Bentuk keluarannya sama,
-     sehingga rankList() dan podBox() tidak perlu tahu bedanya. */
-  function barisPapan() {
-    if (NET.mode === 'kelas' && NET.papan) {
-      return NET.papan.map(function (x) {
-        return { name: x.nama, ava: x.ava, xp: x.xp, me: x.aku };
-      });
-    }
-    return S.leaderboard();
-  }
-
-  function peringkatku(rows) {
-    for (var i = 0; i < rows.length; i++) if (rows[i].me) return i + 1;
-    return rows.length;
-  }
-
   SCREENS.home = function () {
     var p = S.p;
-    var akurasi = p.totalAnswered ? Math.round(p.totalCorrect / p.totalAnswered * 100) : 0;
-    var papan = barisPapan();
-    /* Sebelum papan kelas sempat termuat, peringkat sengaja dikosongkan
-       daripada menampilkan angka dari papan bot yang sama sekali tidak
-       ada hubungannya dengan kelasnya. */
-    var belumTahu = NET.mode === 'kelas' && !NET.papan;
-    var rank = belumTahu ? '–' : peringkatku(papan);
-    var qs = S.quests();
-    var siapKlaim = qs.list.filter(function (q) {
-      var def = S.questDef(q.id); return def && !q.claimed && q.prog >= def.goal;
-    }).length;
 
     scr.innerHTML =
+      '<div class="beranda">' +
       '<section class="hero">' +
         '<div class="hero-top">' +
           '<div class="ava">' + p.ava + '</div>' +
@@ -256,46 +245,18 @@
           '<button class="btn btn-ghost btn-sm" data-act="tab" data-val="me">Ubah</button>' +
         '</div>' +
         xpBar(p.xp) +
-        '<div class="hero-stats">' +
-          '<div class="hstat"><b>' + fmt(p.wins) + '</b><span>Tuntas</span></div>' +
-          '<div class="hstat"><b>' + akurasi + '%</b><span>Akurasi</span></div>' +
-          '<div class="hstat"><b>' + (belumTahu ? '–' : '#' + rank) + '</b><span>Peringkat</span></div>' +
-        '</div>' +
       '</section>' +
 
       spandukSesi() +
 
       '<div class="hiscore"><span>HIGH SCORE-MU</span><b>' + fmt(p.high || 0) + '</b></div>' +
 
-      '<div class="modes" style="margin-top:12px">' +
+      '<div class="modes">' +
         modeCard('main', '🧮', 'Mulai Bermain', '3 rantai operasi · 3 nyawa tiap rantai',
           'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cdeefb,#7fd3f0 50%,#42aad4)',
           '#5ad0e6', '') +
       '</div>' +
-
-      '<div class="sect"><h2 class="h2">🎯 Misi Hari Ini</h2>' +
-        '<button class="link" data-act="tab" data-val="quest">Lihat semua' + (siapKlaim ? ' (' + siapKlaim + ')' : '') + '</button></div>' +
-      questList(qs.list.slice(0, 2)) +
-
-      '<div class="sect"><h2 class="h2">📊 Papan Peringkat</h2>' +
-        '<button class="link" data-act="tab" data-val="rank">Selengkapnya</button></div>' +
-      rankList(papan.slice(0, 3), 1) +
-
-      '<div class="sect"><h2 class="h2">📜 Permainan Terakhir</h2></div>' +
-      historyList(p.history.slice(0, 3)) +
-
-      '<button class="btn btn-ghost btn-block btn-sm" data-act="howto" style="margin-top:16px">❓ Cara Bermain</button>';
-
-    /* Segarkan papan kelas di latar. Teman sekelas bermain sepanjang jam
-       pelajaran, jadi peringkat yang ditampilkan tanpa ini akan tertinggal
-       selama satu sesi penuh. Digambar ulang hanya kalau urutannya benar-
-       benar berubah, supaya layar tidak berkedip tiap kali beranda dibuka. */
-    if (NET.mode === 'kelas') {
-      var sebelum = JSON.stringify(NET.papan);
-      NET.peringkat().then(function () {
-        if (state.screen === 'home' && JSON.stringify(NET.papan) !== sebelum) go('home');
-      });
-    }
+      '</div>';
   };
 
   /* Sesi kelas yang sedang berjalan ditaruh paling atas di beranda:
@@ -618,7 +579,7 @@
         ? '<button class="btn btn-ghost btn-sm btn-block" data-act="keluarKelas" style="margin-top:10px">🚪 Keluar dari Kelas</button>'
         : '<button class="btn btn-ghost btn-sm btn-block" data-act="reset" style="margin-top:10px;color:var(--red)">Hapus Semua Data</button>') +
 
-      '<div class="sect"><span class="eyebrow">Riwayat</span></div>' +
+      '<div class="sect"><span class="eyebrow">Permainan Terakhir</span></div>' +
       historyList(p.history.slice(0, 10));
   };
 
