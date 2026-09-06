@@ -34,7 +34,7 @@
          lencana; `trophies` ditinggal apa adanya supaya profil lama tidak
          kehilangan medan saat dimuat. */
       flawless: 0, hardClear: 0, high: 0,
-      badges: [], sound: true,
+      badges: [], sound: true, layarPenuh: true,
       quests: null,
       history: []
     };

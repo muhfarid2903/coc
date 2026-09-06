@@ -55,6 +55,72 @@
 
   function namaGame(id) { return (GAME[id] || GAME.rantai).nama; }
 
+  /* ============================================================
+     Layar penuh
+
+     Fullscreen API hanya boleh dipanggil dari dalam penanganan sentuhan
+     pengguna; dipanggil dari mana pun selain itu, peramban menolaknya
+     tanpa suara. Karena itu ia dinyalakan dari tombol Mulai dan dari
+     tombol di kepala arena — bukan dari go() saat layarnya berganti.
+
+     Safari di iPhone tidak punya API ini sama sekali untuk elemen biasa,
+     hanya untuk video. Di sana tombolnya tidak digambar: lebih baik
+     tidak ada tombol daripada tombol yang ditekan lalu tidak terjadi
+     apa-apa. iPad dan Android tidak terpengaruh.
+     ============================================================ */
+  var FS = {
+    didukung: function () {
+      var e = document.documentElement;
+      return !!(e.requestFullscreen || e.webkitRequestFullscreen);
+    },
+    aktif: function () {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    },
+    masuk: function () {
+      var e = document.documentElement;
+      var minta = e.requestFullscreen || e.webkitRequestFullscreen;
+      if (!minta || FS.aktif()) return;
+      try {
+        var hasil = minta.call(e);
+        if (hasil && hasil.then) hasil.then(FS.kunciMendatar, function () {});
+        else FS.kunciMendatar();
+      } catch (x) { /* ditolak peramban — biarkan bermain di jendela biasa */ }
+    },
+    keluar: function () {
+      if (!FS.aktif()) return;
+      var lepas = document.exitFullscreen || document.webkitExitFullscreen;
+      try { if (lepas) lepas.call(document); } catch (x) { /* sudah keluar */ }
+    },
+    /* Penguncian orientasi hanya bekerja di dalam layar penuh, dan hanya
+       di sebagian peramban — yang lain melemparkan galat alih-alih
+       menolak diam-diam, jadi ia dibungkus dua lapis penjaga. */
+    kunciMendatar: function () {
+      try {
+        var o = global.screen && global.screen.orientation;
+        if (o && o.lock) { var j = o.lock('landscape'); if (j && j.catch) j.catch(function () {}); }
+      } catch (x) { /* tidak didukung */ }
+    },
+    /* Dipanggil dari tombol yang memulai permainan — satu-satunya tempat
+       yang sah menurut peramban. */
+    mungkinMasuk: function () {
+      if (S.p.layarPenuh !== false) FS.masuk();
+    }
+  };
+
+  function tombolLayarPenuh() {
+    if (!FS.didukung()) return '';
+    return '<button class="quitbtn fsbtn' + (FS.aktif() ? ' on' : '') + '" id="fsBtn" ' +
+      'data-act="layarPenuh" aria-label="' + (FS.aktif() ? 'Keluar layar penuh' : 'Layar penuh') +
+      '">\u26f6</button>';
+  }
+
+  function catLayarPenuh() {
+    var t = $('fsBtn');
+    if (!t) return;
+    t.classList.toggle('on', FS.aktif());
+    t.setAttribute('aria-label', FS.aktif() ? 'Keluar layar penuh' : 'Layar penuh');
+  }
+
   function $(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -113,6 +179,9 @@
   var SCREENS = {};
 
   function go(name, arg) {
+    /* Layar penuh hanya untuk bermain. Menu, papan peringkat, dan profil
+       kembali ke jendela biasa — di sana bilah peramban justru berguna. */
+    if (name !== 'battle' && name !== 'sesi' && name !== 'result' && name !== 'setup') FS.keluar();
     state.screen = name;
     SCREENS[name](arg);
     var full = name === 'battle' || name === 'sesi';
@@ -647,6 +716,10 @@
 
       '<div class="btn-row" style="margin-top:12px">' +
         '<button class="btn btn-ghost btn-sm" data-act="sound">' + (FX.soundOn() ? '🔊 Suara: Nyala' : '🔇 Suara: Mati') + '</button>' +
+        (FS.didukung()
+          ? '<button class="btn btn-ghost btn-sm" data-act="setelLayarPenuh">\u26f6 Layar Penuh: ' +
+            (p.layarPenuh !== false ? 'Nyala' : 'Mati') + '</button>'
+          : '') +
         '<button class="btn btn-ghost btn-sm" data-act="howto">❓ Cara Bermain</button>' +
       '</div>' +
       (NET.mode === 'kelas'
@@ -990,6 +1063,7 @@
           '<span class="spacer"></span>' +
           nyawaHtml(m.nyawa) +
           '<span class="round-tag" id="scMe">Skor ' + fmt(m.my) + '</span>' +
+          tombolLayarPenuh() +
           '<button class="quitbtn" data-act="quit" aria-label="Keluar dari permainan">✕</button>' +
         '</div>' +
 
@@ -1294,6 +1368,7 @@
       state.sel.game = GAME[bagi[0]] ? bagi[0] : 'rantai';
       state.sel.level = Number(bagi[1]) || 1;
       FX.sfx.tap();
+      FS.mungkinMasuk();
       mulaiMain({ game: state.sel.game, level: state.sel.level });
     },
     howto: function () { FX.sfx.tap(); go('howto'); },
@@ -1332,6 +1407,13 @@
       S.save(); FX.sfx.coin();
       go('me'); toast('Profil tersimpan');
     },
+    setelLayarPenuh: function () {
+      S.p.layarPenuh = S.p.layarPenuh === false;
+      S.save();
+      FX.sfx.tap();
+      if (!S.p.layarPenuh) FS.keluar();
+      go('me');
+    },
     sound: function () {
       S.p.sound = !FX.soundOn();
       FX.setSound(S.p.sound);
@@ -1349,6 +1431,11 @@
       ]);
     },
 
+    layarPenuh: function () {
+      FX.sfx.tap();
+      if (FS.aktif()) FS.keluar(); else FS.masuk();
+    },
+
     main: function (v) {
       if (GAME[v]) state.sel.game = v;
       FX.sfx.tap();
@@ -1356,10 +1443,16 @@
     },
     level: function (v) { state.sel.level = parseInt(v, 10); FX.sfx.tap(); SCREENS.setup(); },
 
-    start: function () { mulaiMain({ game: state.sel.game, level: state.sel.level }); },
+    start: function () {
+      /* Dipanggil dari dalam sentuhan tombol Mulai — satu-satunya saat
+         peramban mengizinkan layar penuh dinyalakan. */
+      FS.mungkinMasuk();
+      mulaiMain({ game: state.sel.game, level: state.sel.level });
+    },
 
     gabungSesi: function () {
       FX.sfx.tap();
+      FS.mungkinMasuk();
       LIVE.gabungSesi().then(function (r) {
         if (!r.ok) { toast(r.pesan || 'Sesi sudah tidak ada'); state.sesiAda = null; go('home'); return; }
         var info = r.data.sesi;
@@ -1489,6 +1582,7 @@
 
     ulang: function () {
       var c = state.lastRes && state.lastRes.cfg;
+      FS.mungkinMasuk();
       mulaiMain({ game: c ? c.game : state.sel.game, level: c ? c.level : state.sel.level });
     },
 
@@ -1679,6 +1773,7 @@
           nyawaHtml(S2.nyawa) +
           '<span class="round-tag" id="scMe">' + fmt(S2.skor) + '</span>' +
           '<span class="ring" id="ring"><b id="ringNum">–</b></span>' +
+          tombolLayarPenuh() +
         '</div>' +
 
         '<div class="arena-main">' +
@@ -1913,6 +2008,12 @@
       else if (e.key === 'Enter') { e.preventDefault(); aksi('kirim'); }
       else if (e.key === 'Escape') { e.preventDefault(); (diArena ? ACT.kembaliTelusur : ACT.kembaliSesi)(); }
     });
+
+    /* Keadaan layar penuh bisa berubah tanpa lewat tombol kita — tombol
+       Esc, gestur peramban, atau sistem operasi. Ikonnya karena itu
+       mengikuti keadaan sebenarnya, bukan mengingat tekanan terakhir. */
+    document.addEventListener('fullscreenchange', catLayarPenuh);
+    document.addEventListener('webkitfullscreenchange', catLayarPenuh);
 
     /* Bangunkan audio pada sentuhan pertama. */
     var buka = function () {

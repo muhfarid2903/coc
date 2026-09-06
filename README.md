@@ -402,6 +402,16 @@ deploy/             berkas untuk menjalankannya di VPS
 
 ## Catatan Teknis
 
+- **Layar penuh saat bermain.** Menekan Mulai membuka layar penuh sendiri, dan
+  kembali ke beranda menutupnya; ada juga tombol ⛶ di kepala arena, serta saklar
+  di layar Profil untuk mematikannya. Fullscreen API hanya boleh dipanggil dari
+  dalam sentuhan pengguna, jadi ia dinyalakan dari tombol — bukan saat layarnya
+  berganti. Safari di iPhone tidak punya API ini untuk elemen biasa; di sana
+  tombolnya tidak digambar sama sekali dan aplikasinya berjalan seperti biasa.
+  Di dalam layar penuh, orientasi dikunci mendatar bila perangkatnya
+  mengizinkan. Ukuran papan dan rantai dihitung dari `vmin`, jadi begitu bilah
+  peramban hilang keduanya membesar sendiri — di HP mendatar sel papan HARD naik
+  dari 19 ke 28 piksel tanpa satu baris CSS pun berubah.
 - Dirancang untuk layar **mendatar** — panggung batu satu layar penuh, seperti
   arena pertandingan. Di HP yang dipegang tegak muncul ajakan memutar layar yang
   tetap bisa dilewati (ada siswa yang kunci rotasinya menyala), dan tata letaknya

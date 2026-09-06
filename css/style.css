@@ -718,6 +718,20 @@ img,svg{display:block;max-width:100%}
 }
 .quitbtn:active{transform:scale(.9)}
 
+/* Tombol layar penuh memakai pelat yang sama dengan tombol keluar, tapi
+   biru es — merah sudah punya arti sendiri di sini: mengakhiri
+   permainan. Menyala penuh saat layar penuh sedang aktif. */
+.fsbtn{
+  margin-left:6px;
+  background:
+    radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.4),transparent 70%),
+    linear-gradient(180deg,var(--ice1),var(--ice3));
+  color:var(--ice-ink);
+}
+.fsbtn.on{
+  box-shadow:0 0 0 2px var(--teal),inset 0 -3px 5px rgba(0,0,0,.3),0 0 12px rgba(90,208,230,.55);
+}
+
 /* Papan soal: pelat baja berisi bidang biru tua, dengan berlian kecil
    di tengah tepi atas dan bawah — persis papan angka di arena acuan. */
 /* Papan angka & plakat jawaban
