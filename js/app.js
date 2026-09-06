@@ -1274,6 +1274,9 @@
           soalKe: jalan ? info.soalKe : -1,
           jawabKe: -1,
           skor: 0, benar: 0, runtun: 0,
+          /* Dikumpulkan sepanjang sesi lalu dicatat sekali di akhir —
+             lihat catatSesi(). */
+          terbaik: 0, utuh: 0, dijawab: 0, hadir: 0, ms: 0, mulaiPada: 0, dicatat: false,
           nyawa: NYAWA, langkah: 'telusur',
           qs: jalan ? Q.packSemai(info.jumlah, info.tingkat, info.semai) : null,
           ketik: '',
@@ -1298,7 +1301,12 @@
     },
     keluarSesi: function () {
       FX.sfx.tap();
-      if (state.sesi) cancelAnimationFrame(state.sesi.raf);
+      if (state.sesi) {
+        cancelAnimationFrame(state.sesi.raf);
+        /* Yang keluar di tengah tetap membawa pulang soal yang sudah ia
+           kerjakan — hanya sebanyak itu, bukan sepanjang sesinya. */
+        catatSesi(state.sesi);
+      }
       state.sesi = null;
       go('home');
     },
@@ -1343,6 +1351,8 @@
         if (S2.nyawa > 0) return;
         S2.jawabKe = S2.soalKe;
         S2.runtun = 0;
+        S2.dijawab += 1;
+        S2.ms += Date.now() - (S2.mulaiPada || Date.now());
         LIVE.jawabSesi(S2.soalKe, 0, false);
         gambarSoalSesi();
         var post0 = $('post');
@@ -1354,7 +1364,11 @@
       var poinDapat = poinRantai(S2.nyawa);
       S2.jawabKe = S2.soalKe;
       S2.runtun += 1;
+      if (S2.runtun > S2.terbaik) S2.terbaik = S2.runtun;
       S2.benar += 1;
+      S2.dijawab += 1;
+      if (S2.nyawa === NYAWA) S2.utuh += 1;
+      S2.ms += Date.now() - (S2.mulaiPada || Date.now());
       S2.skor += poinDapat;
       S2.runtun >= 2 ? FX.sfx.combo(S2.runtun) : FX.sfx.ok();
       FX.buzz(18);
@@ -1649,6 +1663,12 @@
       S2.ketik = '';
       S2.nyawa = NYAWA;
       S2.langkah = 'telusur';
+      S2.mulaiPada = Date.now();
+      /* Soal yang sempat terpampang di layarnya, dijawab atau tidak.
+         Yang bergabung di tengah sesi hanya menghitung dari soal
+         pertamanya, jadi ia tidak menanggung soal yang tidak pernah
+         ia lihat. */
+      S2.hadir += 1;
       S2.info.batasMs = d.batasMs;
       S2.habisPada = Date.now() + d.batasMs;
       if (state.screen !== 'sesi') go('sesi'); else gambarSoalSesi();
@@ -1670,11 +1690,61 @@
       cancelAnimationFrame(S2.raf);
       S2.tahap = 'usai';
       S2.papan = d.papan || [];
+      catatSesi(S2);
       FX.confetti(70, 0.5, 0.4);
       if (state.screen === 'sesi') go('sesi');
     });
 
     }
+
+  /* Satu sesi kelas dicatat sebagai satu permainan, sekali, di akhirnya.
+
+     Sampai sekarang sesi tidak meninggalkan jejak apa pun: papan sesi
+     hidup di memori server dan ikut hilang bersama sesinya, sehingga
+     satu jam pelajaran penuh tidak menambah XP siswa dan tidak pernah
+     muncul di rekap guru. Yang dikirim lewat jalur yang sama persis
+     dengan permainan sendiri, supaya XP, lencana, misi, riwayat, dan
+     agregat per tingkat di dasbor guru semuanya ikut terisi.
+
+     Yang cuma menonton tanpa menjawab sekali pun tidak dicatat — sesi
+     yang tidak ia kerjakan tidak boleh menurunkan akurasinya. */
+  function catatSesi(S2) {
+    if (!S2 || S2.dicatat || !S2.dijawab) return;
+    S2.dicatat = true;
+
+    /* Penyebutnya soal yang ia hadapi, bukan yang ia jawab. Soal yang
+       dibiarkan sampai jamnya habis adalah soal yang tidak terpecahkan —
+       menghitungnya sebagai tidak pernah ada akan membuat akurasi siswa
+       yang menyerah terlihat sama bagusnya dengan yang mengerjakan. */
+    var jumlah = Math.max(S2.hadir, S2.dijawab);
+    var tingkat = Number(S2.info && S2.info.tingkat) || 1;
+    var hasil = S2.benar === jumlah ? 'win' : 'lose';
+
+    var xp = Math.round(S2.skor / 25) + tingkat * 10 + (hasil === 'win' ? 60 : 15);
+    var koin = Math.round(S2.skor / 60) + (hasil === 'win' ? 40 : 12);
+    var permata = (hasil === 'win' && S2.utuh === jumlah) ? 1 : 0;
+
+    var efek = S.record({
+      result: hasil,
+      mode: 'sesi', topic: TOPIK, level: tingkat,
+      myScore: S2.skor, opScore: 0,
+      correct: S2.benar, total: jumlah,
+      streak: S2.terbaik, fastest: 0,
+      flawless: S2.utuh, hardClear: hasil === 'win' && tingkat === 3,
+      xp: xp, coin: koin, gem: permata,
+      /* Rerata waktu dibagi soal yang benar-benar dikerjakan — yang
+         dibiarkan lewat tidak punya waktu pengerjaan untuk dirata-rata. */
+      msAvg: S2.dijawab ? Math.round(S2.ms / S2.dijawab) : null
+    });
+
+    hud();
+    if (efek.naikTingkat) {
+      setTimeout(function () {
+        FX.sfx.level();
+        toast('Naik tingkat: ' + efek.naikTingkat.name + '!');
+      }, 1200);
+    }
+  }
 
   /* ============================================================
      Mulai
