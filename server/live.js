@@ -181,14 +181,35 @@ function majuSesi(classId) {
     mulaiPada: sekarang()
   });
 
-  s.jam = setTimeout(() => {
-    const skrg = sesiKelas.get(classId);
-    if (!skrg || skrg.tahap !== 'jalan') return;
-    siarSesi(skrg, 'sesi-papan', { soalKe: skrg.soalKe, papan: papanSesi(skrg) });
-    skrg.jam = setTimeout(() => majuSesi(classId), JEDA_SOAL_MS);
-    skrg.jam.unref && skrg.jam.unref();
-  }, s.batasMs + 700);
+  s.jam = setTimeout(() => tutupSoal(classId), s.batasMs + 700);
   s.jam.unref && s.jam.unref();
+}
+
+/* Tutup soal yang sedang berjalan: tunjukkan papannya, lalu lanjut.
+   Dipanggil dua arah — oleh jam yang habis, dan oleh jawaban terakhir
+   yang masuk. */
+function tutupSoal(classId) {
+  const s = sesiKelas.get(classId);
+  if (!s || s.tahap !== 'jalan') return;
+  if (s.jam) { clearTimeout(s.jam); s.jam = null; }
+  siarSesi(s, 'sesi-papan', { soalKe: s.soalKe, papan: papanSesi(s) });
+  s.jam = setTimeout(() => majuSesi(classId), JEDA_SOAL_MS);
+  s.jam.unref && s.jam.unref();
+}
+
+/* Sudahkah semua yang masih tersambung menjawab soal ini?
+
+   Yang terputus sengaja tidak dihitung: ia tidak akan pernah menjawab,
+   dan menunggunya berarti satu anak yang menutup tab menahan seluruh
+   kelas sampai jamnya habis. */
+function semuaSudahJawab(s) {
+  let hadir = 0;
+  for (const p of s.peserta.values()) {
+    if (!tersambung(p.id)) continue;
+    hadir += 1;
+    if (p.jawabKe !== s.soalKe) return false;
+  }
+  return hadir > 0;
 }
 
 function jawabSesi(studentId, classId, data) {
@@ -205,6 +226,12 @@ function jawabSesi(studentId, classId, data) {
   const tambah = Math.max(0, Math.min(Number(data.poin) || 0, MAKS_POIN_SOAL));
   p.skor += tambah;
   if (data.benar) p.benar += 1;
+
+  /* Kalau seluruh kelas sudah menjawab, jangan habiskan sisa jamnya:
+     satu rantai diberi waktu semenit setengah karena ada yang perlu
+     selama itu, bukan supaya yang sudah selesai duduk menunggu. */
+  if (semuaSudahJawab(s)) tutupSoal(classId);
+
   return { ok: true, skor: p.skor };
 }
 
