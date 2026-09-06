@@ -29,7 +29,7 @@ Setiap pertandingan menyediakan dua kartu bantuan gratis: **Perisai**
 ## Topik Soal
 
 Soal dibangkitkan secara acak, jadi tidak pernah habis. Tujuh topik, masing-masing
-dengan lima tingkat kesulitan:
+dengan tiga tingkat kesulitan — **EASY**, **MEDIUM**, dan **HARD**:
 
 - ⚡ **Hitung Kilat** — tambah, kurang, kali, bagi, urutan operasi
 - 🧮 **Duel Aljabar** — persamaan linear satu variabel
@@ -40,6 +40,12 @@ dengan lima tingkat kesulitan:
 - 🎲 **Serba-serbi** — semua topik diacak jadi satu
 
 Setiap jawaban disertai langkah penyelesaian singkat.
+
+Tingkatnya bukan sekadar angka yang lebih besar: tiap topik punya bentuk soal
+sendiri di tiap tingkat. Geometri EASY berhenti di luas dan keliling bangun
+datar, MEDIUM masuk ke volume kubus-balok dan lingkaran, HARD ke trapesium,
+tabung, prisma, dan luas permukaan. Pola EASY hanya deret bertambah dan
+berkurang; HARD sampai Fibonacci, deret berselang-seling, dan deret pangkat.
 
 ## Progres Pemain
 

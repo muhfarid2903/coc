@@ -367,7 +367,7 @@
       var t = D.topic(h.topic);
       return '<div class="item">' +
         '<span class="rank-no">' + (ikon[h.result] || '🎮') + '</span>' +
-        '<div class="item-b"><h4>' + t.name + ' · ' + (D.LEVELS[h.level - 1] ? D.LEVELS[h.level - 1].name : '') + '</h4>' +
+        '<div class="item-b"><h4>' + t.name + ' · ' + D.levelName(h.level) + '</h4>' +
         '<p>' + h.correct + '/' + h.total + ' benar · ' + waktuLalu(h.t) + '</p></div>' +
         '<b class="mono" style="font-size:13px;color:' +
           (h.result === 'win' ? 'var(--green)' : h.result === 'lose' ? 'var(--red)' : 'var(--txt2)') + '">' +
@@ -431,7 +431,7 @@
       '<div class="lv">' +
         D.LEVELS.map(function (l) {
           return '<button class="pick' + (state.sel.level === l.d ? ' on' : '') + '" data-act="level" data-val="' + l.d + '">' +
-            '<b style="display:block;font-size:15px">' + l.d + '</b>' + l.name + '</button>';
+            l.name + '</button>';
         }).join('') +
       '</div>' +
 
@@ -544,7 +544,6 @@
         '<div class="sect" style="margin-top:2px"><h1 class="h1">📋 Tugas dari Guru</h1></div>' +
         '<div class="list" style="margin-top:10px">' + list.map(function (t) {
           var top = D.topic(t.topic);
-          var lv = D.LEVELS[t.level - 1];
           var selesai = Math.min(t.selesai, t.target);
           var tuntas = selesai >= t.target;
           var pct = Math.round(selesai / t.target * 100);
@@ -553,7 +552,7 @@
               'data-act="kerjakanTugas" data-val="' + t.topic + '|' + t.level + '">' +
             '<span class="mode-ic" style="background:' + top.grad + '">' + top.icon + '</span>' +
             '<span class="mode-b">' +
-              '<h3>' + esc(top.name) + ' · ' + esc(lv ? lv.name : 'Tingkat ' + t.level) + '</h3>' +
+              '<h3>' + esc(top.name) + ' · ' + esc(D.levelName(t.level)) + '</h3>' +
               '<p>' + (t.note ? esc(t.note) + ' · ' : '') +
                 selesai + '/' + t.target + ' selesai' +
                 (t.due ? ' · tenggat ' + esc(tanggalPendek(t.due)) : '') + '</p>' +
@@ -673,7 +672,7 @@
       '<div class="sect"><h1 class="h1">❓ Cara Bermain</h1></div>' +
       '<div class="steps">' +
         '<div class="step"><div><h4>Pilih pertandingan</h4><p>Duel Cepat untuk satu lawan satu, Turnamen untuk tiga babak menuju piala, atau Latihan untuk berlatih santai.</p></div></div>' +
-        '<div class="step"><div><h4>Tentukan topik & tingkat</h4><p>Ada tujuh topik, dari Hitung Kilat sampai Soal Cerita, dengan lima tingkat kesulitan.</p></div></div>' +
+        '<div class="step"><div><h4>Tentukan topik & tingkat</h4><p>Ada tujuh topik, dari Hitung Kilat sampai Soal Cerita, dengan tiga tingkat kesulitan: EASY, MEDIUM, dan HARD.</p></div></div>' +
         '<div class="step"><div><h4>Ketik jawabanmu</h4><p>Tidak ada pilihan ganda — hitung sendiri, ketik angkanya di papan angka, lalu tekan tombol hijau. Satuan seperti cm² dan awalan Rp sudah tercetak, tidak perlu diketik.</p></div></div>' +
         '<div class="step"><div><h4>Jawab sebelum waktu habis</h4><p>Nilai dasar 100 per jawaban benar, ditambah bonus kecepatan hingga 100 dan bonus runtun hingga 100.</p></div></div>' +
         '<div class="step"><div><h4>Pakai kartu bantuan</h4><p>Perisai memaafkan satu jawaban salah — kamu boleh mengetik ulang. Tambah Waktu memberi 6 detik ekstra. Masing-masing sekali per pertandingan.</p></div></div>' +
@@ -699,7 +698,7 @@
 
   function lawanAcak(level) {
     var pool = D.RIVALS.filter(function (r) {
-      return Math.abs(r.skill - (0.5 + level * 0.07)) < 0.2;
+      return Math.abs(r.skill - (0.43 + level * 0.14)) < 0.2;
     });
     return Q.pick(pool.length ? pool : D.RIVALS);
   }
@@ -711,7 +710,7 @@
        ganda: membaca empat pilihan lalu menunjuk satu jauh lebih cepat
        daripada menghitung sampai ketemu angkanya, lalu mengetiknya.
        Batasnya karena itu dilonggarkan sepertiga. */
-    var batas = Math.max(12, (topik.time - (cfg.level - 1) * 1.2) * 1.35) * 1000;
+    var batas = Math.max(12, (topik.time - (cfg.level - 1) * 2.4) * 1.35) * 1000;
 
     state.match = {
       cfg: cfg,
@@ -956,7 +955,7 @@
     /* Lawannya orang: skornya datang dari peristiwa duel-skor, bukan dari
        simulasi. Tidak ada yang perlu dijadwalkan di sini. */
     if (m.langsung) return;
-    var skill = clamp(m.cfg.rival.skill - (m.cfg.level - 3) * 0.06, 0.3, 0.95);
+    var skill = clamp(m.cfg.rival.skill - (m.cfg.level - 2) * 0.12, 0.3, 0.95);
     var benar = Math.random() < skill;
     var frac = benar ? (0.18 + Math.random() * 0.5) : (0.4 + Math.random() * 0.55);
     var at = Math.min(m.limitMs * frac, m.limitMs - 150);
@@ -1141,7 +1140,7 @@
     var akurasi = m.correct / m.qs.length;
     var bintang = akurasi >= 0.9 ? 3 : akurasi >= 0.7 ? 2 : akurasi >= 0.4 ? 1 : 0;
 
-    var xp = Math.round(m.my / 10) + m.cfg.level * 6 +
+    var xp = Math.round(m.my / 10) + m.cfg.level * 10 +
       (hasil === 'win' ? 60 : hasil === 'draw' ? 30 : 15);
     var koin = Math.round(m.my / 25) + (hasil === 'win' ? 40 : 12);
     var permata = (hasil === 'win' && m.correct === m.qs.length) ? 1 : 0;
@@ -1282,12 +1281,11 @@
      ============================================================ */
   SCREENS.antre = function (cfg) {
     var topik = D.topic(cfg.topic);
-    var lv = D.LEVELS[cfg.level - 1];
     var online = state.antreOnline;
     scr.innerHTML =
       '<div class="mm">' +
         '<span class="eyebrow" style="justify-content:center">' + topik.icon + ' ' + topik.name +
-          ' · ' + esc(lv ? lv.name : 'Tingkat ' + cfg.level) + '</span>' +
+          ' · ' + esc(D.levelName(cfg.level)) + '</span>' +
         '<div class="mm-scan"><span>🔍</span></div>' +
         '<div><h2 class="h1">Mencari lawan…</h2>' +
         '<p class="sub">Menunggu teman sekelas memilih topik dan tingkat yang sama.</p></div>' +
@@ -1458,7 +1456,7 @@
       '<button class="btn btn-ghost btn-sm" data-act="keluarTur">‹ Keluar Turnamen</button>' +
       '<div class="sect"><h1 class="h1">🏆 Turnamen 8 Besar</h1></div>' +
       '<p class="sub" style="margin-top:-6px">' + D.topic(t.topic).name + ' · ' +
-        (D.LEVELS[t.level - 1] ? D.LEVELS[t.level - 1].name : '') + '</p>' +
+        D.levelName(t.level) + '</p>' +
 
       '<div class="bracket" style="margin-top:16px">' +
         t.rounds.map(function (r, ri) {

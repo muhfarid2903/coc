@@ -49,12 +49,14 @@
       grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#ffdcb0,#f0a05c 50%,#b85f22)', color: '#f0a05c' }
   ];
 
+  /* Tiga tingkat kesulitan, kembar dengan `d` yang diterima tiap generator
+     di questions.js. Riwayat lama sempat menyimpan level 4 dan 5; angka itu
+     tidak punya nama lagi, jadi pencariannya lewat levelName() yang punya
+     jalan mundur. */
   var LEVELS = [
-    { d: 1, name: 'Pemanasan' },
-    { d: 2, name: 'Mudah' },
-    { d: 3, name: 'Sedang' },
-    { d: 4, name: 'Sulit' },
-    { d: 5, name: 'Maut' }
+    { d: 1, name: 'EASY' },
+    { d: 2, name: 'MEDIUM' },
+    { d: 3, name: 'HARD' }
   ];
 
   /* Kumpulan lawan komputer. skill = peluang dasar menjawab benar. */
@@ -123,6 +125,10 @@
     topic: function (id) {
       for (var i = 0; i < TOPICS.length; i++) if (TOPICS[i].id === id) return TOPICS[i];
       return TOPICS[0];
+    },
+    levelName: function (d) {
+      for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].d === d) return LEVELS[i].name;
+      return 'Tingkat ' + d;
     }
   };
 })(window);

@@ -1,7 +1,8 @@
 /* ============================================================
    questions.js — pabrik soal matematika
-   Setiap generator mengembalikan { text, correct, dis[], explain }
-   lalu difinalkan menjadi 4 pilihan yang sudah diacak.
+   Setiap generator menerima tingkat kesulitan d (1 EASY, 2 MEDIUM,
+   3 HARD) dan mengembalikan { text, correct, explain }, lalu difinalkan
+   jadi soal siap tampil dengan jawaban yang tinggal diketik.
    ============================================================ */
 (function (global) {
   'use strict';
@@ -113,34 +114,25 @@
      1. Hitung Kilat
      ============================================================ */
   function genKilat(d) {
-    var a, b, c, v, t, e;
+    var a, b, c, v, t, e, r;
     if (d <= 1) {
-      if (acak() < 0.5) {
-        a = ri(4, 25); b = ri(3, 20); v = a + b;
-        t = a + ' + ' + b; e = a + ' + ' + b + ' = ' + v;
-      } else {
-        a = ri(12, 40); b = ri(3, 11); v = a - b;
-        t = a + ' − ' + b; e = a + ' − ' + b + ' = ' + v;
-      }
-    } else if (d === 2) {
-      var r = ri(1, 3);
-      if (r === 1) { a = ri(3, 9); b = ri(3, 9); v = a * b; t = a + ' × ' + b; e = 'Perkalian dasar: ' + a + ' × ' + b + ' = ' + v; }
-      else if (r === 2) { a = ri(20, 70); b = ri(15, 40); v = a + b; t = a + ' + ' + b; e = a + ' + ' + b + ' = ' + v; }
+      r = ri(1, 4);
+      if (r === 1) { a = ri(4, 25); b = ri(3, 20); v = a + b; t = a + ' + ' + b; e = a + ' + ' + b + ' = ' + v; }
+      else if (r === 2) { a = ri(12, 40); b = ri(3, 11); v = a - b; t = a + ' − ' + b; e = a + ' − ' + b + ' = ' + v; }
+      else if (r === 3) { a = ri(3, 9); b = ri(3, 9); v = a * b; t = a + ' × ' + b; e = 'Perkalian dasar: ' + a + ' × ' + b + ' = ' + v; }
       else { b = ri(3, 9); v = ri(3, 12); a = b * v; t = a + ' ÷ ' + b; e = a + ' ÷ ' + b + ' = ' + v; }
-    } else if (d === 3) {
-      var r3 = ri(1, 3);
-      if (r3 === 1) { a = ri(6, 14); b = ri(6, 12); v = a * b; t = a + ' × ' + b; e = a + ' × ' + b + ' = ' + v; }
-      else if (r3 === 2) { b = ri(4, 12); v = ri(4, 15); a = b * v; t = a + ' ÷ ' + b; e = a + ' ÷ ' + b + ' = ' + v; }
-      else { a = ri(3, 9); b = ri(3, 9); c = ri(5, 30); v = a * b + c; t = a + ' × ' + b + ' + ' + c; e = 'Kali dulu: ' + a + ' × ' + b + ' = ' + (a * b) + ', lalu + ' + c + ' = ' + v; }
-    } else if (d === 4) {
-      var r4 = ri(1, 3);
-      if (r4 === 1) { a = ri(11, 25); b = ri(6, 14); v = a * b; t = a + ' × ' + b; e = a + ' × ' + b + ' = ' + v; }
-      else if (r4 === 2) { a = ri(4, 12); b = ri(4, 12); c = ri(3, 9); v = (a + b) * c; t = '(' + a + ' + ' + b + ') × ' + c; e = 'Kurung dulu: ' + (a + b) + ', lalu × ' + c + ' = ' + v; }
+    } else if (d === 2) {
+      r = ri(1, 4);
+      if (r === 1) { a = ri(6, 14); b = ri(6, 12); v = a * b; t = a + ' × ' + b; e = a + ' × ' + b + ' = ' + v; }
+      else if (r === 2) { b = ri(4, 12); v = ri(4, 15); a = b * v; t = a + ' ÷ ' + b; e = a + ' ÷ ' + b + ' = ' + v; }
+      else if (r === 3) { a = ri(3, 9); b = ri(3, 9); c = ri(5, 30); v = a * b + c; t = a + ' × ' + b + ' + ' + c; e = 'Kali dulu: ' + a + ' × ' + b + ' = ' + (a * b) + ', lalu + ' + c + ' = ' + v; }
       else { a = ri(5, 12); v = a * a; t = a + '²'; e = a + ' × ' + a + ' = ' + v; }
     } else {
-      var r5 = ri(1, 3);
-      if (r5 === 1) { a = ri(6, 12); b = ri(6, 12); c = ri(6, 30); v = a * b - c; t = a + ' × ' + b + ' − ' + c; e = a + ' × ' + b + ' = ' + (a * b) + ', dikurangi ' + c + ' = ' + v; }
-      else if (r5 === 2) { a = ri(20, 60); b = ri(3, 9); c = ri(3, 9); v = a + b * c; t = a + ' + ' + b + ' × ' + c; e = 'Perkalian didahulukan: ' + b + ' × ' + c + ' = ' + (b * c) + ', lalu + ' + a + ' = ' + v; }
+      r = ri(1, 5);
+      if (r === 1) { a = ri(11, 25); b = ri(6, 14); v = a * b; t = a + ' × ' + b; e = a + ' × ' + b + ' = ' + v; }
+      else if (r === 2) { a = ri(4, 12); b = ri(4, 12); c = ri(3, 9); v = (a + b) * c; t = '(' + a + ' + ' + b + ') × ' + c; e = 'Kurung dulu: ' + (a + b) + ', lalu × ' + c + ' = ' + v; }
+      else if (r === 3) { a = ri(6, 12); b = ri(6, 12); c = ri(6, 30); v = a * b - c; t = a + ' × ' + b + ' − ' + c; e = a + ' × ' + b + ' = ' + (a * b) + ', dikurangi ' + c + ' = ' + v; }
+      else if (r === 4) { a = ri(20, 60); b = ri(3, 9); c = ri(3, 9); v = a + b * c; t = a + ' + ' + b + ' × ' + c; e = 'Perkalian didahulukan: ' + b + ' × ' + c + ' = ' + (b * c) + ', lalu + ' + a + ' = ' + v; }
       else { b = ri(4, 12); v = ri(6, 20); a = b * v; c = ri(3, 15); t = a + ' ÷ ' + b + ' + ' + c; v = v + c; e = a + ' ÷ ' + b + ' = ' + (v - c) + ', lalu + ' + c + ' = ' + v; }
     }
     return { text: t + ' = ?', correct: v, explain: e };
@@ -152,31 +144,35 @@
   function genAljabar(d) {
     var x, a, b, c, dd, t, e;
     if (d <= 1) {
-      x = ri(2, 15); a = ri(2, 20); b = x + a;
-      t = 'x + ' + a + ' = ' + b; e = 'x = ' + b + ' − ' + a + ' = ' + x;
-    } else if (d === 2) {
-      x = ri(2, 12); a = ri(2, 9); b = a * x;
-      t = a + 'x = ' + b; e = 'x = ' + b + ' ÷ ' + a + ' = ' + x;
-    } else if (d === 3) {
-      x = ri(2, 12); a = ri(2, 9); b = ri(1, 20); c = a * x + b;
-      t = a + 'x + ' + b + ' = ' + c;
-      e = a + 'x = ' + c + ' − ' + b + ' = ' + (a * x) + ', jadi x = ' + (a * x) + ' ÷ ' + a + ' = ' + x;
-    } else if (d === 4) {
-      x = ri(2, 11); a = ri(3, 9); c = ri(1, a - 1); b = ri(1, 18);
-      dd = a * x + b - c * x;
-      t = a + 'x + ' + b + ' = ' + c + 'x + ' + dd;
-      e = 'Pindahkan: ' + (a - c) + 'x = ' + dd + ' − ' + b + ' = ' + ((a - c) * x) + ', jadi x = ' + x;
-    } else {
       if (acak() < 0.5) {
-        x = ri(2, 10); a = ri(2, 7); b = ri(1, 9); c = a * (x + b);
-        t = a + '(x + ' + b + ') = ' + c;
-        e = 'x + ' + b + ' = ' + c + ' ÷ ' + a + ' = ' + (x + b) + ', jadi x = ' + x;
+        x = ri(2, 15); a = ri(2, 20); b = x + a;
+        t = 'x + ' + a + ' = ' + b; e = 'x = ' + b + ' − ' + a + ' = ' + x;
+      } else {
+        x = ri(2, 12); a = ri(2, 9); b = a * x;
+        t = a + 'x = ' + b; e = 'x = ' + b + ' ÷ ' + a + ' = ' + x;
+      }
+    } else if (d === 2) {
+      if (acak() < 0.5) {
+        x = ri(2, 12); a = ri(2, 9); b = ri(1, 20); c = a * x + b;
+        t = a + 'x + ' + b + ' = ' + c;
+        e = a + 'x = ' + c + ' − ' + b + ' = ' + (a * x) + ', jadi x = ' + (a * x) + ' ÷ ' + a + ' = ' + x;
       } else {
         a = ri(2, 6); b = ri(1, 15);
         x = ri(2, 12) * a;      /* kelipatan a agar x/a bulat */
         c = x / a + b;
         t = 'x/' + a + ' + ' + b + ' = ' + c;
         e = 'x/' + a + ' = ' + c + ' − ' + b + ' = ' + (x / a) + ', jadi x = ' + (x / a) + ' × ' + a + ' = ' + x;
+      }
+    } else {
+      if (acak() < 0.5) {
+        x = ri(2, 11); a = ri(3, 9); c = ri(1, a - 1); b = ri(1, 18);
+        dd = a * x + b - c * x;
+        t = a + 'x + ' + b + ' = ' + c + 'x + ' + dd;
+        e = 'Pindahkan: ' + (a - c) + 'x = ' + dd + ' − ' + b + ' = ' + ((a - c) * x) + ', jadi x = ' + x;
+      } else {
+        x = ri(2, 10); a = ri(2, 7); b = ri(1, 9); c = a * (x + b);
+        t = a + '(x + ' + b + ') = ' + c;
+        e = 'x + ' + b + ' = ' + c + ' ÷ ' + a + ' = ' + (x + b) + ', jadi x = ' + x;
       }
     }
     return { text: t, correct: x, explain: e };
@@ -225,8 +221,6 @@
         return { text: 'Volume kubus dengan rusuk ' + s + ' cm?', correct: v, unit: ' cm³',
           explain: 'Volume = s³ = ' + s + ' × ' + s + ' × ' + s + ' = ' + v + ' cm³' };
       });
-    }
-    if (d >= 3) {
       bank.push(function () {
         p = ri(3, 12); l = ri(2, 10); tg = ri(2, 9); v = p * l * tg;
         return { text: 'Volume balok ' + p + ' × ' + l + ' × ' + tg + ' cm?', correct: v, unit: ' cm³',
@@ -248,7 +242,7 @@
           explain: 'Luas permukaan = 6 × s² = 6 × ' + (s * s) + ' = ' + v + ' cm²' };
       });
     }
-    if (d >= 4) {
+    if (d >= 3) {
       bank.push(function () {
         a = ri(4, 14); var b2 = a + ri(2, 10); tg = ri(2, 8) * 2; v = (a + b2) * tg / 2;
         return { text: 'Luas trapesium dengan sisi sejajar ' + a + ' cm dan ' + b2 + ' cm, tinggi ' + tg + ' cm?',
@@ -261,8 +255,6 @@
           correct: v, unit: ' cm³', long: true,
           explain: 'V = πr²t = 22/7 × ' + (r * r) + ' × ' + tg + ' = ' + v + ' cm³' };
       });
-    }
-    if (d >= 5) {
       bank.push(function () {
         a = ri(4, 12) * 2; tg = ri(3, 12); var tp = ri(5, 18); v = (a * tg / 2) * tp;
         return { text: 'Volume prisma segitiga: alas ' + a + ' cm, tinggi segitiga ' + tg + ' cm, tinggi prisma ' + tp + ' cm?',
@@ -284,26 +276,27 @@
      4. Pecahan & Persen
      ============================================================ */
   function genPecahan(d) {
-    var a, b, n, p, v, e, txt;
+    var a, b, n, p, v, r;
     if (d <= 1) {
-      p = pick([10, 20, 25, 50, 75]); n = pick([40, 60, 80, 100, 120, 200]);
-      v = n * p / 100;
-      return { text: p + '% dari ' + n + ' = ?', correct: v,
-        explain: p + '% × ' + n + ' = ' + fmt(p / 100) + ' × ' + n + ' = ' + v };
+      if (acak() < 0.5) {
+        p = pick([10, 20, 25, 50, 75]); n = pick([40, 60, 80, 100, 120, 200]);
+        v = n * p / 100;
+        return { text: p + '% dari ' + n + ' = ?', correct: v,
+          explain: p + '% × ' + n + ' = ' + fmt(p / 100) + ' × ' + n + ' = ' + v };
+      }
+      b = pick([2, 3, 4, 5]); n = b * ri(4, 20); v = n / b;
+      return { text: '1/' + b + ' dari ' + n + ' = ?', correct: v,
+        explain: n + ' ÷ ' + b + ' = ' + v };
     }
     if (d === 2) {
-      if (acak() < 0.5) {
-        b = pick([2, 3, 4, 5]); n = b * ri(4, 20); v = n / b;
-        return { text: '1/' + b + ' dari ' + n + ' = ?', correct: v,
-          explain: n + ' ÷ ' + b + ' = ' + v };
+      r = ri(1, 3);
+      if (r === 1) {
+        p = pick([15, 30, 40, 60]); n = pick([50, 100, 150, 200, 250]);
+        v = n * p / 100;
+        return { text: p + '% dari ' + n + ' = ?', correct: v,
+          explain: p + '/100 × ' + n + ' = ' + v };
       }
-      p = pick([15, 30, 40, 60]); n = pick([50, 100, 150, 200, 250]);
-      v = n * p / 100;
-      return { text: p + '% dari ' + n + ' = ?', correct: v,
-        explain: p + '/100 × ' + n + ' = ' + v };
-    }
-    if (d === 3) {
-      if (acak() < 0.5) {
+      if (r === 2) {
         b = pick([5, 6, 7, 8, 9, 10, 12]); a = ri(1, b - 2);
         var a2 = ri(1, b - a - 1);
         var num = a + a2, den = b, g = gcd(num, den);
@@ -317,16 +310,18 @@
       return { text: 'Sederhanakan ' + (s1 * k) + '/' + (s2 * k), correct: right2,
         explain: 'Bagi pembilang dan penyebut dengan ' + k + ': ' + (s1 * k) + '÷' + k + ' = ' + s1 + ', ' + (s2 * k) + '÷' + k + ' = ' + s2 };
     }
-    if (d === 4) {
-      if (acak() < 0.5) {
-        var harga = pick([80, 120, 150, 200, 240, 300, 400]) * 1000;
-        var dis1 = pick([10, 15, 20, 25, 30, 40]);
-        v = harga - harga * dis1 / 100;
-        return { text: 'Harga ' + rupiah(harga) + ' didiskon ' + dis1 + '%. Berapa harga akhirnya?',
-          correct: v, prefix: 'Rp', long: true,
-          explain: 'Potongan = ' + dis1 + '% × ' + rupiah(harga) + ' = ' + rupiah(harga * dis1 / 100) +
-            ', sisa ' + rupiah(v) };
-      }
+    /* d === 3 */
+    r = ri(1, 4);
+    if (r === 1) {
+      var harga = pick([80, 120, 150, 200, 240, 300, 400]) * 1000;
+      var dis1 = pick([10, 15, 20, 25, 30, 40]);
+      v = harga - harga * dis1 / 100;
+      return { text: 'Harga ' + rupiah(harga) + ' didiskon ' + dis1 + '%. Berapa harga akhirnya?',
+        correct: v, prefix: 'Rp', long: true,
+        explain: 'Potongan = ' + dis1 + '% × ' + rupiah(harga) + ' = ' + rupiah(harga * dis1 / 100) +
+          ', sisa ' + rupiah(v) };
+    }
+    if (r === 2) {
       var d1 = pick([2, 3, 4]), d2 = pick([5, 6, 8]);
       var pemb = ri(1, d1 - 1), pemb2 = ri(1, d2 - 1);
       var nu = pemb * d2 + pemb2 * d1, de = d1 * d2, gg = gcd(nu, de);
@@ -335,8 +330,7 @@
         explain: 'Samakan penyebut jadi ' + de + ': ' + (pemb * d2) + '/' + de + ' + ' + (pemb2 * d1) + '/' + de +
           ' = ' + nu + '/' + de + (gg > 1 ? ' = ' + res : '') };
     }
-    /* d === 5 */
-    if (acak() < 0.5) {
+    if (r === 3) {
       var modal = pick([150, 200, 250, 400, 500]) * 1000;
       var untung = pick([12, 15, 20, 25, 30]);
       v = modal + modal * untung / 100;
@@ -360,11 +354,9 @@
   function genPola(d) {
     var seq = [], v, e, i, a, b, r;
     var kind;
-    if (d <= 1) kind = pick(['tambah', 'tambah']);
-    else if (d === 2) kind = pick(['tambah', 'kurang', 'kali']);
-    else if (d === 3) kind = pick(['kali', 'kuadrat', 'naikbeda']);
-    else if (d === 4) kind = pick(['fibo', 'naikbeda', 'kuadrat', 'kali']);
-    else kind = pick(['fibo', 'selang', 'naikbeda', 'pangkat']);
+    if (d <= 1) kind = pick(['tambah', 'kurang']);
+    else if (d === 2) kind = pick(['kali', 'kuadrat', 'naikbeda']);
+    else kind = pick(['fibo', 'selang', 'naikbeda', 'pangkat', 'kuadrat']);
 
     if (kind === 'tambah') {
       a = ri(2, 12); b = ri(2, 9);
@@ -464,8 +456,6 @@
           correct: v, prefix: 'Rp', long: true,
           explain: 'Diskon = ' + rupiah(harga * disk / 100) + ', bayar = ' + rupiah(v) };
       });
-    }
-    if (d >= 3) {
       bank.push(function () {
         var umurA = ri(8, 16), selisih = ri(3, 12), thn = ri(2, 8);
         var v = umurA + selisih + thn;
@@ -482,7 +472,7 @@
           explain: 'Waktu = jarak ÷ kecepatan = ' + jarak + ' ÷ ' + kec + ' = ' + v + ' jam' };
       });
     }
-    if (d >= 4) {
+    if (d >= 3) {
       bank.push(function () {
         var pekerja = ri(3, 8), hari = ri(4, 12), tambah = ri(1, 4);
         var totalKerja = pekerja * hari;
@@ -500,8 +490,6 @@
           correct: v, prefix: 'Rp', long: true,
           explain: 'Rugi = ' + rupiah(modal * rugi / 100) + ', harga jual = ' + rupiah(v) };
       });
-    }
-    if (d >= 5) {
       bank.push(function () {
         var a = ri(2, 6), b = ri(3, 9), total = (a + b) * ri(4, 14);
         var v = total * a / (a + b);
@@ -535,7 +523,7 @@
   function one(topicId, d) {
     var id = topicId === 'campuran' ? pick(ALL) : topicId;
     var fn = GEN[id] || genKilat;
-    var raw = fn(Math.min(5, Math.max(1, d | 0)));
+    var raw = fn(Math.min(3, Math.max(1, d | 0)));
     return finalize(id, raw);
   }
 

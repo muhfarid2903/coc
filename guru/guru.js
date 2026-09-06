@@ -277,7 +277,7 @@
       return '<option value="' + t.id + '">' + t.icon + ' ' + t.name + '</option>';
     }).join('');
     var opsiLevel = D.LEVELS.map(function (l) {
-      return '<option value="' + l.d + '"' + (l.d === 2 ? ' selected' : '') + '>' + l.d + ' · ' + l.name + '</option>';
+      return '<option value="' + l.d + '"' + (l.d === 2 ? ' selected' : '') + '>' + l.name + '</option>';
     }).join('');
 
     return '<div class="card stack">' +
@@ -285,9 +285,8 @@
       ((tugas && tugas.length)
         ? '<table class="gtabel"><tbody>' + tugas.map(function (t) {
             var top = D.topic(t.topic);
-            var lv = D.LEVELS[t.level - 1];
             return '<tr>' +
-              '<td>' + top.icon + ' ' + esc(top.name) + ' · ' + esc(lv ? lv.name : t.level) +
+              '<td>' + top.icon + ' ' + esc(top.name) + ' · ' + esc(D.levelName(t.level)) +
                 '<br><small class="sunyi">' + t.target + '× main' +
                 (t.due ? ' · tenggat ' + esc(t.due) : '') +
                 (t.note ? '<br>' + esc(t.note) : '') + '</small></td>' +
@@ -379,12 +378,11 @@
       if (!r.ok) { toast(r.pesan || 'Gagal memuat rekap'); return; }
       var t = r.data.tugas;
       var top = D.topic(t.topic);
-      var lv = D.LEVELS[t.level - 1];
       var sudah = r.data.rekap.filter(function (x) { return x.selesai >= x.target; }).length;
       isi.innerHTML =
         '<button class="btn btn-ghost btn-sm" id="btnBalikDetail">‹ Kembali ke kelas</button>' +
         '<h2 class="h2" style="margin:14px 0 4px">Rekap Tugas</h2>' +
-        '<p class="sub">' + top.icon + ' ' + esc(top.name) + ' · ' + esc(lv ? lv.name : t.level) +
+        '<p class="sub">' + top.icon + ' ' + esc(top.name) + ' · ' + esc(D.levelName(t.level)) +
           ' · ' + t.target + '× main' + (t.due ? ' · tenggat ' + esc(t.due) : '') + '</p>' +
         '<div class="statgrid" style="margin:16px 0">' +
           '<div class="sbox"><span>Tuntas</span><b>' + sudah + ' / ' + r.data.rekap.length + '</b></div>' +
@@ -480,7 +478,7 @@
         return '<option value="' + t.id + '">' + t.icon + ' ' + t.name + '</option>';
       }).join('');
       var opsiLevel = D.LEVELS.map(function (l) {
-        return '<option value="' + l.d + '"' + (l.d === 2 ? ' selected' : '') + '>' + l.d + ' · ' + l.name + '</option>';
+        return '<option value="' + l.d + '"' + (l.d === 2 ? ' selected' : '') + '>' + l.name + '</option>';
       }).join('');
       return '<span class="eyebrow">Sesi Kelas Serentak</span>' +
         (s && s.tahap === 'usai' && liveSesi.papan.length

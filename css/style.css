@@ -509,9 +509,11 @@ img,svg{display:block;max-width:100%}
   box-shadow:0 0 0 2px var(--sv2),inset 0 -4px 7px rgba(0,0,0,.2),0 0 14px rgba(90,208,230,.35);
 }
 .pick:active{transform:scale(.95)}
-.lv{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.lv .pick{padding:clamp(8px,1.3vmin,11px) 4px;border-radius:11px;text-align:center;
-  font-size:clamp(9.5px,1.3vmin,11.5px)}
+/* Tiga tombol sejajar, selebar-lebarnya — satu kata per tombol, jadi
+   hurufnya boleh jauh lebih besar daripada waktu masih lima kolom. */
+.lv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lv .pick{padding:clamp(11px,1.9vmin,16px) 4px;border-radius:12px;text-align:center;
+  letter-spacing:.06em;font-size:clamp(12px,1.9vmin,15px)}
 
 /* ---------- 12. Layar jodoh (matchmaking) ---------- */
 .mm{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
