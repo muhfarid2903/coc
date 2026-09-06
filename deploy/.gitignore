@@ -1,0 +1,7 @@
+# Frasa sandi guru — hanya hidup di server.
+.env
+
+# Basis data SQLite beserta berkas WAL-nya. Ini satu-satunya direktori
+# yang perlu di-backup, dan justru yang paling tidak boleh masuk git:
+# isinya data seluruh siswa.
+data/

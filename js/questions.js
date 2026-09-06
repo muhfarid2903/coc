@@ -6,12 +6,48 @@
 (function (global) {
   'use strict';
 
+  /* ---------- sumber keacakan ----------
+     Seluruh pabrik soal menarik angka acak lewat satu pintu ini, bukan
+     Math.random langsung. Dengan begitu satu angka semai bisa membuat
+     sepuluh soal yang sama persis di perangkat mana pun — syarat mutlak
+     untuk mengadu dua siswa: skor tidak berarti apa-apa kalau soalnya
+     berbeda.
+
+     mulberry32 dipilih karena muat dalam enam baris, tidak menyimpan
+     keadaan di luar closure-nya, dan sebarannya cukup rata untuk soal
+     matematika. Ini bukan keacakan kriptografis, dan memang tidak perlu. */
+  var acak = Math.random;
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  /* Ubah teks semai apa pun menjadi bilangan 32-bit. Semai dari server
+     berupa teks (mis. "d3f1a90c"), jadi perlu diringkas dulu. */
+  function keAngka(semai) {
+    if (typeof semai === 'number') return semai | 0;
+    var h = 2166136261, t = String(semai);
+    for (var i = 0; i < t.length; i++) {
+      h ^= t.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h | 0;
+  }
+
+  function semaikan(semai) { acak = mulberry32(keAngka(semai)); }
+  function bebaskan() { acak = Math.random; }
+
   /* ---------- utilitas ---------- */
-  function ri(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+  function ri(a, b) { return Math.floor(acak() * (b - a + 1)) + a; }
   function pick(a) { return a[ri(0, a.length - 1)]; }
   function shuffle(a) {
     for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
+      var j = Math.floor(acak() * (i + 1));
       var t = a[i]; a[i] = a[j]; a[j] = t;
     }
     return a;
@@ -28,80 +64,49 @@
   }
   function rupiah(n) { return 'Rp' + fmt(n); }
 
-  /* Pengecoh numerik di sekitar jawaban benar. */
-  function near(correct, count, spread) {
-    var out = [], guard = 0;
-    spread = Math.max(2, Math.round(spread || Math.abs(correct) * 0.15) || 3);
-    while (out.length < count && guard++ < 300) {
-      var step = ri(1, spread);
-      var v = correct + (Math.random() < 0.5 ? -step : step);
-      if (Math.random() < 0.22) v = correct + (Math.random() < 0.5 ? -1 : 1) * ri(spread + 1, spread * 3);
-      if (v === correct) continue;
-      if (correct >= 0 && v < 0) continue;
-      if (out.indexOf(v) !== -1) continue;
-      out.push(v);
-    }
-    var extra = 1;
-    while (out.length < count) {
-      var f = correct + extra * (correct >= 0 ? 1 : -1) + count;
-      if (f !== correct && out.indexOf(f) === -1) out.push(f);
-      extra++;
-      if (extra > 60) break;
-    }
-    return out;
-  }
+  /* Bungkus mentahan generator jadi soal siap tampil.
 
-  /* Pengecoh uang: dibulatkan ke kelipatan agar tetap terlihat wajar. */
-  function nearMoney(correct, count) {
-    var mag = Math.pow(10, Math.max(3, String(Math.round(correct)).length - 2));
-    var step = Math.max(500, Math.round(correct * 0.08 / mag) * mag || mag);
-    var out = [], guard = 0;
-    while (out.length < count && guard++ < 200) {
-      var v = correct + (Math.random() < 0.5 ? -1 : 1) * ri(1, 4) * step;
-      if (v === correct || v <= 0 || out.indexOf(v) !== -1) continue;
-      out.push(v);
-    }
-    var k = 1;
-    while (out.length < count && k < 30) {
-      var f = correct + k * step;
-      if (out.indexOf(f) === -1) out.push(f);
-      k++;
-    }
-    return out;
-  }
-
-  /* Bungkus mentahan generator jadi soal siap tampil. */
+     Jawabannya disimpan dalam dua bentuk. `answer` untuk dibaca manusia:
+     lengkap dengan "Rp", satuan, dan titik ribuan. `ketik` untuk
+     dibandingkan dengan yang diketik siswa: tanpa hiasan itu semua,
+     karena awalan dan satuan sudah tercetak tetap di kiri-kanan papan
+     angka — tidak pernah ada yang mengetiknya. */
   function finalize(topic, raw) {
     var unit = raw.unit || '', pre = raw.prefix || '';
-    var label = function (v) { return pre + (typeof v === 'number' ? fmt(v) : String(v)) + unit; };
-    var right = label(raw.correct);
-    var seen = {}; seen[right] = 1;
-    var opts = [right];
-    for (var i = 0; i < raw.dis.length && opts.length < 4; i++) {
-      var s = label(raw.dis[i]);
-      if (seen[s]) continue;
-      seen[s] = 1; opts.push(s);
-    }
-    /* Jaring pengaman bila pengecoh bentrok setelah diformat. */
-    var bump = 1, frac = /^(-?\d+)\/(\d+)$/.exec(String(raw.correct));
-    while (opts.length < 4 && bump < 80) {
-      var s2;
-      if (typeof raw.correct === 'number') s2 = label(raw.correct + bump);
-      else if (frac) s2 = pre + (parseInt(frac[1], 10) + bump) + '/' + frac[2] + unit;
-      else s2 = String(raw.correct) + ' \u00b7' + bump;
-      if (!seen[s2]) { seen[s2] = 1; opts.push(s2); }
-      bump++;
-    }
-    var order = shuffle(opts.slice());
+    var teks = typeof raw.correct === 'number' ? fmt(raw.correct) : String(raw.correct);
     return {
       topic: topic,
       text: raw.text,
       long: !!raw.long,
-      options: order,
-      correct: order.indexOf(right),
-      answer: right,
+      prefix: pre,
+      unit: unit,
+      ketik: teks.replace(/\./g, ''),
+      answer: pre + teks + unit,
       explain: raw.explain || ''
     };
+  }
+
+  /* Angka Indonesia jadi bilangan: "1.215" -> 1215, "7,5" -> 7,5.
+     Pecahan sengaja ditolak (mengembalikan null) — lihat cocok(). */
+  function keBilangan(s) {
+    var t = String(s).replace(/\./g, '');
+    if (!/^-?\d+(,\d+)?$/.test(t)) return null;
+    return parseFloat(t.replace(',', '.'));
+  }
+
+  /* Apakah ketikan siswa sama dengan jawaban soal?
+
+     Dibandingkan sebagai bilangan lebih dulu, supaya "07" dan "7,50"
+     tetap diterima — siswa tidak boleh kehilangan poin gara-gara nol di
+     depan. Pecahan justru dibandingkan sebagai teks: pada soal
+     "Sederhanakan 8/14", jawaban "8/14" bernilai sama tetapi belum
+     dikerjakan, jadi memang tidak boleh lolos. */
+  function cocok(ketikan, q) {
+    var a = String(ketikan == null ? '' : ketikan).trim().replace(/\./g, '');
+    if (!a) return false;
+    if (a === q.ketik) return true;
+    var na = keBilangan(a), nb = keBilangan(q.ketik);
+    return na !== null && nb !== null && Math.abs(na - nb) < 1e-9;
   }
 
   /* ============================================================
@@ -110,7 +115,7 @@
   function genKilat(d) {
     var a, b, c, v, t, e;
     if (d <= 1) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         a = ri(4, 25); b = ri(3, 20); v = a + b;
         t = a + ' + ' + b; e = a + ' + ' + b + ' = ' + v;
       } else {
@@ -138,7 +143,7 @@
       else if (r5 === 2) { a = ri(20, 60); b = ri(3, 9); c = ri(3, 9); v = a + b * c; t = a + ' + ' + b + ' × ' + c; e = 'Perkalian didahulukan: ' + b + ' × ' + c + ' = ' + (b * c) + ', lalu + ' + a + ' = ' + v; }
       else { b = ri(4, 12); v = ri(6, 20); a = b * v; c = ri(3, 15); t = a + ' ÷ ' + b + ' + ' + c; v = v + c; e = a + ' ÷ ' + b + ' = ' + (v - c) + ', lalu + ' + c + ' = ' + v; }
     }
-    return { text: t + ' = ?', correct: v, dis: near(v, 3, Math.max(3, Math.round(Math.abs(v) * 0.18))), explain: e };
+    return { text: t + ' = ?', correct: v, explain: e };
   }
 
   /* ============================================================
@@ -162,7 +167,7 @@
       t = a + 'x + ' + b + ' = ' + c + 'x + ' + dd;
       e = 'Pindahkan: ' + (a - c) + 'x = ' + dd + ' − ' + b + ' = ' + ((a - c) * x) + ', jadi x = ' + x;
     } else {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         x = ri(2, 10); a = ri(2, 7); b = ri(1, 9); c = a * (x + b);
         t = a + '(x + ' + b + ') = ' + c;
         e = 'x + ' + b + ' = ' + c + ' ÷ ' + a + ' = ' + (x + b) + ', jadi x = ' + x;
@@ -174,7 +179,7 @@
         e = 'x/' + a + ' = ' + c + ' − ' + b + ' = ' + (x / a) + ', jadi x = ' + (x / a) + ' × ' + a + ' = ' + x;
       }
     }
-    return { text: t, correct: x, dis: near(x, 3, Math.max(2, Math.round(Math.abs(x) * 0.4) || 3)), explain: e };
+    return { text: t, correct: x, explain: e };
   }
 
   /* ============================================================
@@ -272,7 +277,6 @@
     }
 
     var raw = pick(bank)();
-    raw.dis = near(raw.correct, 3, Math.max(3, Math.round(raw.correct * 0.2)));
     return raw;
   }
 
@@ -284,44 +288,42 @@
     if (d <= 1) {
       p = pick([10, 20, 25, 50, 75]); n = pick([40, 60, 80, 100, 120, 200]);
       v = n * p / 100;
-      return { text: p + '% dari ' + n + ' = ?', correct: v, dis: near(v, 3, Math.max(3, v * 0.3)),
+      return { text: p + '% dari ' + n + ' = ?', correct: v,
         explain: p + '% × ' + n + ' = ' + fmt(p / 100) + ' × ' + n + ' = ' + v };
     }
     if (d === 2) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         b = pick([2, 3, 4, 5]); n = b * ri(4, 20); v = n / b;
-        return { text: '1/' + b + ' dari ' + n + ' = ?', correct: v, dis: near(v, 3, Math.max(2, v * 0.4)),
+        return { text: '1/' + b + ' dari ' + n + ' = ?', correct: v,
           explain: n + ' ÷ ' + b + ' = ' + v };
       }
       p = pick([15, 30, 40, 60]); n = pick([50, 100, 150, 200, 250]);
       v = n * p / 100;
-      return { text: p + '% dari ' + n + ' = ?', correct: v, dis: near(v, 3, Math.max(3, v * 0.3)),
+      return { text: p + '% dari ' + n + ' = ?', correct: v,
         explain: p + '/100 × ' + n + ' = ' + v };
     }
     if (d === 3) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         b = pick([5, 6, 7, 8, 9, 10, 12]); a = ri(1, b - 2);
         var a2 = ri(1, b - a - 1);
         var num = a + a2, den = b, g = gcd(num, den);
         var right = (num / g) + '/' + (den / g);
-        var wrong = [ num + '/' + (den * 2), (num + 1) + '/' + den, (num > 1 ? num - 1 : num + 2) + '/' + den ];
-        return { text: a + '/' + b + ' + ' + a2 + '/' + b + ' = ?', correct: right, dis: wrong,
+        return { text: a + '/' + b + ' + ' + a2 + '/' + b + ' = ?', correct: right,
           explain: 'Penyebut sama: (' + a + ' + ' + a2 + ')/' + b + ' = ' + num + '/' + den +
             (g > 1 ? ' disederhanakan jadi ' + right : '') };
       }
       var k = ri(2, 9); var s1 = ri(1, 6); var s2 = s1 + ri(1, 5);
       var right2 = s1 + '/' + s2;
       return { text: 'Sederhanakan ' + (s1 * k) + '/' + (s2 * k), correct: right2,
-        dis: [ (s1 * k) + '/' + s2, s1 + '/' + (s2 * k), (s1 + 1) + '/' + s2 ],
         explain: 'Bagi pembilang dan penyebut dengan ' + k + ': ' + (s1 * k) + '÷' + k + ' = ' + s1 + ', ' + (s2 * k) + '÷' + k + ' = ' + s2 };
     }
     if (d === 4) {
-      if (Math.random() < 0.5) {
+      if (acak() < 0.5) {
         var harga = pick([80, 120, 150, 200, 240, 300, 400]) * 1000;
         var dis1 = pick([10, 15, 20, 25, 30, 40]);
         v = harga - harga * dis1 / 100;
         return { text: 'Harga ' + rupiah(harga) + ' didiskon ' + dis1 + '%. Berapa harga akhirnya?',
-          correct: v, prefix: 'Rp', dis: nearMoney(v, 3), long: true,
+          correct: v, prefix: 'Rp', long: true,
           explain: 'Potongan = ' + dis1 + '% × ' + rupiah(harga) + ' = ' + rupiah(harga * dis1 / 100) +
             ', sisa ' + rupiah(v) };
       }
@@ -330,17 +332,16 @@
       var nu = pemb * d2 + pemb2 * d1, de = d1 * d2, gg = gcd(nu, de);
       var res = (nu / gg) + '/' + (de / gg);
       return { text: pemb + '/' + d1 + ' + ' + pemb2 + '/' + d2 + ' = ?', correct: res,
-        dis: [ (pemb + pemb2) + '/' + (d1 + d2), nu + '/' + (de + d1), (nu / gg + 1) + '/' + (de / gg) ],
         explain: 'Samakan penyebut jadi ' + de + ': ' + (pemb * d2) + '/' + de + ' + ' + (pemb2 * d1) + '/' + de +
           ' = ' + nu + '/' + de + (gg > 1 ? ' = ' + res : '') };
     }
     /* d === 5 */
-    if (Math.random() < 0.5) {
+    if (acak() < 0.5) {
       var modal = pick([150, 200, 250, 400, 500]) * 1000;
       var untung = pick([12, 15, 20, 25, 30]);
       v = modal + modal * untung / 100;
       return { text: 'Modal ' + rupiah(modal) + ' dijual untung ' + untung + '%. Berapa harga jualnya?',
-        correct: v, prefix: 'Rp', dis: nearMoney(v, 3), long: true,
+        correct: v, prefix: 'Rp', long: true,
         explain: 'Untung = ' + untung + '% × ' + rupiah(modal) + ' = ' + rupiah(modal * untung / 100) +
           ', harga jual = ' + rupiah(v) };
     }
@@ -349,7 +350,7 @@
     var stg = awal * (100 - pot1) / 100;
     v = stg * (100 - pot2) / 100;
     return { text: 'Harga ' + rupiah(awal) + ' didiskon ' + pot1 + '% lalu ' + pot2 + '% lagi. Harga akhir?',
-      correct: v, prefix: 'Rp', dis: [ awal * (100 - pot1 - pot2) / 100, stg, awal - awal * pot2 / 100 ], long: true,
+      correct: v, prefix: 'Rp', long: true,
       explain: 'Diskon bertingkat dihitung berurutan: ' + rupiah(awal) + ' → ' + rupiah(stg) + ' → ' + rupiah(v) };
   }
 
@@ -405,7 +406,6 @@
     return {
       text: seq.map(fmt).join(', ') + ', ...',
       correct: v,
-      dis: near(v, 3, Math.max(2, Math.round(Math.abs(v) * 0.2))),
       explain: e
     };
   }
@@ -421,7 +421,7 @@
     bank.push(function () {
       var h = pick([2500, 3000, 4500, 5000, 7500]), q = ri(3, 12), v = h * q;
       return { text: n1 + ' membeli ' + q + ' buku tulis seharga ' + rupiah(h) + ' per buah. Berapa total belanjanya?',
-        correct: v, prefix: 'Rp', dis: nearMoney(v, 3),
+        correct: v, prefix: 'Rp',
         explain: q + ' × ' + rupiah(h) + ' = ' + rupiah(v) };
     });
     bank.push(function () {
@@ -430,20 +430,20 @@
       if (bayar <= total) bayar = Math.ceil(total / 50000) * 50000 + 50000;
       var v = bayar - total;
       return { text: n1 + ' membeli ' + q + ' porsi bakso @ ' + rupiah(h) + ' dan membayar ' + rupiah(bayar) + '. Berapa kembaliannya?',
-        correct: v, prefix: 'Rp', dis: nearMoney(v, 3), long: true,
+        correct: v, prefix: 'Rp', long: true,
         explain: 'Total = ' + rupiah(total) + '. Kembalian = ' + rupiah(bayar) + ' − ' + rupiah(total) + ' = ' + rupiah(v) };
     });
     bank.push(function () {
       var v0 = pick([40, 50, 60, 72, 80]), t = ri(2, 5), v = v0 * t;
       return { text: 'Sebuah mobil melaju ' + v0 + ' km/jam selama ' + t + ' jam. Berapa jarak yang ditempuh?',
-        correct: v, unit: ' km', dis: near(v, 3, Math.round(v * 0.2)),
+        correct: v, unit: ' km',
         explain: 'Jarak = kecepatan × waktu = ' + v0 + ' × ' + t + ' = ' + v + ' km' };
     });
     bank.push(function () {
       var total = ri(4, 12) * ri(3, 9), org = 0, per = 0;
       org = pick([3, 4, 5, 6]); per = ri(4, 15); total = org * per;
       return { text: total + ' permen dibagi rata kepada ' + org + ' anak. Berapa permen tiap anak?',
-        correct: per, dis: near(per, 3, Math.max(2, Math.round(per * 0.5))),
+        correct: per,
         explain: total + ' ÷ ' + org + ' = ' + per };
     });
     if (d >= 2) {
@@ -454,14 +454,14 @@
         if (sisa !== 0) { vals[0] += (n - sisa); sum += (n - sisa); }
         var v = sum / n;
         return { text: 'Nilai ulangan ' + n1 + ': ' + vals.join(', ') + '. Berapa rata-ratanya?',
-          correct: v, dis: near(v, 3, 6), long: true,
+          correct: v, long: true,
           explain: 'Jumlah = ' + sum + ', dibagi ' + n + ' = ' + v };
       });
       bank.push(function () {
         var harga = pick([60, 80, 120, 150, 250]) * 1000, disk = pick([10, 20, 25, 50]);
         var v = harga - harga * disk / 100;
         return { text: n1 + ' membeli sepatu ' + rupiah(harga) + ' dengan diskon ' + disk + '%. Berapa yang dibayar?',
-          correct: v, prefix: 'Rp', dis: nearMoney(v, 3), long: true,
+          correct: v, prefix: 'Rp', long: true,
           explain: 'Diskon = ' + rupiah(harga * disk / 100) + ', bayar = ' + rupiah(v) };
       });
     }
@@ -470,7 +470,7 @@
         var umurA = ri(8, 16), selisih = ri(3, 12), thn = ri(2, 8);
         var v = umurA + selisih + thn;
         return { text: 'Umur ' + n1 + ' sekarang ' + umurA + ' tahun. ' + n2 + ' ' + selisih + ' tahun lebih tua. Berapa umur ' + n2 + ' ' + thn + ' tahun lagi?',
-          correct: v, unit: ' tahun', dis: near(v, 3, 5), long: true,
+          correct: v, unit: ' tahun', long: true,
           explain: 'Umur ' + n2 + ' sekarang = ' + umurA + ' + ' + selisih + ' = ' + (umurA + selisih) + ', ditambah ' + thn + ' tahun = ' + v };
       });
       bank.push(function () {
@@ -478,7 +478,7 @@
         while (jarak % kec !== 0) jarak = kec * ri(2, 6);
         var v = jarak / kec;
         return { text: 'Jarak ' + jarak + ' km ditempuh dengan kecepatan ' + kec + ' km/jam. Berapa lama perjalanannya?',
-          correct: v, unit: ' jam', dis: near(v, 3, Math.max(1, Math.round(v * 0.6))), long: true,
+          correct: v, unit: ' jam', long: true,
           explain: 'Waktu = jarak ÷ kecepatan = ' + jarak + ' ÷ ' + kec + ' = ' + v + ' jam' };
       });
     }
@@ -490,14 +490,14 @@
         while (totalKerja % baru !== 0) { hari++; totalKerja = pekerja * hari; }
         var v = totalKerja / baru;
         return { text: 'Sebuah pekerjaan selesai dalam ' + hari + ' hari oleh ' + pekerja + ' orang. Jika dikerjakan ' + baru + ' orang, berapa hari selesainya?',
-          correct: v, unit: ' hari', dis: near(v, 3, Math.max(1, Math.round(v * 0.5))), long: true,
+          correct: v, unit: ' hari', long: true,
           explain: 'Total beban = ' + pekerja + ' × ' + hari + ' = ' + totalKerja + ' hari-orang, dibagi ' + baru + ' orang = ' + v + ' hari' };
       });
       bank.push(function () {
         var modal = pick([250, 400, 600, 800]) * 1000, rugi = pick([10, 15, 20, 25]);
         var v = modal - modal * rugi / 100;
         return { text: 'Barang bermodal ' + rupiah(modal) + ' dijual rugi ' + rugi + '%. Berapa harga jualnya?',
-          correct: v, prefix: 'Rp', dis: nearMoney(v, 3), long: true,
+          correct: v, prefix: 'Rp', long: true,
           explain: 'Rugi = ' + rupiah(modal * rugi / 100) + ', harga jual = ' + rupiah(v) };
       });
     }
@@ -506,14 +506,14 @@
         var a = ri(2, 6), b = ri(3, 9), total = (a + b) * ri(4, 14);
         var v = total * a / (a + b);
         return { text: 'Uang ' + rupiah(total * 1000) + ' dibagi ' + n1 + ' dan ' + n2 + ' dengan perbandingan ' + a + ' : ' + b + '. Berapa bagian ' + n1 + '?',
-          correct: v * 1000, prefix: 'Rp', dis: nearMoney(v * 1000, 3), long: true,
+          correct: v * 1000, prefix: 'Rp', long: true,
           explain: 'Bagian ' + n1 + ' = ' + a + '/' + (a + b) + ' × ' + rupiah(total * 1000) + ' = ' + rupiah(v * 1000) };
       });
       bank.push(function () {
         var tabung = pick([500, 800, 1200]) * 1000, bunga = pick([6, 8, 10, 12]), bulan = pick([6, 9, 12]);
         var v = tabung + tabung * bunga / 100 * bulan / 12;
         return { text: 'Tabungan ' + rupiah(tabung) + ' berbunga ' + bunga + '% per tahun. Berapa saldonya setelah ' + bulan + ' bulan?',
-          correct: v, prefix: 'Rp', dis: nearMoney(v, 3), long: true,
+          correct: v, prefix: 'Rp', long: true,
           explain: 'Bunga = ' + bunga + '% × ' + rupiah(tabung) + ' × ' + bulan + '/12 = ' + rupiah(tabung * bunga / 100 * bulan / 12) + ', saldo = ' + rupiah(v) };
       });
     }
@@ -552,5 +552,19 @@
     return out;
   }
 
-  global.COC_Q = { one: one, pack: pack, fmt: fmt, ri: ri, pick: pick, shuffle: shuffle };
+  /* Satu set soal yang bisa diulang. Tanpa `semai`, hasilnya acak seperti
+     dulu; dengan `semai`, dua perangkat mendapat sepuluh soal identik.
+     Keadaan acaknya selalu dikembalikan ke Math.random setelah selesai,
+     supaya set bersemai tidak diam-diam menentukan set berikutnya. */
+  function packSemai(n, topic, level, semai) {
+    if (semai == null) return pack(n, topic, level);
+    semaikan(semai);
+    try { return pack(n, topic, level); }
+    finally { bebaskan(); }
+  }
+
+  global.COC_Q = {
+    one: one, pack: pack, packSemai: packSemai, fmt: fmt, cocok: cocok,
+    ri: ri, pick: pick, shuffle: shuffle
+  };
 })(window);

@@ -6,14 +6,18 @@
 
   /* Tingkatan pemain. minXp menaik; tingkat terakhir tanpa batas atas. */
   var TIERS = [
-    { id: 'perunggu', name: 'Perunggu',  icon: '🥉', minXp: 0,    color: '#c98a52' },
-    { id: 'perak',    name: 'Perak',     icon: '🥈', minXp: 600,  color: '#c9d3ee' },
-    { id: 'emas',     name: 'Emas',      icon: '🥇', minXp: 1600, color: '#ffc53d' },
-    { id: 'platina',  name: 'Platina',   icon: '💠', minXp: 3200, color: '#31e1ff' },
-    { id: 'berlian',  name: 'Berlian',   icon: '💎', minXp: 5600, color: '#7cf5c8' },
-    { id: 'juara',    name: 'Sang Juara', icon: '👑', minXp: 9000, color: '#ff9f1c' }
+    { id: 'perunggu', name: 'Perunggu',  icon: '🥉', minXp: 0,    color: '#d3a06a' },
+    { id: 'perak',    name: 'Perak',     icon: '🥈', minXp: 600,  color: '#dbe5ef' },
+    { id: 'emas',     name: 'Emas',      icon: '🥇', minXp: 1600, color: '#e8b84b' },
+    { id: 'platina',  name: 'Platina',   icon: '💠', minXp: 3200, color: '#5ad0e6' },
+    { id: 'berlian',  name: 'Berlian',   icon: '💎', minXp: 5600, color: '#a9e9ff' },
+    { id: 'juara',    name: 'Sang Juara', icon: '👑', minXp: 9000, color: '#f0a05c' }
   ];
 
+  /* Kembar dengan AVATAR di server/db.js, yang memakainya untuk memberi
+     avatar awal acak tiap siswa baru. Keduanya harus tetap sama isinya:
+     avatar dari server yang tidak ada di sini akan membuat seorang siswa
+     melihat avatarnya sendiri hilang dari kisi pilihan. */
   var AVATARS = [
     '🦊', '🐼', '🦉', '🐯', '🦁', '🐨',
     '🐺', '🦄', '🐸', '🦖', '🐙', '🦈',
@@ -24,25 +28,25 @@
   var TOPICS = [
     { id: 'kilat',    name: 'Hitung Kilat',    icon: '⚡', time: 13,
       desc: 'Tambah, kurang, kali, bagi — adu kecepatan',
-      grad: 'linear-gradient(135deg,#ffe08a,#ffc53d,#ff9f1c)', color: '#ffc53d' },
+      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#f8e5ad,#e8b84b 50%,#b7862a)', color: '#e8b84b' },
     { id: 'aljabar',  name: 'Duel Aljabar',    icon: '🧮', time: 22,
       desc: 'Cari nilai x sebelum waktu habis',
-      grad: 'linear-gradient(135deg,#a6c0ff,#4d7cff,#2f5ce0)', color: '#4d7cff' },
+      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cfe0ff,#7f9ff0 50%,#3a5cb8)', color: '#7f9ff0' },
     { id: 'geometri', name: 'Serbu Geometri',  icon: '📐', time: 26,
       desc: 'Luas, keliling, dan volume bangun',
-      grad: 'linear-gradient(135deg,#c8a6ff,#9b6bff,#6a3fd6)', color: '#9b6bff' },
+      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#ddd0ff,#a888ec 50%,#6a45c0)', color: '#a888ec' },
     { id: 'pecahan',  name: 'Pecahan & Persen', icon: '🍕', time: 22,
       desc: 'Potongan harga, rasio, dan pecahan',
-      grad: 'linear-gradient(135deg,#ffb3cd,#ff5fa2,#e0257f)', color: '#ff5fa2' },
+      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#ffd0e0,#f07aa8 50%,#b8306a)', color: '#f07aa8' },
     { id: 'pola',     name: 'Baca Pola',       icon: '🔢', time: 22,
       desc: 'Tebak angka berikutnya dalam deret',
-      grad: 'linear-gradient(135deg,#8ff5d5,#2ee6a0,#12b981)', color: '#2ee6a0' },
+      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#b6e88a,#77c341 50%,#4b8f1c)', color: '#77c341' },
     { id: 'cerita',   name: 'Soal Cerita',     icon: '📖', time: 34,
       desc: 'Cerita sehari-hari yang perlu dihitung',
-      grad: 'linear-gradient(135deg,#7ee8f5,#31e1ff,#1195c4)', color: '#31e1ff' },
+      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cdeefb,#7fd3f0 50%,#42aad4)', color: '#5ad0e6' },
     { id: 'campuran', name: 'Serba-serbi',     icon: '🎲', time: 24,
       desc: 'Semua topik diacak jadi satu',
-      grad: 'linear-gradient(135deg,#ffd08a,#ff8a5c,#f2542d)', color: '#ff8a5c' }
+      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#ffdcb0,#f0a05c 50%,#b85f22)', color: '#f0a05c' }
   ];
 
   var LEVELS = [

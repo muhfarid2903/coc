@@ -8,6 +8,15 @@
   var D = global.COC_DATA, Q = global.COC_Q;
   var KEY = 'coc.profil.v1';
 
+  /* net.js boleh tidak ada sama sekali (mis. berkas dibuka langsung dari
+     disk). Semua panggilan ke NET karena itu dijaga oleh `punyaNet()`. */
+  function NET() { return global.COC_NET; }
+  function punyaNet() { var n = NET(); return n && n.mode === 'kelas'; }
+
+  /* Saat profil dari server diadopsi, save() tidak boleh mengirimnya
+     balik — itu hanya menaikkan versi tanpa mengubah apa pun. */
+  var jangan_dorong = false;
+
   function today() {
     var d = new Date();
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
@@ -37,8 +46,25 @@
     } catch (e) { return null; }
   }
 
+  /* localStorage tetap jadi sumber utama saat bermain: cepat, dan membuat
+     permainan tidak tersendat kalau jaringan sekolah putus di tengah duel.
+     Server hanya menerima salinannya, tertunda dan disatukan di net.js. */
   function save() {
     try { global.localStorage.setItem(KEY, JSON.stringify(P)); } catch (e) { /* mode privat */ }
+    if (!jangan_dorong && punyaNet()) NET().dorongProfil(P);
+    return P;
+  }
+
+  /* Pakai profil dari server apa adanya — dipanggil setelah siswa masuk
+     kelas, atau setelah perangkat lain menyimpan lebih dulu. */
+  function adopsi(data) {
+    if (!data || typeof data !== 'object') return P;
+    var base = blank();
+    for (var k in base) if (Object.prototype.hasOwnProperty.call(base, k) && data[k] !== undefined) base[k] = data[k];
+    P = base;
+    jangan_dorong = true;
+    try { save(); } finally { jangan_dorong = false; }
+    syncQuests(); syncBoard();
     return P;
   }
 
@@ -165,6 +191,18 @@
     if (r.result === 'win') bump('win', 1);
 
     save();
+
+    /* Dicatat terurai di server, terpisah dari blob profil: dasbor guru
+       perlu menjawab "kelas ini lemah di topik apa", dan itu tidak bisa
+       dihitung dari satu JSON profil tanpa memindai semuanya. */
+    if (punyaNet()) {
+      NET().catatMain({
+        topic: r.topic, level: r.level, mode: r.mode,
+        correct: r.correct, total: r.total, score: r.myScore,
+        result: r.result, msAvg: r.msAvg || null
+      });
+    }
+
     return {
       naikTingkat: tierAfter.id !== tierBefore.id ? tierAfter : null,
       lencanaBaru: checkBadges()
@@ -195,7 +233,7 @@
   function reset() { P = blank(); syncQuests(); syncBoard(); save(); return P; }
 
   global.COC_STORE = {
-    load: load, save: save, reset: reset,
+    load: load, save: save, reset: reset, adopsi: adopsi,
     get p() { return P; },
     quests: syncQuests, questDef: questDef, bump: bump, claim: claim,
     leaderboard: leaderboard, myRank: myRank,

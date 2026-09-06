@@ -1,0 +1,14 @@
+{
+  "name": "coc-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API kelas untuk COC — identitas siswa, papan peringkat sekelas, dan dasbor guru",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "sandi": "node hash-passphrase.js"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
