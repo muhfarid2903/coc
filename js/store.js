@@ -35,7 +35,7 @@
          kehilangan medan saat dimuat. */
       flawless: 0, hardClear: 0, high: 0,
       badges: [], sound: true,
-      quests: null, board: null, boardDay: '',
+      quests: null,
       history: []
     };
   }
@@ -69,7 +69,7 @@
     P = base;
     jangan_dorong = true;
     try { save(); } finally { jangan_dorong = false; }
-    syncQuests(); syncBoard();
+    syncQuests();
     return P;
   }
 
@@ -126,37 +126,6 @@
     });
     if (got) save();
     return got;
-  }
-
-  /* ---------- Papan peringkat ---------- */
-  function seedBoard() {
-    return D.RIVALS.map(function (r) {
-      return { name: r.name, ava: r.ava, xp: Math.round(r.skill * 6200 + Q.ri(-450, 450)) };
-    });
-  }
-
-  /* Bot ikut naik XP tiap hari supaya papan terasa hidup. */
-  function syncBoard() {
-    if (!P.board || !P.board.length) { P.board = seedBoard(); P.boardDay = today(); save(); return; }
-    if (P.boardDay !== today()) {
-      P.board.forEach(function (b) { b.xp += Q.ri(20, 160); });
-      P.boardDay = today();
-      save();
-    }
-  }
-
-  function leaderboard() {
-    syncBoard();
-    var rows = P.board.map(function (b) { return { name: b.name, ava: b.ava, xp: b.xp, me: false }; });
-    rows.push({ name: P.name || 'Kamu', ava: P.ava, xp: P.xp, me: true });
-    rows.sort(function (a, b) { return b.xp - a.xp; });
-    return rows;
-  }
-
-  function myRank() {
-    var rows = leaderboard();
-    for (var i = 0; i < rows.length; i++) if (rows[i].me) return i + 1;
-    return rows.length;
   }
 
   /* ---------- Lencana ---------- */
@@ -240,17 +209,16 @@
     } else {
       P = blank();
     }
-    syncQuests(); syncBoard();
+    syncQuests();
     return P;
   }
 
-  function reset() { P = blank(); syncQuests(); syncBoard(); save(); return P; }
+  function reset() { P = blank(); syncQuests(); save(); return P; }
 
   global.COC_STORE = {
     load: load, save: save, reset: reset, adopsi: adopsi,
     get p() { return P; },
     quests: syncQuests, questDef: questDef, bump: bump, claim: claim,
-    leaderboard: leaderboard, myRank: myRank,
     record: record, trophy: trophy, spend: spend, checkBadges: checkBadges,
     today: today
   };

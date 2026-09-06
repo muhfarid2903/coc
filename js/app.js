@@ -214,16 +214,16 @@
   /* ============================================================
      Layar: Arena (beranda)
      ============================================================ */
-  /* Baris papan peringkat untuk layar beranda: teman sekelas kalau sudah
-     masuk kelas, penghuni papan bawaan kalau belum. Bentuk keluarannya sama,
-     sehingga rankList() dan podBox() tidak perlu tahu bedanya. */
+  /* Baris papan peringkat: hanya teman sekelas sungguhan. Di luar kelas
+     papannya memang kosong — dulu ia diisi dua belas nama karangan, dan
+     peringkat di antara nama karangan tidak mengukur apa pun. */
   function barisPapan() {
     if (NET.mode === 'kelas' && NET.papan) {
       return NET.papan.map(function (x) {
         return { name: x.nama, ava: x.ava, xp: x.xp, me: x.aku };
       });
     }
-    return S.leaderboard();
+    return [];
   }
 
   function peringkatku(rows) {
@@ -235,11 +235,10 @@
     var p = S.p;
     var akurasi = p.totalAnswered ? Math.round(p.totalCorrect / p.totalAnswered * 100) : 0;
     var papan = barisPapan();
-    /* Sebelum papan kelas sempat termuat, peringkat sengaja dikosongkan
-       daripada menampilkan angka dari papan bot yang sama sekali tidak
-       ada hubungannya dengan kelasnya. */
-    var belumTahu = NET.mode === 'kelas' && !NET.papan;
-    var rank = belumTahu ? '–' : peringkatku(papan);
+    /* Peringkat hanya punya arti kalau ada orang lain di papannya: sebelum
+       papan kelas termuat, dan di luar kelas sama sekali, ia dikosongkan. */
+    var adaPapan = papan.length > 1;
+    var rank = adaPapan ? peringkatku(papan) : '–';
     var qs = S.quests();
     var siapKlaim = qs.list.filter(function (q) {
       var def = S.questDef(q.id); return def && !q.claimed && q.prog >= def.goal;
@@ -259,7 +258,7 @@
         '<div class="hero-stats">' +
           '<div class="hstat"><b>' + fmt(p.wins) + '</b><span>Tuntas</span></div>' +
           '<div class="hstat"><b>' + akurasi + '%</b><span>Akurasi</span></div>' +
-          '<div class="hstat"><b>' + (belumTahu ? '–' : '#' + rank) + '</b><span>Peringkat</span></div>' +
+          '<div class="hstat"><b>' + (adaPapan ? '#' + rank : '–') + '</b><span>Peringkat</span></div>' +
         '</div>' +
       '</section>' +
 
@@ -277,9 +276,11 @@
         '<button class="link" data-act="tab" data-val="quest">Lihat semua' + (siapKlaim ? ' (' + siapKlaim + ')' : '') + '</button></div>' +
       questList(qs.list.slice(0, 2)) +
 
-      '<div class="sect"><h2 class="h2">📊 Papan Peringkat</h2>' +
-        '<button class="link" data-act="tab" data-val="rank">Selengkapnya</button></div>' +
-      rankList(papan.slice(0, 3), 1) +
+      (papan.length
+        ? '<div class="sect"><h2 class="h2">📊 Papan Peringkat</h2>' +
+          '<button class="link" data-act="tab" data-val="rank">Selengkapnya</button></div>' +
+          rankList(papan.slice(0, 3), 1)
+        : '') +
 
       '<div class="sect"><h2 class="h2">📜 Permainan Terakhir</h2></div>' +
       historyList(p.history.slice(0, 3)) +
@@ -454,24 +455,28 @@
       return;
     }
 
-    var rows = S.leaderboard();
-    var top = rows.slice(0, 3);
+    /* Di luar kelas tidak ada siapa-siapa untuk diperingkatkan. Daripada
+       memajang papan berisi satu nama — atau nama karangan seperti dulu —
+       layar ini menjelaskan apa yang membuatnya terisi. */
     scr.innerHTML =
       '<div class="sect" style="margin-top:2px"><h1 class="h1">📊 Papan Peringkat</h1></div>' +
-      '<p class="sub" style="margin-top:-6px">Poin pengalaman (XP) menentukan urutan.</p>' +
+      '<p class="sub" style="margin-top:-6px">Berisi teman sekelasmu, diurutkan menurut XP.</p>' +
+      '<div class="empty" style="margin-top:14px"><i>🏫</i>' +
+        'Papan peringkat baru terisi<br/>setelah kamu masuk kelas.</div>' +
       (NET.mode === 'tamu'
         ? '<div class="card ajak" style="margin-top:12px">' +
-            '<p class="sub">Nama-nama ini bawaan aplikasi. Masuk kelas supaya papan ini berisi teman sekelasmu sungguhan.</p>' +
+            '<p class="sub">Minta kode kelas ke gurumu, lalu masuk supaya progresmu tersimpan ' +
+            'dan kamu muncul di papan peringkat kelas.</p>' +
             '<button class="btn btn-sm" data-act="keMasuk" style="margin-top:10px">🏫 Masuk Kelas</button>' +
           '</div>'
-        : '') +
-      '<div class="card" style="margin-top:14px">' +
-        '<div class="podium">' +
-          podBox(top[1], 2) + podBox(top[0], 1) + podBox(top[2], 3) +
-        '</div>' +
-      '</div>' +
-      '<div class="sect"><span class="eyebrow">Klasemen Lengkap</span></div>' +
-      rankList(rows, 1);
+        : '<p class="sub" style="margin-top:12px">Aplikasi ini sedang berjalan tanpa server kelas, ' +
+          'jadi papan peringkat tidak tersedia.</p>') +
+
+      '<div class="sect"><span class="eyebrow">Catatanmu Sendiri</span></div>' +
+      '<div class="statgrid">' +
+        '<div class="sbox"><span>XP</span><b>' + fmt(S.p.xp) + '</b></div>' +
+        '<div class="sbox"><span>Skor Tertinggi</span><b>' + fmt(S.p.high || 0) + '</b></div>' +
+      '</div>';
   };
 
   function kepalaPeringkat(namaKelas) {

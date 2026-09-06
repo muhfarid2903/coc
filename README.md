@@ -70,8 +70,12 @@ Setiap soal yang selesai menampilkan telusuran majunya sebagai pembahasan.
 ## Progres Pemain
 
 Enam tingkatan (Perunggu → Perak → Emas → Platina → Berlian → Sang Juara),
-sembilan lencana, misi harian yang berganti tiap hari, papan peringkat, skor
-tertinggi, dan riwayat 40 permainan terakhir.
+sembilan lencana, misi harian yang berganti tiap hari, skor tertinggi, dan
+riwayat 40 permainan terakhir.
+
+Papan peringkat hanya berisi orang sungguhan, jadi ia baru terisi setelah masuk
+kelas. Di luar kelas papannya kosong — dulu ia diisi dua belas nama karangan,
+dan peringkat di antara nama karangan tidak mengukur apa pun.
 
 Tanpa kelas, semua data hidup di `localStorage` peramban masing-masing dan
 tidak dikirim ke mana pun. Di dalam kelas, profil ikut tersimpan di server
@@ -85,7 +89,7 @@ saat mode ini menyala:
 
 | Tanpa kelas | Di dalam kelas |
 | --- | --- |
-| Papan peringkat berisi 12 nama bawaan | Papan peringkat berisi teman sekelas sungguhan |
+| Tidak ada papan peringkat | Papan peringkat berisi teman sekelas sungguhan |
 | Progres hilang kalau ganti perangkat atau hapus data peramban | Progres tersimpan di server, ikut ke perangkat mana pun |
 | Guru tidak melihat apa pun | Guru melihat siapa berlatih, akurasinya, dan di tingkat mana kelasnya tersendat |
 | Tidak ada tugas | Guru bisa memberi tugas bertenggat, progresnya terhitung sendiri |

@@ -34,24 +34,6 @@
     { d: 3, name: 'HARD' }
   ];
 
-  /* Penghuni papan peringkat di luar kelas. Sejak duel dihapus mereka
-     tidak pernah dihadapi siapa pun; `skill` tinggal dipakai store.js
-     untuk menebar XP awal mereka supaya papannya tidak rata. */
-  var RIVALS = [
-    { name: 'Bagas',   ava: '🐯', skill: 0.55 },
-    { name: 'Nadia',   ava: '🦉', skill: 0.60 },
-    { name: 'Reyhan',  ava: '🦊', skill: 0.64 },
-    { name: 'Kirana',  ava: '🐼', skill: 0.68 },
-    { name: 'Dimas',   ava: '🐺', skill: 0.71 },
-    { name: 'Salsa',   ava: '🦄', skill: 0.74 },
-    { name: 'Fajar',   ava: '🦖', skill: 0.77 },
-    { name: 'Anindya', ava: '🐙', skill: 0.80 },
-    { name: 'Bimo',    ava: '🥷', skill: 0.83 },
-    { name: 'Hana',    ava: '🧙', skill: 0.86 },
-    { name: 'Yudha',   ava: '🤖', skill: 0.89 },
-    { name: 'Callista',ava: '👾', skill: 0.92 }
-  ];
-
   /* Misi harian: kind dipakai app.js untuk menaikkan progres.
      Angkanya ditakar untuk permainan 3 soal — misi lama yang meminta 25
      jawaban benar dulu setara tiga pertandingan, sekarang setara
@@ -91,7 +73,7 @@
 
   global.COC_DATA = {
     TIERS: TIERS, AVATARS: AVATARS, LEVELS: LEVELS,
-    RIVALS: RIVALS, QUESTS: QUESTS, BADGES: BADGES,
+    QUESTS: QUESTS, BADGES: BADGES,
 
     tierOf: function (xp) {
       var t = TIERS[0];
