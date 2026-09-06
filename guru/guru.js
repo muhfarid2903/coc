@@ -191,7 +191,7 @@
             '<p class="sub">Tulis kode ini di papan tulis. Siswa memasukkannya di aplikasi, memilih namanya, lalu membuat PIN 4 angka sendiri.</p>' +
           '</div>' +
           '<div class="card stack" id="kotakSesi"></div>' +
-          kartuTopik(d.topik) +
+          kartuTingkat(d.tingkat) +
           kartuTambahSiswa() +
           kartuTugas(d.tugas) +
         '</div>' +
@@ -239,23 +239,22 @@
       '</tbody></table></div></div>';
   }
 
-  /* Topik diurutkan dari akurasi terendah oleh server — yang paling perlu
-     diulang di kelas muncul paling atas. */
-  function kartuTopik(topik) {
-    if (!topik.length) {
-      return '<div class="card"><span class="eyebrow">Penguasaan Materi</span>' +
+  /* Penguasaan per tingkat kesulitan, dari EASY ke HARD. Di sinilah guru
+     melihat kelasnya mulai tersendat di sebelah mana. */
+  function kartuTingkat(tingkat) {
+    if (!tingkat || !tingkat.length) {
+      return '<div class="card"><span class="eyebrow">Penguasaan per Tingkat</span>' +
         '<p class="sub" style="margin-top:8px">Belum ada data. Muncul setelah siswa mulai bermain.</p></div>';
     }
     return '<div class="card">' +
-      '<span class="eyebrow">Penguasaan Materi</span>' +
-      '<p class="sub" style="margin:6px 0 12px">Diurutkan dari yang paling sering salah.</p>' +
+      '<span class="eyebrow">Penguasaan per Tingkat</span>' +
+      '<p class="sub" style="margin:6px 0 12px">Persentase rantai yang berhasil dipecahkan.</p>' +
       '<table class="gtabel"><tbody>' +
-      topik.map(function (t) {
-        var top = D.topic(t.topic);
+      tingkat.map(function (t) {
         var a = akurasi(t.benar, t.soal);
         return '<tr>' +
-          '<td style="width:1%">' + top.icon + '</td>' +
-          '<td>' + esc(top.name) + '<br><small class="sunyi">' + t.main + ' pertandingan</small></td>' +
+          '<td>' + esc(D.levelName(t.level)) +
+            '<br><small class="sunyi">' + t.main + ' permainan</small></td>' +
           '<td style="width:40%"><div class="gbar"><i style="width:' + (a || 0) + '%"></i></div></td>' +
           '<td class="num">' + selAkurasi(t.benar, t.soal) + '</td>' +
         '</tr>';
@@ -273,9 +272,6 @@
   }
 
   function kartuTugas(tugas) {
-    var opsiTopik = D.TOPICS.map(function (t) {
-      return '<option value="' + t.id + '">' + t.icon + ' ' + t.name + '</option>';
-    }).join('');
     var opsiLevel = D.LEVELS.map(function (l) {
       return '<option value="' + l.d + '"' + (l.d === 2 ? ' selected' : '') + '>' + l.name + '</option>';
     }).join('');
@@ -284,9 +280,8 @@
       '<span class="eyebrow">Tugas</span>' +
       ((tugas && tugas.length)
         ? '<table class="gtabel"><tbody>' + tugas.map(function (t) {
-            var top = D.topic(t.topic);
             return '<tr>' +
-              '<td>' + top.icon + ' ' + esc(top.name) + ' · ' + esc(D.levelName(t.level)) +
+              '<td>Rantai ' + esc(D.levelName(t.level)) +
                 '<br><small class="sunyi">' + t.target + '× main' +
                 (t.due ? ' · tenggat ' + esc(t.due) : '') +
                 (t.note ? '<br>' + esc(t.note) : '') + '</small></td>' +
@@ -297,7 +292,6 @@
           }).join('') + '</tbody></table>'
         : '<p class="sub">Belum ada tugas.</p>') +
       '<hr style="border:0;border-top:1px solid var(--line);margin:4px 0"/>' +
-      '<select class="field" id="tTopik">' + opsiTopik + '</select>' +
       '<select class="field" id="tLevel">' + opsiLevel + '</select>' +
       '<div class="gaksi">' +
         '<input class="field" id="tTarget" type="number" min="1" max="20" value="3" style="width:90px"/>' +
@@ -328,7 +322,6 @@
 
     $('btnBuatTugas').addEventListener('click', function () {
       minta('POST', '/guru/kelas/' + id + '/tugas', {
-        topic: $('tTopik').value,
         level: Number($('tLevel').value),
         target: Number($('tTarget').value) || 1,
         due: $('tDue').value || null,
@@ -377,12 +370,11 @@
     minta('GET', '/guru/tugas/' + tugasId + '/rekap').then(function (r) {
       if (!r.ok) { toast(r.pesan || 'Gagal memuat rekap'); return; }
       var t = r.data.tugas;
-      var top = D.topic(t.topic);
       var sudah = r.data.rekap.filter(function (x) { return x.selesai >= x.target; }).length;
       isi.innerHTML =
         '<button class="btn btn-ghost btn-sm" id="btnBalikDetail">‹ Kembali ke kelas</button>' +
         '<h2 class="h2" style="margin:14px 0 4px">Rekap Tugas</h2>' +
-        '<p class="sub">' + top.icon + ' ' + esc(top.name) + ' · ' + esc(D.levelName(t.level)) +
+        '<p class="sub">Rantai ' + esc(D.levelName(t.level)) +
           ' · ' + t.target + '× main' + (t.due ? ' · tenggat ' + esc(t.due) : '') + '</p>' +
         '<div class="statgrid" style="margin:16px 0">' +
           '<div class="sbox"><span>Tuntas</span><b>' + sudah + ' / ' + r.data.rekap.length + '</b></div>' +
@@ -474,9 +466,6 @@
     var s = liveSesi.sesi;
 
     if (!s || s.tahap === 'usai') {
-      var opsiTopik = D.TOPICS.map(function (t) {
-        return '<option value="' + t.id + '">' + t.icon + ' ' + t.name + '</option>';
-      }).join('');
       var opsiLevel = D.LEVELS.map(function (l) {
         return '<option value="' + l.d + '"' + (l.d === 2 ? ' selected' : '') + '>' + l.name + '</option>';
       }).join('');
@@ -484,14 +473,14 @@
         (s && s.tahap === 'usai' && liveSesi.papan.length
           ? '<p class="sub" style="margin-top:6px">Sesi terakhir sudah selesai.</p>' + papanHtml(liveSesi.papan) + '<hr style="border:0;border-top:1px solid var(--line);margin:12px 0"/>'
           : '<p class="sub" style="margin-top:6px">Seluruh kelas mengerjakan soal yang sama pada saat yang sama. Tayangkan halaman ini di proyektor.</p>') +
-        '<select class="field" id="sTopik" style="margin-top:10px">' + opsiTopik + '</select>' +
-        '<select class="field" id="sLevel" style="margin-top:8px">' + opsiLevel + '</select>' +
+        '<select class="field" id="sLevel" style="margin-top:10px">' + opsiLevel + '</select>' +
         '<div class="gaksi" style="margin-top:8px">' +
-          '<input class="field" id="sJumlah" type="number" min="3" max="20" value="10" style="width:80px"/>' +
-          '<span class="sub">soal</span>' +
-          '<input class="field" id="sDetik" type="number" min="6" max="60" value="30" style="width:80px"/>' +
-          /* Siswa mengetik jawabannya, bukan menunjuk salah satu dari
-             empat, jadi bawaannya dilonggarkan dari 20 detik. */
+          '<input class="field" id="sJumlah" type="number" min="3" max="20" value="3" style="width:80px"/>' +
+          '<span class="sub">rantai</span>' +
+          '<input class="field" id="sDetik" type="number" min="15" max="300" value="90" style="width:80px"/>' +
+          /* Satu rantai berisi 6-14 operasi yang harus ditelusuri mundur,
+             dan siswa boleh salah dua kali sebelum nyawanya habis. Setengah
+             menit tidak akan pernah cukup, jadi bawaannya 90 detik. */
           '<span class="sub">detik per soal</span>' +
         '</div>' +
         '<button class="btn btn-sm" id="btnBuatSesi" style="margin-top:10px">▶ Siapkan Sesi</button>';
@@ -501,7 +490,7 @@
       return '<span class="eyebrow">Sesi Kelas — menunggu siswa</span>' +
         '<div class="sesi-besar">' + liveSesi.peserta + '</div>' +
         '<p class="sub center">siswa sudah gabung</p>' +
-        '<p class="sub" style="margin-top:10px">' + D.topic(s.topik).icon + ' ' + esc(D.topic(s.topik).name) +
+        '<p class="sub" style="margin-top:10px">Rantai ' + esc(D.levelName(s.tingkat)) +
           ' · ' + s.jumlah + ' soal · ' + Math.round(s.batasMs / 1000) + ' detik per soal</p>' +
         '<p class="sub">Minta siswa membuka aplikasi dan menekan <b>Gabung</b> di beranda.</p>' +
         '<div class="gaksi" style="margin-top:10px">' +
@@ -538,10 +527,9 @@
     var b;
     if ((b = $('btnBuatSesi'))) b.addEventListener('click', function () {
       minta('POST', '/guru/kelas/' + id + '/sesi', {
-        topic: $('sTopik').value,
         level: Number($('sLevel').value),
-        jumlah: Number($('sJumlah').value) || 10,
-        batasMs: (Number($('sDetik').value) || 30) * 1000
+        jumlah: Number($('sJumlah').value) || 3,
+        batasMs: (Number($('sDetik').value) || 90) * 1000
       }).then(function (r) {
         if (!r.ok) { toast(r.pesan || 'Gagal membuat sesi'); return; }
         toast('Sesi disiapkan — minta siswa menekan Gabung');

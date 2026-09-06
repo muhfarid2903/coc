@@ -10,7 +10,7 @@
      bentuk yang sudah dipakai localStorage di client. Ini membuat sinkron
      jadi sepele dan client nyaris tidak berubah.
    - `matches` menyimpan tiap pertandingan secara terurai. Dasbor guru
-     butuh agregat per topik ("kelas ini lemah di pecahan"), dan itu tidak
+     butuh agregat per tingkat ("kelas ini tersendat di HARD"), dan itu tidak
      bisa dijawab dari blob JSON tanpa memindai semua baris.
    ============================================================ */
 'use strict';
@@ -336,7 +336,7 @@ function catatMain(studentId, m) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     studentId, now(),
-    String(m.topic || 'campuran'), Number(m.level) || 1, String(m.mode || 'latihan'),
+    String(m.topic || 'rantai'), Number(m.level) || 1, String(m.mode || 'rantai'),
     Number(m.correct) || 0, Number(m.total) || 0, Number(m.score) || 0,
     String(m.result || 'draw'), m.msAvg == null ? null : Number(m.msAvg)
   );
@@ -378,19 +378,22 @@ function ringkasKelas(classId) {
      ORDER BY xp DESC, CAST(s.name AS INTEGER), s.name COLLATE NOCASE
   `).all(classId);
 
-  /* Agregat per topik: inilah alasan tabel `matches` ada. Guru butuh tahu
-     materi mana yang paling banyak salah, bukan sekadar siapa yang rajin. */
-  const topik = db.prepare(`
-    SELECT m.topic,
-           COUNT(*)     AS main,
+  /* Agregat per tingkat: inilah alasan tabel `matches` ada. Guru butuh
+     tahu di tingkat mana kelasnya mulai tersendat, bukan sekadar siapa
+     yang rajin. Dulu dikelompokkan per topik; sejak soalnya berbentuk
+     rantai operasi, tingkat kesulitanlah satu-satunya sumbu yang
+     tersisa — dan ia justru lebih terbaca. */
+  const tingkat = db.prepare(`
+    SELECT m.level,
+           COUNT(*)       AS main,
            SUM(m.correct) AS benar,
            SUM(m.total)   AS soal,
            AVG(m.ms_avg)  AS ms
       FROM matches m
       JOIN students s ON s.id = m.student_id
      WHERE s.class_id = ?
-     GROUP BY m.topic
-     ORDER BY (CAST(SUM(m.correct) AS REAL) / NULLIF(SUM(m.total), 0)) ASC
+     GROUP BY m.level
+     ORDER BY m.level
   `).all(classId);
 
   const harian = db.prepare(`
@@ -402,7 +405,7 @@ function ringkasKelas(classId) {
      GROUP BY hari ORDER BY hari
   `).all(classId, new Date(Date.now() - 29 * 864e5).toISOString());
 
-  return { siswa, topik, harian };
+  return { siswa, tingkat, harian };
 }
 
 /* ── Tugas ─────────────────────────────────────────────────── */
@@ -411,7 +414,7 @@ function buatTugas(classId, t) {
     INSERT INTO assignments (class_id, topic, level, target, due, note, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(
-    classId, String(t.topic), Number(t.level) || 1, Number(t.target) || 1,
+    classId, String(t.topic || 'rantai'), Number(t.level) || 1, Number(t.target) || 1,
     t.due || null, t.note ? String(t.note).slice(0, 140) : null, now()
   );
   return db.prepare('SELECT * FROM assignments WHERE id = ?').get(Number(r.lastInsertRowid));
@@ -426,7 +429,7 @@ function tugasKelas(classId) {
 }
 
 /* Progres tugas dihitung dari `matches`, bukan disimpan terpisah: hanya
-   pertandingan setelah tugas dibuat, dengan topik dan level yang cocok,
+   pertandingan setelah tugas dibuat, dengan tingkat yang cocok,
    yang dihitung. Jadi tugas tidak bisa "sudah selesai" oleh latihan lama. */
 function progresTugas(classId, studentId) {
   return db.prepare(`

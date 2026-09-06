@@ -1,5 +1,5 @@
 /* ============================================================
-   live.js — aliran peristiwa langsung untuk duel dan sesi kelas.
+   live.js — aliran peristiwa langsung untuk sesi kelas.
 
    Menyambung ke /api/live lewat EventSource. Pilihan itu membawa satu
    keuntungan besar untuk wifi sekolah: peramban menyambung ulang sendiri
@@ -18,7 +18,6 @@
   var pendengar = {};
 
   var JENIS = [
-    'duel-mulai', 'duel-skor', 'duel-usai', 'antre-usai',
     'sesi-ada', 'sesi-mulai', 'sesi-soal', 'sesi-papan', 'sesi-usai', 'sesi-peserta'
   ];
 
@@ -48,7 +47,7 @@
 
     /* EventSource menyambung ulang sendiri. Yang penting di sini hanya
        menandai keadaannya, supaya layar bisa memberi tahu siswa bahwa
-       duelnya sedang tidak terhubung. */
+       sesinya sedang tidak terhubung. */
     sumber.onerror = function () {
       LIVE.nyambung = false;
       pancar('putus', {});
@@ -86,23 +85,6 @@
       return { ok: false, status: 0, data: {}, pesan: 'Tidak tersambung.' };
     });
   }
-
-  /* ---------- Duel ---------- */
-  LIVE.antre = function (topik, tingkat, jumlah) {
-    return kirim('/duel/antre', { topik: topik, tingkat: tingkat, jumlah: jumlah });
-  };
-  LIVE.batalAntre = function () { return kirim('/duel/batal'); };
-
-  /* Dikirim setiap kali satu soal tuntas. Kegagalannya sengaja diabaikan:
-     satu paket skor yang hilang hanya membuat bar lawan tertinggal sesaat,
-     dan paket berikutnya membawa angka kumulatif yang benar. */
-  LIVE.jawab = function (soalKe, skor, benar) {
-    return kirim('/duel/jawab', { soalKe: soalKe, skor: skor, benar: benar });
-  };
-  LIVE.selesaiDuel = function (skor, benar) {
-    return kirim('/duel/selesai', { skor: skor, benar: benar });
-  };
-  LIVE.keluarDuel = function () { return kirim('/duel/keluar'); };
 
   /* ---------- Sesi kelas ---------- */
   LIVE.gabungSesi = function () { return kirim('/sesi/gabung'); };

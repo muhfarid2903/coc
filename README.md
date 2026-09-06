@@ -1,57 +1,71 @@
 # COC — Clash of Champions Matematika
 
-Arena turnamen matematika berbasis web. Dibuat dengan HTML, CSS, dan JavaScript
-murni — tanpa proses build, tanpa dependensi, tanpa server. Cukup buka
-`index.html` di peramban.
+Teka-teki rantai operasi berbasis web: telusuri rantainya mundur, tentukan
+nilai awal yang membuat hasil akhirnya pas. Dibuat dengan HTML, CSS, dan
+JavaScript murni — tanpa proses build, tanpa dependensi, tanpa server. Cukup
+buka `index.html` di peramban.
 
 ## Cara Bermain
 
-| Mode | Isi |
-| --- | --- |
-| ⚔️ **Duel Cepat** | 10 soal melawan satu penantang. Siapa cepat dan tepat, dia menang. |
-| 🏆 **Turnamen 8 Besar** | Bagan gugur tiga babak: perempat final, semifinal, final. |
-| 🎯 **Latihan Santai** | 10 soal tanpa lawan. XP tetap didapat, separuh. |
+Satu permainan berisi **3 soal**. Tiap soal adalah sebuah rantai operasi hitung
+yang berujung pada satu nilai akhir:
 
-Nilai per soal: **100** (jawaban benar) + **sisa waktu × 100** (bonus kecepatan)
-+ **runtun × 20**, maksimal 100 (bonus beruntun). Jawaban salah atau kehabisan
-waktu bernilai 0 dan memutus runtun.
+```
+? ··· ×9 ··· +9 ··· ×2 ··· +25 ··· −20% ··· 92
+```
 
-Jawaban **diketik**, bukan dipilih — tidak ada pilihan ganda. Papan angka di
-layar (atau papan ketik sungguhan) dipakai untuk mengetik angkanya; awalan
-`Rp` dan satuan seperti `cm²` sudah tercetak tetap di plakat dan tidak ikut
-dinilai. Tombol koma dan garis pecahan hanya muncul kalau set soalnya memang
-memerlukan.
+Yang ditanya bukan hasilnya, melainkan **nilai awalnya** — angka yang masuk di
+ujung kiri. Jalannya dari kanan ke kiri: lawan tiap operasi dengan
+kebalikannya sampai tiba di ujung.
 
-Setiap pertandingan menyediakan dua kartu bantuan gratis: **Perisai**
-(satu jawaban salah dimaafkan, boleh mengetik ulang) dan **Tambah Waktu**
-(+6 detik).
+Dua aturan yang membuatnya bisa dikerjakan:
 
-## Topik Soal
+1. Rantai dijalankan **berurutan dari kiri ke kanan**. Aturan urutan operasi
+   matematika (kali dan bagi lebih dulu) **tidak berlaku** — justru itu yang
+   membuat tiap langkah bisa dibalik satu per satu.
+2. Rantainya selalu dibangkitkan maju dari sebuah bilangan bulat, jadi tiap
+   nilai antara juga bulat. Tidak akan pernah ada pecahan di tengah jalan.
 
-Soal dibangkitkan secara acak, jadi tidak pernah habis. Tujuh topik, masing-masing
-dengan tiga tingkat kesulitan — **EASY**, **MEDIUM**, dan **HARD**:
+Tiap soal memberi **3 nyawa**. Salah menjawab mengurangi satu nyawa dan kamu
+boleh langsung mencoba lagi. Soal berganti kalau jawabannya benar atau nyawanya
+habis.
 
-- ⚡ **Hitung Kilat** — tambah, kurang, kali, bagi, urutan operasi
-- 🧮 **Duel Aljabar** — persamaan linear satu variabel
-- 📐 **Serbu Geometri** — luas, keliling, volume, luas permukaan
-- 🍕 **Pecahan & Persen** — penyederhanaan, penjumlahan pecahan, diskon, untung-rugi
-- 🔢 **Baca Pola** — deret aritmetika, geometri, kuadrat, Fibonacci
-- 📖 **Soal Cerita** — belanja, kecepatan, rata-rata, perbandingan, bunga
-- 🎲 **Serba-serbi** — semua topik diacak jadi satu
+**Tidak ada hitung mundur.** Pikirkan selama yang kamu perlu — yang dinilai
+ketelitian menelusuri rantai, bukan kecepatan mengetik.
 
-Setiap jawaban disertai langkah penyelesaian singkat.
+Nilai per soal: **1.000** untuk rantai yang terpecahkan, ditambah **250** untuk
+tiap nyawa yang masih utuh. Sekali tebak langsung benar bernilai 1.750; tebakan
+ketiga yang akhirnya benar bernilai 1.250; nyawa habis bernilai 0. Nilai
+tertinggi satu permainan **5.250**.
 
-Tingkatnya bukan sekadar angka yang lebih besar: tiap topik punya bentuk soal
-sendiri di tiap tingkat. Geometri EASY berhenti di luas dan keliling bangun
-datar, MEDIUM masuk ke volume kubus-balok dan lingkaran, HARD ke trapesium,
-tabung, prisma, dan luas permukaan. Pola EASY hanya deret bertambah dan
-berkurang; HARD sampai Fibonacci, deret berselang-seling, dan deret pangkat.
+Jawaban **diketik** di papan angka pada layar, atau lewat papan ketik sungguhan.
+Jawabannya selalu bilangan bulat, jadi tidak ada tombol koma maupun garis
+pecahan.
+
+## Tingkat Kesulitan
+
+Soal dibangkitkan secara acak, jadi tidak pernah habis. Yang naik dua-duanya:
+rantainya makin panjang dan operasinya makin beragam.
+
+| Tingkat | Panjang | Operasi | Angka |
+| --- | --- | --- | --- |
+| **EASY** | 6 langkah | `+` `−` | 1–12 |
+| **MEDIUM** | 10 langkah | `+` `−` `×` `÷` | 1–20 |
+| **HARD** | 14 langkah | `+` `−` `×` `÷` `x²` `%` | 1–25 |
+
+Pembaginya selalu angka yang habis membagi nilai berjalan, pengurangnya tidak
+pernah menembus 1, dan persentasenya hanya yang menghasilkan bilangan bulat.
+Kuadrat cuma boleh muncul sekali dalam satu rantai dan hanya pada nilai kecil —
+dua kuadrat berturut-turut membuat angkanya meledak, dan akar dari angka besar
+bukan lagi hitungan yang bisa dikejar di kepala.
+
+Setiap soal yang selesai menampilkan telusuran majunya sebagai pembahasan.
 
 ## Progres Pemain
 
 Enam tingkatan (Perunggu → Perak → Emas → Platina → Berlian → Sang Juara),
-sembilan lencana, misi harian yang berganti tiap hari, papan peringkat, dan
-riwayat 40 pertandingan terakhir.
+sembilan lencana, misi harian yang berganti tiap hari, papan peringkat, skor
+tertinggi, dan riwayat 40 permainan terakhir.
 
 Tanpa kelas, semua data hidup di `localStorage` peramban masing-masing dan
 tidak dikirim ke mana pun. Di dalam kelas, profil ikut tersimpan di server
@@ -65,52 +79,41 @@ saat mode ini menyala:
 
 | Tanpa kelas | Di dalam kelas |
 | --- | --- |
-| Papan peringkat berisi 12 lawan komputer | Papan peringkat berisi teman sekelas sungguhan |
+| Papan peringkat berisi 12 nama bawaan | Papan peringkat berisi teman sekelas sungguhan |
 | Progres hilang kalau ganti perangkat atau hapus data peramban | Progres tersimpan di server, ikut ke perangkat mana pun |
-| Guru tidak melihat apa pun | Guru melihat siapa berlatih, akurasinya, dan materi mana yang lemah |
+| Guru tidak melihat apa pun | Guru melihat siapa berlatih, akurasinya, dan di tingkat mana kelasnya tersendat |
 | Tidak ada tugas | Guru bisa memberi tugas bertenggat, progresnya terhitung sendiri |
-| Duel melawan bot | Duel langsung melawan teman sekelas, soal yang sama |
-| — | Sesi kelas serentak: satu kelas, satu soal, satu detik yang sama |
+| — | Sesi kelas serentak: satu kelas, satu rantai, satu detik yang sama |
 
 Mode kelas **tidak wajib**. Kalau server API tidak ada — misalnya versi yang
 disajikan GitHub Pages — aplikasi berjalan persis seperti sebelumnya, dan
 tombol masuk kelas tidak ditawarkan sama sekali.
 
-### Lawan orang, bukan bot
+### Sesi kelas serentak
 
-Di dalam kelas, bot dihapus sepenuhnya. Ada dua bentuk pertandingan melawan
-manusia, dan keduanya bertumpu pada satu hal yang sama.
+**Soal bersemai.** Tiap perangkat membangkitkan rantainya sendiri, jadi dua
+siswa tidak akan pernah mendapat soal yang sama — dan skor mereka tidak bisa
+diadu dengan cara apa pun. Karena itu seluruh pabrik soal menarik angka acak
+lewat satu pintu yang bisa disemai: satu angka semai menghasilkan rantai yang
+sama persis di perangkat mana pun. Tidak ada soal yang dikirim lewat jaringan;
+yang dikirim hanya semainya.
 
-**Soal bersemai.** Dulu tiap perangkat membangkitkan soalnya sendiri secara
-acak, jadi dua siswa tidak pernah mendapat soal yang sama — dan skor mereka
-tidak bisa diadu dengan cara apa pun. Sekarang seluruh pabrik soal menarik
-angka acak lewat satu pintu yang bisa disemai, sehingga satu angka semai
-menghasilkan sepuluh soal yang sama persis di perangkat mana pun. Tidak ada
-soal yang dikirim lewat jaringan; yang dikirim hanya semainya.
+**Jalannya sesi.** Guru menyiapkan sesi, siswa menekan *Gabung*, lalu seluruh
+kelas mengerjakan rantai yang sama pada detik yang sama, dengan papan peringkat
+muncul di antara soal. Panel guru bisa ditayangkan di proyektor.
 
-**Duel Langsung** — dua siswa sekelas yang memilih topik dan tingkat sama
-dipasangkan saat itu juga. Keduanya menjawab dengan iramanya sendiri, dan bar
-tarik-tambang di layar bergerak mengikuti skor lawan yang sungguhan. Server
-yang memutuskan menang-kalah setelah keduanya tuntas — kalau tidak, dua siswa
-bisa sama-sama melihat dirinya menang karena masing-masing hanya tahu skor
-lawan sampai paket terakhir yang sempat sampai.
+Berbeda dari permainan sendiri, sesi kelas **punya hitung mundur** — batasnya
+disetel guru, bawaannya 90 detik per rantai. Tanpa jam, satu siswa yang diam
+menahan seluruh kelas menunggu tanpa akhir. Nyawanya tetap tiga: salah boleh
+dicoba ulang selama waktunya belum habis.
 
-**Sesi Kelas Serentak** — guru menyiapkan sesi, siswa menekan *Gabung*, lalu
-seluruh kelas mengerjakan soal yang sama pada detik yang sama, dengan papan
-peringkat muncul di antara soal. Jamnya dijalankan server, bukan masing-masing
-peramban: jam di tiap ponsel tidak pernah cukup seragam untuk membuat satu
-kelas benar-benar serentak. Panel guru bisa ditayangkan di proyektor.
-
-Turnamen 8 Besar seluruh bagannya melawan komputer, jadi ia disembunyikan di
-dalam kelas — di luar kelas tetap ada seperti semula.
+Jamnya dijalankan server, bukan masing-masing peramban: jam di tiap ponsel
+tidak pernah cukup seragam untuk membuat satu kelas benar-benar serentak.
 
 Peristiwa langsungnya lewat **SSE**, bukan WebSocket: Node tidak punya server
 WebSocket bawaan, dan memakainya berarti menambah dependensi npm pertama di
 proyek ini. Semua yang perlu didorong ke siswa searah saja, dan `EventSource`
 menyambung ulang sendiri saat wifi sekolah putus sebentar.
-
-Kalau lawan menutup tab atau koneksinya putus, pemain yang bertahan diberi
-tahu dan duelnya ditutup — bukan dibiarkan menunggu selamanya.
 
 ### Cara siswa masuk
 
@@ -136,13 +139,13 @@ selama 15 menit.
 Ada di `/guru`, terkunci satu frasa sandi, dan menampilkan per kelas:
 
 - **Kode kelas** dalam huruf besar, siap disalin ke papan tulis.
-- **Tabel siswa** — XP, jumlah pertandingan, akurasi berwarna, dan kapan
+- **Tabel siswa** — XP, jumlah permainan, akurasi berwarna, dan kapan
   terakhir aktif. Siswa yang belum pernah masuk ditandai.
-- **Penguasaan materi** — akurasi rata-rata kelas per topik, diurutkan dari
-  yang paling sering salah, jadi materi yang perlu diulang langsung terlihat.
-- **Tugas** — pilih topik, tingkat, berapa kali harus dimainkan, dan tenggat.
-  Progresnya dihitung dari pertandingan yang benar-benar cocok topik dan
-  tingkatnya, dan hanya yang dimainkan setelah tugas dibuat.
+- **Penguasaan per tingkat** — persentase rantai yang berhasil dipecahkan di
+  tiap tingkat, jadi terlihat di sebelah mana kelasnya mulai tersendat.
+- **Tugas** — pilih tingkat, berapa kali harus dimainkan, dan tenggat.
+  Progresnya dihitung dari permainan yang benar-benar cocok tingkatnya, dan
+  hanya yang dimainkan setelah tugas dibuat.
 
 Menambah siswa dilakukan dengan menempel daftar nama dari absen, satu nama per
 baris. Pakai nama panggilan saja — server sengaja tidak punya kolom nama
@@ -323,13 +326,13 @@ domainmu.com, www.domainmu.com {
 ```
 index.html          kerangka halaman
 css/style.css       seluruh gaya tampilan
-js/data.js          tingkatan, topik, lawan, misi, lencana
-js/questions.js     pabrik soal + penjelasan jawaban
+js/data.js          tingkatan pemain, tingkat kesulitan, misi, lencana
+js/threads.js       pabrik rantai operasi + telusuran jawabannya
 js/fx.js            efek suara (WebAudio), getaran, konfeti
 js/store.js         profil, misi harian, papan peringkat (localStorage)
-js/app.js           alur layar, mesin duel, bagan turnamen
+js/app.js           alur layar dan mesin permainan
 js/net.js           penghubung ke API kelas (aman bila server tidak ada)
-js/live.js          aliran peristiwa duel langsung dan sesi kelas (SSE)
+js/live.js          aliran peristiwa sesi kelas (SSE)
 
 server/             API kelas — Node tanpa dependensi, SQLite bawaan
 guru/               dasbor guru (halaman terpisah di /guru)
@@ -345,6 +348,6 @@ deploy/             berkas untuk menjalankannya di VPS
 - Efek suara dibangkitkan lewat WebAudio — tidak ada berkas audio yang perlu diunduh.
 - Satu-satunya sumber daya eksternal adalah Google Fonts; bila diblokir, tampilan
   otomatis memakai huruf sistem.
-- Pintasan papan ketik saat bertanding: angka `0`–`9` untuk mengetik jawaban,
+- Pintasan papan ketik saat bermain: angka `0`–`9` untuk mengetik jawaban,
   `Backspace` menghapus, `Enter` mengirim — lalu `Enter` sekali lagi untuk lanjut
-  ke soal berikutnya. Titik pada papan angka numerik dibaca sebagai koma desimal.
+  ke soal berikutnya.

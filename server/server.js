@@ -305,7 +305,7 @@ const server = http.createServer(async (req, res) => {
         const id = Number(m[1]);
         if (!DB.kelas(id)) return kirim(res, 404, { error: 'Kelas tidak ada.' });
         const b = await bacaBody(req);
-        if (!b.topic) return kirim(res, 400, { error: 'Topik belum dipilih.' });
+        if (!b.level) return kirim(res, 400, { error: 'Tingkat belum dipilih.' });
         return kirim(res, 200, { tugas: DB.buatTugas(id, b) });
       }
       /* ---- Sesi kelas serentak ---- */
@@ -356,34 +356,6 @@ const server = http.createServer(async (req, res) => {
       LIVE.pasangAliran(LIVE.kSiswa(siswa.id), res);
       DB.tandaiAktif(siswa.id);
       return;
-    }
-
-    /* ---- Duel langsung ---- */
-    if (jalur === '/api/duel/antre' && M === 'POST') {
-      const b = await bacaBody(req);
-      const r = LIVE.antre(siswa, String(b.topik || 'campuran'), Number(b.tingkat) || 2, Number(b.jumlah) || 10);
-      const sekelas = DB.siswaDiKelas(siswa.class_id).map((x) => x.id);
-      return kirim(res, 200, Object.assign(r, {
-        online: LIVE.onlineSekelas(siswa.class_id, sekelas, siswa.id)
-      }));
-    }
-    if (jalur === '/api/duel/batal' && M === 'POST') {
-      LIVE.batalAntre(siswa.id);
-      return kirim(res, 200, { ok: true });
-    }
-    if (jalur === '/api/duel/jawab' && M === 'POST') {
-      const b = await bacaBody(req);
-      const r = LIVE.jawabDuel(siswa.id, b);
-      return kirim(res, r.error ? 409 : 200, r);
-    }
-    if (jalur === '/api/duel/selesai' && M === 'POST') {
-      const b = await bacaBody(req);
-      const r = LIVE.selesaiDuel(siswa.id, b);
-      return kirim(res, r.error ? 409 : 200, r);
-    }
-    if (jalur === '/api/duel/keluar' && M === 'POST') {
-      LIVE.keluarDuel(siswa.id);
-      return kirim(res, 200, { ok: true });
     }
 
     /* ---- Sesi kelas ---- */

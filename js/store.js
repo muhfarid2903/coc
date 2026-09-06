@@ -29,6 +29,11 @@
       xp: 0, coin: 150, gem: 3,
       played: 0, wins: 0, losses: 0, draws: 0, trophies: 0, perfects: 0,
       totalCorrect: 0, totalAnswered: 0, bestStreak: 0, fastest: 0,
+      /* flawless: rantai yang dipecahkan tanpa kehilangan satu nyawa pun.
+         hardClear: permainan tingkat HARD yang tuntas. Keduanya menopang
+         lencana; `trophies` ditinggal apa adanya supaya profil lama tidak
+         kehilangan medan saat dimuat. */
+      flawless: 0, hardClear: 0, high: 0,
       badges: [], sound: true,
       quests: null, board: null, boardDay: '',
       history: []
@@ -83,8 +88,14 @@
     return null;
   }
 
+  /* Misi diacak ulang bukan cuma saat harinya berganti, tapi juga kalau
+     salah satu id-nya sudah tidak dikenal. Tanpa itu, siswa yang misi
+     hariannya tersimpan sebelum daftar misi berubah akan memegang misi
+     tanpa definisi — progresnya tidak pernah naik dan hadiahnya tidak
+     pernah bisa diambil. */
   function syncQuests() {
-    if (!P.quests || P.quests.date !== today()) { P.quests = rollQuests(); save(); }
+    var asing = P.quests && P.quests.list.some(function (q) { return !questDef(q.id); });
+    if (!P.quests || P.quests.date !== today() || asing) { P.quests = rollQuests(); save(); }
     return P.quests;
   }
 
@@ -170,6 +181,9 @@
     if (r.streak > P.bestStreak) P.bestStreak = r.streak;
     if (r.fastest > 0 && (P.fastest === 0 || r.fastest < P.fastest)) P.fastest = r.fastest;
     if (r.correct === r.total && r.total > 0) P.perfects += 1;
+    P.flawless += r.flawless || 0;
+    if (r.hardClear) P.hardClear += 1;
+    if (r.myScore > P.high) P.high = r.myScore;
 
     var tierBefore = D.tierOf(P.xp);
     P.xp += r.xp;
@@ -186,14 +200,14 @@
 
     bump('match', 1);
     bump('correct', r.correct);
-    bump('fast', r.fastCount || 0);
+    bump('utuh', r.flawless || 0);
     bump('streak', r.streak);
     if (r.result === 'win') bump('win', 1);
 
     save();
 
     /* Dicatat terurai di server, terpisah dari blob profil: dasbor guru
-       perlu menjawab "kelas ini lemah di topik apa", dan itu tidak bisa
+       perlu menjawab "kelas ini tersendat di tingkat mana", dan itu tidak bisa
        dihitung dari satu JSON profil tanpa memindai semuanya. */
     if (punyaNet()) {
       NET().catatMain({

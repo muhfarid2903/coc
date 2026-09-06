@@ -24,33 +24,8 @@
     '🧑‍🚀', '🧙', '🥷', '🤖', '👾', '🐝'
   ];
 
-  /* Topik soal. `gen` menunjuk fungsi di questions.js, `time` detik dasar. */
-  var TOPICS = [
-    { id: 'kilat',    name: 'Hitung Kilat',    icon: '⚡', time: 13,
-      desc: 'Tambah, kurang, kali, bagi — adu kecepatan',
-      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#f8e5ad,#e8b84b 50%,#b7862a)', color: '#e8b84b' },
-    { id: 'aljabar',  name: 'Duel Aljabar',    icon: '🧮', time: 22,
-      desc: 'Cari nilai x sebelum waktu habis',
-      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cfe0ff,#7f9ff0 50%,#3a5cb8)', color: '#7f9ff0' },
-    { id: 'geometri', name: 'Serbu Geometri',  icon: '📐', time: 26,
-      desc: 'Luas, keliling, dan volume bangun',
-      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#ddd0ff,#a888ec 50%,#6a45c0)', color: '#a888ec' },
-    { id: 'pecahan',  name: 'Pecahan & Persen', icon: '🍕', time: 22,
-      desc: 'Potongan harga, rasio, dan pecahan',
-      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#ffd0e0,#f07aa8 50%,#b8306a)', color: '#f07aa8' },
-    { id: 'pola',     name: 'Baca Pola',       icon: '🔢', time: 22,
-      desc: 'Tebak angka berikutnya dalam deret',
-      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#b6e88a,#77c341 50%,#4b8f1c)', color: '#77c341' },
-    { id: 'cerita',   name: 'Soal Cerita',     icon: '📖', time: 34,
-      desc: 'Cerita sehari-hari yang perlu dihitung',
-      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cdeefb,#7fd3f0 50%,#42aad4)', color: '#5ad0e6' },
-    { id: 'campuran', name: 'Serba-serbi',     icon: '🎲', time: 24,
-      desc: 'Semua topik diacak jadi satu',
-      grad: 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#ffdcb0,#f0a05c 50%,#b85f22)', color: '#f0a05c' }
-  ];
-
-  /* Tiga tingkat kesulitan, kembar dengan `d` yang diterima tiap generator
-     di questions.js. Riwayat lama sempat menyimpan level 4 dan 5; angka itu
+  /* Tiga tingkat kesulitan, kembar dengan `d` yang diterima pabrik rantai
+     di threads.js. Riwayat lama sempat menyimpan level 4 dan 5; angka itu
      tidak punya nama lagi, jadi pencariannya lewat levelName() yang punya
      jalan mundur. */
   var LEVELS = [
@@ -59,7 +34,9 @@
     { d: 3, name: 'HARD' }
   ];
 
-  /* Kumpulan lawan komputer. skill = peluang dasar menjawab benar. */
+  /* Penghuni papan peringkat di luar kelas. Sejak duel dihapus mereka
+     tidak pernah dihadapi siapa pun; `skill` tinggal dipakai store.js
+     untuk menebar XP awal mereka supaya papannya tidak rata. */
   var RIVALS = [
     { name: 'Bagas',   ava: '🐯', skill: 0.55 },
     { name: 'Nadia',   ava: '🦉', skill: 0.60 },
@@ -75,43 +52,46 @@
     { name: 'Callista',ava: '👾', skill: 0.92 }
   ];
 
-  /* Misi harian: kind dipakai app.js untuk menaikkan progres. */
+  /* Misi harian: kind dipakai app.js untuk menaikkan progres.
+     Angkanya ditakar untuk permainan 3 soal — misi lama yang meminta 25
+     jawaban benar dulu setara tiga pertandingan, sekarang setara
+     sembilan. */
   var QUESTS = [
-    { id: 'main3',    kind: 'match',   goal: 3,  coin: 60,  gem: 1, text: 'Selesaikan 3 pertandingan' },
-    { id: 'benar25',  kind: 'correct', goal: 25, coin: 80,  gem: 1, text: 'Jawab 25 soal dengan benar' },
-    { id: 'menang2',  kind: 'win',     goal: 2,  coin: 100, gem: 2, text: 'Menangkan 2 duel' },
-    { id: 'runtun5',  kind: 'streak',  goal: 5,  coin: 70,  gem: 1, text: 'Capai runtun 5 jawaban benar' },
-    { id: 'kilat10',  kind: 'fast',    goal: 10, coin: 90,  gem: 1, text: 'Jawab 10 soal di bawah 5 detik' }
+    { id: 'main3',   kind: 'match',   goal: 3, coin: 60,  gem: 1, text: 'Selesaikan 3 permainan' },
+    { id: 'benar6',  kind: 'correct', goal: 6, coin: 80,  gem: 1, text: 'Pecahkan 6 rantai' },
+    { id: 'menang2', kind: 'win',     goal: 2, coin: 100, gem: 2, text: 'Tuntaskan 2 permainan penuh' },
+    { id: 'runtun3', kind: 'streak',  goal: 3, coin: 70,  gem: 1, text: 'Pecahkan 3 rantai berturut-turut' },
+    { id: 'utuh3',   kind: 'utuh',    goal: 3, coin: 90,  gem: 1, text: 'Pecahkan 3 rantai tanpa kehilangan nyawa' }
   ];
 
-  /* Lencana. `check(p)` menerima profil dan mengembalikan boolean. */
+  /* Lencana. `check(p)` menerima profil dan mengembalikan boolean.
+     Id-nya sengaja dipertahankan walau artinya berubah: lencana yang
+     sudah dikoleksi siswa disimpan sebagai daftar id, dan mengganti id
+     berarti mencabut lencana yang sudah mereka dapat. */
   var BADGES = [
-    { id: 'debut',   icon: '🎬', name: 'Debut',        desc: 'Main 1 pertandingan',
+    { id: 'debut',   icon: '🎬', name: 'Debut',          desc: 'Main 1 permainan',
       check: function (p) { return p.played >= 1; } },
-    { id: 'menang1', icon: '🎖️', name: 'Kemenangan Perdana', desc: 'Menang sekali',
+    { id: 'menang1', icon: '🎖️', name: 'Tuntas Perdana', desc: 'Tuntaskan satu permainan penuh',
       check: function (p) { return p.wins >= 1; } },
-    { id: 'runtun10',icon: '🔥', name: 'Panas',         desc: 'Runtun 10 benar',
-      check: function (p) { return p.bestStreak >= 10; } },
-    { id: 'sempurna',icon: '💯', name: 'Nilai Penuh',   desc: 'Satu duel tanpa salah',
+    { id: 'runtun10',icon: '🔥', name: 'Lima Tuntas',    desc: 'Tuntaskan 5 permainan',
+      check: function (p) { return p.wins >= 5; } },
+    { id: 'sempurna',icon: '💯', name: 'Nilai Penuh',    desc: 'Satu permainan 3 dari 3',
       check: function (p) { return p.perfects >= 1; } },
-    { id: 'kilat',   icon: '⚡', name: 'Secepat Kilat', desc: 'Jawab benar < 2 detik',
-      check: function (p) { return p.fastest > 0 && p.fastest < 2000; } },
-    { id: 'juara',   icon: '🏆', name: 'Juara Turnamen', desc: 'Menangi 1 turnamen',
-      check: function (p) { return p.trophies >= 1; } },
-    { id: 'veteran', icon: '🛡️', name: 'Veteran',       desc: 'Main 25 pertandingan',
+    { id: 'kilat',   icon: '❤️', name: 'Tanpa Lecet',    desc: 'Pecahkan rantai tanpa kehilangan nyawa',
+      check: function (p) { return p.flawless >= 1; } },
+    { id: 'juara',   icon: '🏆', name: 'Penakluk HARD',  desc: 'Tuntaskan satu permainan HARD',
+      check: function (p) { return p.hardClear >= 1; } },
+    { id: 'veteran', icon: '🛡️', name: 'Veteran',        desc: 'Main 25 permainan',
       check: function (p) { return p.played >= 25; } },
-    { id: 'sarjana', icon: '🎓', name: 'Sarjana Angka', desc: '250 jawaban benar',
-      check: function (p) { return p.totalCorrect >= 250; } },
-    { id: 'sultan',  icon: '👑', name: 'Sang Juara',    desc: 'Capai tingkat tertinggi',
+    { id: 'sarjana', icon: '🎓', name: 'Sarjana Angka',  desc: '60 rantai terpecahkan',
+      check: function (p) { return p.totalCorrect >= 60; } },
+    { id: 'sultan',  icon: '👑', name: 'Sang Juara',     desc: 'Capai tingkat tertinggi',
       check: function (p) { return p.xp >= 9000; } }
   ];
 
-  /* Nama babak turnamen, dari 8 besar ke final. */
-  var ROUNDS = ['Perempat Final', 'Semifinal', 'Final'];
-
   global.COC_DATA = {
-    TIERS: TIERS, AVATARS: AVATARS, TOPICS: TOPICS, LEVELS: LEVELS,
-    RIVALS: RIVALS, QUESTS: QUESTS, BADGES: BADGES, ROUNDS: ROUNDS,
+    TIERS: TIERS, AVATARS: AVATARS, LEVELS: LEVELS,
+    RIVALS: RIVALS, QUESTS: QUESTS, BADGES: BADGES,
 
     tierOf: function (xp) {
       var t = TIERS[0];
@@ -121,10 +101,6 @@
     nextTier: function (xp) {
       for (var i = 0; i < TIERS.length; i++) if (xp < TIERS[i].minXp) return TIERS[i];
       return null;
-    },
-    topic: function (id) {
-      for (var i = 0; i < TOPICS.length; i++) if (TOPICS[i].id === id) return TOPICS[i];
-      return TOPICS[0];
     },
     levelName: function (d) {
       for (var i = 0; i < LEVELS.length; i++) if (LEVELS[i].d === d) return LEVELS[i].name;
