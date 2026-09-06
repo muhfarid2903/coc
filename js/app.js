@@ -7,7 +7,7 @@
   var D = global.COC_DATA, Q = global.COC_Q, FX = global.COC_FX, S = global.COC_STORE;
   var NET = global.COC_NET;
   var LIVE = global.COC_LIVE;
-  var scr, tabbar, modal;
+  var scr, tabbar, modal, topbar;
 
   var state = {
     screen: 'home',
@@ -80,7 +80,13 @@
     SCREENS[name](arg);
     var full = name === 'battle' || name === 'mm' || name === 'antre' || name === 'sesi';
     tabbar.hidden = full;
-    if (!full) global.scrollTo(0, 0);
+    /* Saat bertanding, kepala panggung ikut menyingkir: di layar itu
+       yang berlaku papan "Soal 1/10" dan nama topik, bukan dompet. */
+    topbar.hidden = full;
+    /* Panggung tidak lagi menggulir bersama halaman — yang menggulir
+       hanya kotak layarnya, jadi posisi gulir itu yang perlu disetel
+       ulang tiap ganti layar. */
+    scr.scrollTop = 0;
     hud();
     var map = { home: 'home', setup: 'home', bracket: 'home', result: 'home', champion: 'home',
       howto: 'home', masuk: 'home', antre: 'home', tunggu: 'home', sesi: 'home',
@@ -257,14 +263,14 @@
       '<div class="sect"><span class="eyebrow">Pilih Pertandingan</span></div>' +
       '<div class="modes">' +
         (NET.mode === 'kelas'
-          ? modeCard('duel', '⚔️', 'Duel Langsung', 'Lawan teman sekelas, soal yang sama', 'linear-gradient(135deg,#ffe08a,#ffc53d,#ff9f1c)', '#ffc53d', '<span class="badge badge-hot">Orang</span>')
-          : modeCard('duel', '⚔️', 'Duel Cepat', '10 soal lawan satu penantang', 'linear-gradient(135deg,#ffe08a,#ffc53d,#ff9f1c)', '#ffc53d', '<span class="badge badge-hot">Populer</span>')) +
+          ? modeCard('duel', '⚔️', 'Duel Langsung', 'Lawan teman sekelas, soal yang sama', 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#f8e5ad,#e8b84b 50%,#b7862a)', '#e8b84b', '<span class="badge badge-hot">Orang</span>')
+          : modeCard('duel', '⚔️', 'Duel Cepat', '10 soal lawan satu penantang', 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#f8e5ad,#e8b84b 50%,#b7862a)', '#e8b84b', '<span class="badge badge-hot">Populer</span>')) +
         /* Turnamen 8 Besar seluruh bagannya lawan komputer. Di dalam kelas
            lawannya harus orang, jadi mode ini disembunyikan di sana; di luar
            kelas ia tetap ada seperti semula. */
         (NET.mode === 'kelas' ? ''
-          : modeCard('tour', '🏆', 'Turnamen 8 Besar', 'Menang 3 babak untuk jadi juara', 'linear-gradient(135deg,#a6c0ff,#4d7cff,#2f5ce0)', '#4d7cff', '')) +
-        modeCard('solo', '🎯', 'Latihan Santai', 'Tanpa lawan, fokus asah kemampuan', 'linear-gradient(135deg,#8ff5d5,#2ee6a0,#12b981)', '#2ee6a0', '') +
+          : modeCard('tour', '🏆', 'Turnamen 8 Besar', 'Menang 3 babak untuk jadi juara', 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#cdeefb,#7fd3f0 50%,#42aad4)', '#5ad0e6', '')) +
+        modeCard('solo', '🎯', 'Latihan Santai', 'Tanpa lawan, fokus asah kemampuan', 'radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#b6e88a,#77c341 50%,#4b8f1c)', '#77c341', '') +
       '</div>' +
 
       '<div class="sect"><h2 class="h2">🎯 Misi Hari Ini</h2>' +
@@ -298,14 +304,14 @@
   function spandukSesi() {
     if (NET.mode !== 'kelas' || !state.sesiAda) return '';
     if (state.sesi && state.sesi.tahap !== 'usai') {
-      return '<button class="mode sesi-spanduk" style="--mc:#2ee6a0" data-act="tab" data-val="sesi">' +
-        '<span class="mode-ic" style="background:linear-gradient(135deg,#8ff5d5,#2ee6a0,#12b981)">🏫</span>' +
+      return '<button class="mode sesi-spanduk" style="--mc:#77c341" data-act="tab" data-val="sesi">' +
+        '<span class="mode-ic" style="background:radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#b6e88a,#77c341 50%,#4b8f1c)">🏫</span>' +
         '<span class="mode-b"><h3>Sesi kelas sedang berjalan</h3><p>Kembali ke sesi</p></span>' +
         '<span class="mode-go">›</span></button>';
     }
     var t = D.topic(state.sesiAda.topik);
-    return '<button class="mode sesi-spanduk" style="--mc:#2ee6a0" data-act="gabungSesi">' +
-      '<span class="mode-ic" style="background:linear-gradient(135deg,#8ff5d5,#2ee6a0,#12b981)">🏫</span>' +
+    return '<button class="mode sesi-spanduk" style="--mc:#77c341" data-act="gabungSesi">' +
+      '<span class="mode-ic" style="background:radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.55),transparent 70%),linear-gradient(180deg,#b6e88a,#77c341 50%,#4b8f1c)">🏫</span>' +
       '<span class="mode-b"><h3>Sesi Kelas — gabung sekarang</h3>' +
       '<p>' + t.icon + ' ' + esc(t.name) + ' · ' + state.sesiAda.jumlah + ' soal · seluruh kelas bersamaan</p></span>' +
       '<span class="mode-go">›</span></button>';
@@ -410,8 +416,11 @@
       '<div class="modes">' +
         D.TOPICS.map(function (t) {
           var on = state.sel.topic === t.id;
-          return '<button class="mode" data-act="topic" data-val="' + t.id + '" style="--mc:' + t.color +
-            (on ? ';border-color:' + t.color + ';box-shadow:0 0 0 2px ' + t.color + '33' : '') + '">' +
+          /* Pelat mode bersudut potong, jadi tanda terpilihnya ikut bentuk
+             itu lewat kelas .on di CSS — bingkai kotak dari box-shadow
+             sebaris akan menggantung di luar sudut yang dipotong. */
+          return '<button class="mode' + (on ? ' on' : '') + '" data-act="topic" data-val="' + t.id +
+            '" style="--mc:' + t.color + '">' +
             '<span class="mode-ic" style="background:' + t.grad + '">' + t.icon + '</span>' +
             '<span class="mode-b"><h3>' + t.name + '</h3><p>' + t.desc + '</p></span>' +
             '<span class="mode-go">' + (on ? '✓' : '›') + '</span></button>';
@@ -516,7 +525,7 @@
       '<div class="card" style="margin-top:14px">' +
         '<h3 class="h2">Kartu Bantuan</h3>' +
         '<p class="sub" style="margin-top:4px">Di setiap pertandingan kamu dapat dua kartu gratis: ' +
-        '<b>Eliminasi</b> membuang dua pilihan salah, <b>Tambah Waktu</b> menambah 6 detik. ' +
+        '<b>Perisai</b> memaafkan satu jawaban salah, <b>Tambah Waktu</b> menambah 6 detik. ' +
         'Pakai di saat yang tepat!</p>' +
       '</div>';
 
@@ -665,8 +674,9 @@
       '<div class="steps">' +
         '<div class="step"><div><h4>Pilih pertandingan</h4><p>Duel Cepat untuk satu lawan satu, Turnamen untuk tiga babak menuju piala, atau Latihan untuk berlatih santai.</p></div></div>' +
         '<div class="step"><div><h4>Tentukan topik & tingkat</h4><p>Ada tujuh topik, dari Hitung Kilat sampai Soal Cerita, dengan lima tingkat kesulitan.</p></div></div>' +
+        '<div class="step"><div><h4>Ketik jawabanmu</h4><p>Tidak ada pilihan ganda — hitung sendiri, ketik angkanya di papan angka, lalu tekan tombol hijau. Satuan seperti cm² dan awalan Rp sudah tercetak, tidak perlu diketik.</p></div></div>' +
         '<div class="step"><div><h4>Jawab sebelum waktu habis</h4><p>Nilai dasar 100 per jawaban benar, ditambah bonus kecepatan hingga 100 dan bonus runtun hingga 100.</p></div></div>' +
-        '<div class="step"><div><h4>Pakai kartu bantuan</h4><p>Eliminasi membuang dua pilihan salah. Tambah Waktu memberi 6 detik ekstra. Masing-masing sekali per pertandingan.</p></div></div>' +
+        '<div class="step"><div><h4>Pakai kartu bantuan</h4><p>Perisai memaafkan satu jawaban salah — kamu boleh mengetik ulang. Tambah Waktu memberi 6 detik ekstra. Masing-masing sekali per pertandingan.</p></div></div>' +
         '<div class="step"><div><h4>Kumpulkan XP dan naik tingkat</h4><p>Dari Perunggu sampai Sang Juara. XP juga menentukan posisimu di papan peringkat.</p></div></div>' +
       '</div>' +
       '<div class="card" style="margin-top:14px">' +
@@ -697,7 +707,11 @@
   /* cfg: { topic, level, mode, rival, roundName, onDone } */
   function mulaiDuel(cfg) {
     var topik = D.topic(cfg.topic);
-    var batas = Math.max(9, topik.time - (cfg.level - 1) * 1.2) * 1000;
+    /* Mengetik jawaban sendiri makan waktu yang tidak ada pada pilihan
+       ganda: membaca empat pilihan lalu menunjuk satu jauh lebih cepat
+       daripada menghitung sampai ketemu angkanya, lalu mengetiknya.
+       Batasnya karena itu dilonggarkan sepertiga. */
+    var batas = Math.max(12, (topik.time - (cfg.level - 1) * 1.2) * 1.35) * 1000;
 
     state.match = {
       cfg: cfg,
@@ -707,6 +721,9 @@
       qs: cfg.semai
         ? Q.packSemai(SOAL_PER_MATCH, cfg.topic, cfg.level, cfg.semai)
         : Q.pack(SOAL_PER_MATCH, cfg.topic, cfg.level),
+      /* Ditetapkan sekali untuk seluruh set, bukan per soal — lihat
+         kunciTambahan(). */
+      kunci: null,
       langsung: !!cfg.langsung,
       i: 0,
       my: 0, op: 0,
@@ -714,17 +731,113 @@
       correct: 0, fast: 0, fastest: 0,
       log: [],
       lock: true,
-      pw: { fifty: true, time: true },
+      ketik: '',
+      /* perisai: sudah diaktifkan dan menunggu dipakai. pw: masih boleh
+         diaktifkan sekali dalam pertandingan ini. */
+      perisai: false,
+      pw: { perisai: true, time: true },
       opState: null,
       botPlan: null,
       baseMs: batas, limitMs: batas, endAt: 0,
       raf: 0, botT: 0, nextT: 0, lastTick: -1
     };
+    state.match.kunci = kunciTambahan(state.match.qs);
     FX.sfx.start();
     go('battle');
   }
 
   SCREENS.battle = function () { gambarSoal(); };
+
+  /* ============================================================
+     Papan angka
+
+     Jawaban diketik, bukan dipilih. Awalan ("Rp") dan satuan ("cm²")
+     tercetak tetap di kiri-kanan plakat dan tidak pernah ikut diketik —
+     yang dinilai hanya angkanya, jadi tidak ada siswa yang kehilangan
+     poin gara-gara lupa menulis satuan.
+     ============================================================ */
+  var KETIK_MAKS = 9;
+
+  /* Tombol koma dan garis pecahan ditentukan sekali untuk seluruh set
+     soal, bukan per soal. Kalau dipasang per soal, munculnya tombol
+     garis pecahan sudah membocorkan bahwa jawaban yang sedang tampil
+     berbentuk pecahan sebelum siswa menghitungnya. */
+  function kunciTambahan(qs) {
+    var koma = false, garis = false;
+    for (var i = 0; i < qs.length; i++) {
+      if (qs[i].ketik.indexOf(',') !== -1) koma = true;
+      if (qs[i].ketik.indexOf('/') !== -1) garis = true;
+    }
+    return { koma: koma, garis: garis };
+  }
+
+  /* Titik ribuan dipasang sambil mengetik, supaya 225000 terbaca
+     225.000 persis seperti angka di dalam soalnya. */
+  function hiasAngka(t) {
+    if (!/^\d+$/.test(t)) return t;
+    return t.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function plakat(q, ketikan) {
+    return '<div class="plate" id="plate">' +
+      (q.prefix ? '<span class="plate-fix">' + esc(q.prefix) + '</span>' : '') +
+      '<b id="plateVal"' + (ketikan ? '' : ' class="kosong"') + '>' +
+        esc(ketikan ? hiasAngka(ketikan) : '0') + '</b>' +
+      (q.unit ? '<span class="plate-fix">' + esc(q.unit.replace(/^ /, '')) + '</span>' : '') +
+      '</div>';
+  }
+
+  /* `act` menentukan layar mana yang menangani tekanannya — duel atau
+     sesi kelas — sehingga susunan papannya cuma ditulis sekali. */
+  function papanAngka(q, kunci, act, ketikan, mati) {
+    var d = mati ? ' disabled' : '';
+    var tombol = '';
+    for (var n = 1; n <= 9; n++) {
+      tombol += '<button class="key" data-act="' + act + '" data-val="' + n + '"' + d + '>' + n + '</button>';
+    }
+    tombol +=
+      '<button class="key key-del" data-act="' + act + '" data-val="hapus"' + d +
+        ' aria-label="Hapus satu angka">\u232b</button>' +
+      '<button class="key" data-act="' + act + '" data-val="0"' + d + '>0</button>' +
+      '<button class="key key-ok" data-act="' + act + '" data-val="kirim"' + d +
+        ' aria-label="Kirim jawaban">\u27a4</button>';
+    var ekstra =
+      (kunci.koma ? '<button class="key key-alt" data-act="' + act + '" data-val=","' + d + '>,</button>' : '') +
+      (kunci.garis ? '<button class="key key-alt" data-act="' + act + '" data-val="/"' + d + '>/</button>' : '');
+    return '<div class="jawab">' + plakat(q, ketikan) +
+      '<div class="pad">' + tombol + ekstra + '</div></div>';
+  }
+
+  function catPlakat(ketikan) {
+    var el = $('plateVal');
+    if (!el) return;
+    el.textContent = ketikan ? hiasAngka(ketikan) : '0';
+    el.classList.toggle('kosong', !ketikan);
+  }
+
+  /* Getar menolak: dipakai saat mengirim plakat kosong dan saat perisai
+     memaafkan satu jawaban salah. Kelasnya dilepas-pasang supaya
+     animasinya bisa berjalan dua kali berturut-turut. */
+  function goyangPlakat(kelas) {
+    var pl = $('plate');
+    if (!pl) return;
+    pl.classList.remove('salah', 'benar');
+    void pl.offsetWidth;
+    pl.classList.add(kelas || 'salah');
+  }
+
+  /* Satu tekanan papan angka. Mengembalikan ketikan yang baru, atau
+     null kalau tekanan itu memang harus diabaikan. */
+  function tekanKe(ketikan, v) {
+    if (v === 'hapus') return ketikan.slice(0, -1);
+    if (ketikan.length >= KETIK_MAKS) return null;
+    /* Pemisah hanya boleh satu, dan tidak boleh jadi karakter pertama:
+       ",5" dan "3/4/5" bukan jawaban yang bisa dinilai. */
+    if (v === ',' || v === '/') {
+      if (!ketikan || /[,/]/.test(ketikan)) return null;
+    }
+    return ketikan + v;
+  }
 
   function gambarSoal() {
     var m = state.match;
@@ -735,6 +848,7 @@
     var lawan = m.cfg.rival;
 
     m.lock = false;
+    m.ketik = '';
     m.opState = null;
     m.limitMs = m.baseMs;
     m.endAt = Date.now() + m.limitMs;
@@ -780,21 +894,18 @@
         (solo ? '' : '<div class="tug"><i class="me" id="tugMe"></i><i class="op" id="tugOp"></i></div>') +
         '<div class="progress-dots">' + titik + '</div>' +
 
-        '<div class="qcard">' +
-          '<span class="qtopic">' + topik.icon + ' ' + topik.name + '</span>' +
-          '<div class="qtext' + (q.long ? ' long' : '') + '">' + esc(q.text) + '</div>' +
-          (m.streak >= 2 ? '<span class="streak-flag">🔥 Runtun ' + m.streak + '</span>' : '') +
-        '</div>' +
-
-        '<div class="opts" id="opts">' +
-          q.options.map(function (o, idx) {
-            return '<button class="opt' + (o.length > 9 ? ' long' : '') + '" data-act="jawab" data-val="' + idx + '">' +
-              '<small>' + 'ABCD'[idx] + '</small>' + esc(o) + '</button>';
-          }).join('') +
+        '<div class="duel-main">' +
+          '<div class="qcard">' +
+            '<span class="qtopic">' + topik.icon + ' ' + topik.name + '</span>' +
+            '<div class="qtext' + (q.long ? ' long' : '') + '">' + esc(q.text) + '</div>' +
+            (m.streak >= 2 ? '<span class="streak-flag">🔥 Runtun ' + m.streak + '</span>' : '') +
+          '</div>' +
+          papanAngka(q, m.kunci, 'tekan', '', false) +
         '</div>' +
 
         '<div class="powers">' +
-          '<button class="power" data-act="pw" data-val="fifty"' + (m.pw.fifty ? '' : ' disabled') + '>✂️ Eliminasi</button>' +
+          '<button class="power" data-act="pw" data-val="perisai"' +
+            (m.pw.perisai ? '' : ' disabled') + '>🛡️ Perisai</button>' +
           '<button class="power" data-act="pw" data-val="time"' + (m.pw.time ? '' : ' disabled') + '>⏱️ +6 detik</button>' +
         '</div>' +
 
@@ -834,7 +945,7 @@
     fg.style.strokeDashoffset = (1 - rasio) * RING_C;
     ring.classList.toggle('warn', left <= 5000 && left > 0);
     if (det !== m.lastTick && det <= 5 && det > 0 && !m.lock) { FX.sfx.hurry(); m.lastTick = det; }
-    if (left <= 0) { if (!m.lock) jawab(-1); return; }
+    if (left <= 0) { if (!m.lock) jawab(null); return; }
     m.raf = requestAnimationFrame(detak);
   }
 
@@ -873,17 +984,37 @@
     catHud();
   }
 
-  /* ---------- jawaban pemain ---------- */
-  function jawab(idx) {
+  /* ---------- jawaban pemain ----------
+     `ketikan` null berarti waktunya habis sebelum ada yang dikirim. */
+  function jawab(ketikan) {
     var m = state.match;
     if (!m || m.lock) return;
+
+    var q = m.qs[m.i];
+    var habis = ketikan == null;
+    var benar = !habis && Q.cocok(ketikan, q);
+
+    /* Perisai memaafkan satu jawaban salah dalam satu pertandingan.
+       Mengetik jawaban sendiri jauh lebih berat daripada menebak satu
+       dari empat: salah satu angka saja sudah nol poin. Perisai memberi
+       satu kesempatan mengetik ulang — tapi tidak untuk waktu yang
+       keburu habis, karena di situ tidak ada yang bisa diperbaiki. */
+    if (!benar && !habis && m.perisai) {
+      m.perisai = false;
+      m.ketik = '';
+      catPlakat('');
+      goyangPlakat('salah');
+      FX.sfx.bad();
+      FX.buzz(30);
+      toast('Perisai dipakai — coba lagi!');
+      return;
+    }
+
     m.lock = true;
     cancelAnimationFrame(m.raf);
 
-    var q = m.qs[m.i];
     var left = Math.max(0, m.endAt - Date.now());
     var pakai = m.limitMs - left;
-    var benar = idx === q.correct;
     var dapat = 0;
 
     if (benar) {
@@ -897,23 +1028,20 @@
     } else {
       m.streak = 0;
     }
-    m.log[m.i] = { ok: benar, ms: pakai, pilih: idx, q: q };
+    m.log[m.i] = { ok: benar, ms: pakai, ketik: habis ? '' : String(ketikan), q: q };
 
-    /* tandai pilihan */
-    var opts = $('opts').children;
-    for (var i = 0; i < opts.length; i++) {
-      opts[i].disabled = true;
-      if (i === q.correct) opts[i].classList.add('ok');
-      else if (i === idx) opts[i].classList.add('no');
-      else opts[i].classList.add('dim');
-    }
+    /* Kunci papan angka lalu warnai plakatnya. */
+    goyangPlakat(benar ? 'benar' : 'salah');
+    Array.prototype.forEach.call(document.querySelectorAll('.pad .key'), function (b) {
+      b.disabled = true;
+    });
 
     var badge = $('anMe');
     if (badge) { badge.className = 'answered show ' + (benar ? 'ok' : 'no'); badge.textContent = benar ? '✓' : '✕'; }
     var fm = $('fMe');
     if (fm) { fm.classList.add(benar ? 'score-up' : 'hit'); setTimeout(function () { fm.classList.remove('score-up', 'hit'); }, 420); }
 
-    umpanBalik(benar, dapat, idx === -1);
+    umpanBalik(benar, dapat, habis);
     catHud();
 
     /* pastikan lawan menyelesaikan gilirannya sebelum lanjut */
@@ -923,14 +1051,17 @@
     var post = $('post');
     post.innerHTML =
       '<div class="explain" style="margin-top:12px">' +
-        (benar ? '<b>Tepat!</b> ' : (idx === -1 ? '<b>Waktu habis.</b> Jawabannya <b>' + esc(q.answer) + '</b>. ' :
+        (benar ? '<b>Tepat!</b> ' : (habis ? '<b>Waktu habis.</b> Jawabannya <b>' + esc(q.answer) + '</b>. ' :
           '<b>Belum tepat.</b> Jawabannya <b>' + esc(q.answer) + '</b>. ')) +
         esc(q.explain) +
       '</div>' +
       '<button class="btn btn-ghost btn-block btn-sm" data-act="next" style="margin-top:10px">' +
         (m.i + 1 >= m.qs.length ? 'Lihat Hasil ›' : 'Soal Berikutnya ›') + '</button>';
 
-    m.nextT = setTimeout(lanjut, benar ? 2000 : 3200);
+    /* Sapuan hasil menutup layar sedetik penuh, jadi jeda baca setelahnya
+       ditambah selama itu — terutama saat salah, karena di situ pembahasan
+       yang di bawahnya justru paling perlu dibaca. */
+    m.nextT = setTimeout(lanjut, benar ? 2400 : 4000);
   }
 
   function umpanBalik(benar, dapat, habis) {
@@ -938,13 +1069,19 @@
     d.className = 'feed ' + (benar ? 'ok' : 'no');
     var m = state.match;
     if (benar) {
-      var judul = m.streak >= 5 ? 'LUAR BIASA!' : m.streak >= 3 ? 'HEBAT!' : 'BENAR!';
-      d.innerHTML = judul + '<small>+' + fmt(dapat) + ' poin' + (m.streak >= 2 ? ' · runtun ' + m.streak : '') + '</small>';
+      /* Dua baris bertumpuk, seperti papan hasil di arena: kata pertama
+         tetap, kata kedua yang menyala. Pujian untuk runtun panjang
+         turun ke baris kecil supaya bentuknya tidak ikut berubah. */
+      var puji = m.streak >= 5 ? 'LUAR BIASA! ' : m.streak >= 3 ? 'HEBAT! ' : '';
+      d.innerHTML = '<em>JAWABAN</em><b>BENAR</b><small>' + puji + '+' + fmt(dapat) + ' poin' +
+        (m.streak >= 2 ? ' · runtun ' + m.streak : '') + '</small>';
       FX.sfx.combo(m.streak);
       FX.buzz(20);
-      FX.burst(global.innerWidth / 2, global.innerHeight * 0.38, '#2ee6a0', 16);
+      FX.burst(global.innerWidth / 2, global.innerHeight * 0.5, '#77c341', 16);
     } else {
-      d.innerHTML = (habis ? 'WAKTU HABIS' : 'SALAH') + '<small>runtun terputus</small>';
+      d.innerHTML = habis
+        ? '<em>WAKTU</em><b>HABIS</b><small>runtun terputus</small>'
+        : '<em>JAWABAN</em><b>SALAH</b><small>runtun terputus</small>';
       FX.sfx.bad();
       FX.buzz([30, 40, 30]);
     }
@@ -1111,7 +1248,9 @@
       '<div class="review">' + res.log.map(function (l, i) {
         return '<div class="rev"><i>' + (l.ok ? '✅' : '❌') + '</i><div class="rev-b">' +
           '<b>' + (i + 1) + '. ' + esc(l.q.text) + '</b>' +
-          '<span>' + (l.ok ? 'Benar' : 'Jawaban: <em>' + esc(l.q.answer) + '</em>') +
+          '<span>' + (l.ok ? 'Benar'
+            : (l.ketik ? 'Kamu tulis <em>' + esc(l.ketik) + '</em> · ' : 'Tidak terjawab · ') +
+              'Jawaban: <em>' + esc(l.q.answer) + '</em>') +
           ' · ' + fmt(Math.round(l.ms / 100) / 10) + ' dtk</span></div></div>';
       }).join('') + '</div>' +
 
@@ -1548,7 +1687,10 @@
     reset: function () {
       dialog('Hapus semua data?', '<p>Nama, XP, koin, lencana, dan riwayat akan hilang permanen dari perangkat ini.</p>', [
         { label: 'Batal', cls: 'btn btn-ghost' },
-        { label: 'Hapus', cls: 'btn', fn: function () { S.reset(); go('onboard'); toast('Data dihapus'); } }
+        /* Satu-satunya tombol yang benar-benar menghapus tanpa bisa
+           ditarik kembali, jadi pelatnya merah — bukan biru seperti
+           tombol utama lain. */
+        { label: 'Hapus', cls: 'btn btn-bad', fn: function () { S.reset(); go('onboard'); toast('Data dihapus'); } }
       ]);
     },
 
@@ -1572,10 +1714,26 @@
       FX.sfx.tap();
       LIVE.gabungSesi().then(function (r) {
         if (!r.ok) { toast(r.pesan || 'Sesi sudah tidak ada'); state.sesiAda = null; go('home'); return; }
+        var info = r.data.sesi;
+        /* Sesinya mungkin sudah berjalan — anak yang terlambat masuk
+           kelas, HP-nya baru menyala, atau ia baru selesai membuat PIN.
+           Keadaan sesi dari server karena itu diadopsi apa adanya, bukan
+           dipaksa jadi 'menunggu': peristiwa sesi-mulai yang membawa
+           semai sudah lewat dan tidak akan datang dua kali, jadi set
+           soalnya harus dibangkitkan di sini juga. Tanpa ini ia terjebak
+           di layar "menunggu guru memulai" sampai sesi berakhir. */
+        var jalan = !!info.semai;
         state.sesi = {
-          info: r.data.sesi, tahap: 'menunggu', soalKe: -1, jawabKe: -1,
-          skor: 0, benar: 0, runtun: 0, qs: null, papan: r.data.papan || [], raf: 0
+          info: info,
+          tahap: jalan ? 'nyusul' : 'menunggu',
+          soalKe: jalan ? info.soalKe : -1,
+          jawabKe: -1,
+          skor: 0, benar: 0, runtun: 0,
+          qs: jalan ? Q.packSemai(info.jumlah, info.topik, info.tingkat, info.semai) : null,
+          kunci: null, ketik: '',
+          papan: r.data.papan || [], raf: 0
         };
+        if (state.sesi.qs) state.sesi.kunci = kunciTambahan(state.sesi.qs);
         go('sesi');
       });
     },
@@ -1585,14 +1743,32 @@
       state.sesi = null;
       go('home');
     },
+    /* Papan angka sesi kelas. Dipisah dari ACT.tekan karena keadaannya
+       memang lain: di sesi tidak ada perisai, dan yang mengunci soal
+       adalah jam server, bukan jawaban siswa. */
+    tekanSesi: function (v) {
+      var S2 = state.sesi;
+      if (!S2 || S2.tahap !== 'soal' || S2.jawabKe === S2.soalKe) return;
+      if (S2.ketik == null) S2.ketik = '';
+      if (v === 'kirim') {
+        if (S2.ketik) ACT.jawabSesi(S2.ketik);
+        else { FX.sfx.bad(); goyangPlakat('salah'); }
+        return;
+      }
+      var baru = tekanKe(S2.ketik, v);
+      if (baru === null || baru === S2.ketik) return;
+      S2.ketik = baru;
+      FX.sfx.tap();
+      catPlakat(S2.ketik);
+    },
+
     jawabSesi: function (v) {
       var S2 = state.sesi;
       if (!S2 || S2.tahap !== 'soal' || S2.jawabKe === S2.soalKe) return;
       var q = S2.qs && S2.qs[S2.soalKe];
       if (!q) return;
 
-      var idx = parseInt(v, 10);
-      var benar = idx === q.correct;
+      var benar = Q.cocok(v, q);
       var sisa = Math.max(0, S2.habisPada - Date.now());
       var poinDapat = benar ? poin(sisa / S2.info.batasMs, S2.runtun) : 0;
 
@@ -1605,13 +1781,12 @@
 
       LIVE.jawabSesi(S2.soalKe, poinDapat, benar);
 
-      /* Tandai pilihan lalu kunci semuanya — jawaban benarnya sengaja
+      /* Plakatnya diwarnai lalu papan dikunci — jawaban benarnya sengaja
          belum dibuka, supaya siswa yang menjawab cepat tidak bisa
          membisikkannya ke teman sebangku yang belum menjawab. */
-      var tombol = document.querySelectorAll('#opts .opt');
-      Array.prototype.forEach.call(tombol, function (b, i) {
+      goyangPlakat(benar ? 'benar' : 'salah');
+      Array.prototype.forEach.call(document.querySelectorAll('.pad .key'), function (b) {
         b.disabled = true;
-        if (i === idx) b.classList.add(benar ? 'ok' : 'no');
       });
       var sc = $('scMe'); if (sc) sc.textContent = fmt(S2.skor);
       var post = $('post');
@@ -1639,23 +1814,30 @@
       else go('mm', { topic: c.topic, level: c.level, mode: c.mode });
     },
 
-    jawab: function (v) { jawab(parseInt(v, 10)); },
+    tekan: function (v) {
+      var m = state.match;
+      if (!m || m.lock) return;
+      if (v === 'kirim') {
+        if (m.ketik) jawab(m.ketik);
+        else { FX.sfx.bad(); goyangPlakat('salah'); }
+        return;
+      }
+      var baru = tekanKe(m.ketik, v);
+      if (baru === null || baru === m.ketik) return;
+      m.ketik = baru;
+      FX.sfx.tap();
+      catPlakat(m.ketik);
+    },
     next: function () { FX.sfx.tap(); lanjut(); },
     pw: function (v, el) {
       var m = state.match;
       if (!m || m.lock || !m.pw[v]) return;
       m.pw[v] = false;
       el.disabled = true;
-      if (v === 'fifty') {
-        var q = m.qs[m.i], buang = [], i;
-        for (i = 0; i < q.options.length; i++) if (i !== q.correct) buang.push(i);
-        Q.shuffle(buang);
-        buang.slice(0, 2).forEach(function (idx) {
-          var b = $('opts').children[idx];
-          b.classList.add('gone'); b.disabled = true;
-        });
+      if (v === 'perisai') {
+        m.perisai = true;
         FX.sfx.coin();
-        toast('Dua pilihan salah dibuang!');
+        toast('Perisai aktif — satu jawaban salah dimaafkan');
       } else {
         m.endAt += 6000;
         FX.sfx.ok();
@@ -1760,6 +1942,19 @@
       return;
     }
 
+    if (S2.tahap === 'nyusul') {
+      scr.innerHTML =
+        '<div class="mm">' +
+          '<div class="mm-scan"><span>🏫</span></div>' +
+          '<div><h2 class="h1">Menyusul Sesi</h2>' +
+          '<p class="sub">Kelas sudah mengerjakan soal ' + (S2.soalKe + 1) + '. ' +
+          'Kamu ikut mulai dari soal berikutnya.</p></div>' +
+          papanSesiHtml(S2.papan, null) +
+          '<button class="btn btn-ghost btn-block" data-act="keluarSesi">Keluar</button>' +
+        '</div>';
+      return;
+    }
+
     if (S2.tahap === 'jeda') {
       scr.innerHTML =
         '<div class="mm">' +
@@ -1842,18 +2037,12 @@
             '<span class="fighter-b"><h5>Benar</h5><b>' + S2.benar + '</b></span></div>' +
         '</div>' +
 
-        '<div class="qcard">' +
-          '<span class="qtopic">' + topik.icon + ' ' + topik.name + '</span>' +
-          '<div class="qtext' + (q.long ? ' long' : '') + '">' + esc(q.text) + '</div>' +
-        '</div>' +
-
-        '<div class="opts" id="opts">' +
-          q.options.map(function (o, idx) {
-            return '<button class="opt' + (o.length > 9 ? ' long' : '') + '"' +
-              (sudah ? ' disabled' : '') +
-              ' data-act="jawabSesi" data-val="' + idx + '">' +
-              '<small>' + 'ABCD'[idx] + '</small>' + esc(o) + '</button>';
-          }).join('') +
+        '<div class="duel-main">' +
+          '<div class="qcard">' +
+            '<span class="qtopic">' + topik.icon + ' ' + topik.name + '</span>' +
+            '<div class="qtext' + (q.long ? ' long' : '') + '">' + esc(q.text) + '</div>' +
+          '</div>' +
+          papanAngka(q, S2.kunci || kunciTambahan(S2.qs), 'tekanSesi', S2.ketik || '', sudah) +
         '</div>' +
 
         '<div id="post">' + (sudah
@@ -1884,7 +2073,7 @@
       if (sisa > 0) s.raf = requestAnimationFrame(jalan);
       else {
         ring.textContent = '0';
-        Array.prototype.forEach.call(document.querySelectorAll('#opts .opt'), function (b) { b.disabled = true; });
+        Array.prototype.forEach.call(document.querySelectorAll('.pad .key'), function (b) { b.disabled = true; });
       }
     };
     S2.raf = requestAnimationFrame(jalan);
@@ -1976,6 +2165,8 @@
       if (!state.sesi) return;               // tidak ikut gabung
       state.sesi.info = d;
       state.sesi.qs = Q.packSemai(d.jumlah, d.topik, d.tingkat, d.semai);
+      state.sesi.kunci = kunciTambahan(state.sesi.qs);
+      state.sesi.ketik = '';
       state.sesi.tahap = 'jeda';
       state.sesi.soalKe = -1;
       if (state.screen === 'sesi') go('sesi');
@@ -1986,6 +2177,7 @@
       if (!S2) return;
       S2.tahap = 'soal';
       S2.soalKe = d.soalKe;
+      S2.ketik = '';
       S2.info.batasMs = d.batasMs;
       S2.habisPada = Date.now() + d.batasMs;
       if (state.screen !== 'sesi') go('sesi'); else gambarSoalSesi();
@@ -2044,16 +2236,36 @@
 
     $('brandBtn').addEventListener('click', function () { FX.sfx.tap(); go('home'); });
 
+    /* Ajakan memutar layar harus bisa dilewati: ada siswa yang kunci
+       rotasinya menyala dan tidak boleh sampai terkurung di sana. */
+    var lewatiRotasi = $('rotateSkip');
+    if (lewatiRotasi) {
+      lewatiRotasi.addEventListener('click', function () {
+        FX.sfx.tap();
+        document.body.classList.add('tetap-tegak');
+      });
+    }
+
     modal.addEventListener('click', function (e) { if (e.target === modal) modal.hidden = true; });
 
-    /* Pintasan papan ketik saat bertanding. */
+    /* Pintasan papan ketik: di lab komputer, mengetik jawaban lewat
+       papan ketik sungguhan jauh lebih cepat daripada mengklik papan
+       angka di layar. Titik pada papan angka numerik dipetakan ke koma,
+       karena di sini koma yang jadi pemisah desimal. */
     document.addEventListener('keydown', function (e) {
-      if (state.screen !== 'battle' || !state.match) return;
-      var k = e.key.toUpperCase();
-      var idx = 'ABCD'.indexOf(k);
-      if (idx === -1 && k >= '1' && k <= '4') idx = parseInt(k, 10) - 1;
-      if (idx >= 0) { e.preventDefault(); jawab(idx); }
-      else if (e.key === 'Enter' && state.match.lock) { e.preventDefault(); lanjut(); }
+      var aksi = state.screen === 'battle' ? ACT.tekan
+               : state.screen === 'sesi' ? ACT.tekanSesi : null;
+      if (!aksi) return;
+
+      if (state.screen === 'battle' && state.match && state.match.lock) {
+        if (e.key === 'Enter') { e.preventDefault(); lanjut(); }
+        return;
+      }
+      if (e.key >= '0' && e.key <= '9') { e.preventDefault(); aksi(e.key); }
+      else if (e.key === 'Backspace') { e.preventDefault(); aksi('hapus'); }
+      else if (e.key === 'Enter') { e.preventDefault(); aksi('kirim'); }
+      else if (e.key === ',' || e.key === '.') { e.preventDefault(); aksi(','); }
+      else if (e.key === '/') { e.preventDefault(); aksi('/'); }
     });
 
     /* Bangunkan audio pada sentuhan pertama. */
@@ -2077,7 +2289,7 @@
   }
 
   function boot() {
-    scr = $('screen'); tabbar = $('tabbar'); modal = $('modal');
+    scr = $('screen'); tabbar = $('tabbar'); modal = $('modal'); topbar = $('topbar');
     S.load();
     FX.init();
     FX.setSound(S.p.sound !== false);

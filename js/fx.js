@@ -105,7 +105,7 @@
     global.addEventListener('resize', fit);
   }
 
-  var COLORS = ['#ffc53d', '#ff9f1c', '#4d7cff', '#2ee6a0', '#ff5fa2', '#31e1ff', '#ffffff'];
+  var COLORS = ['#5ad0e6', '#7fd3f0', '#c3d0d7', '#e8b84b', '#77c341', '#f4f8fa', '#42aad4'];
 
   function loop() {
     raf = 0;
@@ -172,7 +172,7 @@
       parts.push({
         x: x, y: y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 1,
         g: 0.14, w: 4 + Math.random() * 4, h: 4 + Math.random() * 4,
-        rot: 0, vr: 0.2, c: color || '#ffc53d', round: true, life: 40 + Math.random() * 25
+        rot: 0, vr: 0.2, c: color || '#5ad0e6', round: true, life: 40 + Math.random() * 25
       });
     }
     if (!raf) raf = requestAnimationFrame(loop);

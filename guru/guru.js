@@ -491,7 +491,9 @@
         '<div class="gaksi" style="margin-top:8px">' +
           '<input class="field" id="sJumlah" type="number" min="3" max="20" value="10" style="width:80px"/>' +
           '<span class="sub">soal</span>' +
-          '<input class="field" id="sDetik" type="number" min="6" max="60" value="20" style="width:80px"/>' +
+          '<input class="field" id="sDetik" type="number" min="6" max="60" value="30" style="width:80px"/>' +
+          /* Siswa mengetik jawabannya, bukan menunjuk salah satu dari
+             empat, jadi bawaannya dilonggarkan dari 20 detik. */
           '<span class="sub">detik per soal</span>' +
         '</div>' +
         '<button class="btn btn-sm" id="btnBuatSesi" style="margin-top:10px">▶ Siapkan Sesi</button>';
@@ -541,7 +543,7 @@
         topic: $('sTopik').value,
         level: Number($('sLevel').value),
         jumlah: Number($('sJumlah').value) || 10,
-        batasMs: (Number($('sDetik').value) || 20) * 1000
+        batasMs: (Number($('sDetik').value) || 30) * 1000
       }).then(function (r) {
         if (!r.ok) { toast(r.pesan || 'Gagal membuat sesi'); return; }
         toast('Sesi disiapkan — minta siswa menekan Gabung');

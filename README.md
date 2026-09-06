@@ -16,8 +16,15 @@ Nilai per soal: **100** (jawaban benar) + **sisa waktu × 100** (bonus kecepatan
 + **runtun × 20**, maksimal 100 (bonus beruntun). Jawaban salah atau kehabisan
 waktu bernilai 0 dan memutus runtun.
 
-Setiap pertandingan menyediakan dua kartu bantuan gratis: **Eliminasi**
-(membuang dua pilihan salah) dan **Tambah Waktu** (+6 detik).
+Jawaban **diketik**, bukan dipilih — tidak ada pilihan ganda. Papan angka di
+layar (atau papan ketik sungguhan) dipakai untuk mengetik angkanya; awalan
+`Rp` dan satuan seperti `cm²` sudah tercetak tetap di plakat dan tidak ikut
+dinilai. Tombol koma dan garis pecahan hanya muncul kalau set soalnya memang
+memerlukan.
+
+Setiap pertandingan menyediakan dua kartu bantuan gratis: **Perisai**
+(satu jawaban salah dimaafkan, boleh mengetik ulang) dan **Tambah Waktu**
+(+6 detik).
 
 ## Topik Soal
 
@@ -135,6 +142,12 @@ Menambah siswa dilakukan dengan menempel daftar nama dari absen, satu nama per
 baris. Pakai nama panggilan saja — server sengaja tidak punya kolom nama
 lengkap, NIS, atau email, sehingga data pribadi siswa yang tersimpan seminimal
 mungkin.
+
+Tiap siswa baru langsung mendapat **avatar acak** yang belum terpakai di
+kelasnya, jadi papan peringkat bisa dibaca sekilas tanpa menunggu anak-anak
+mengganti sendiri. Kelasnya boleh lebih besar daripada 18 avatar yang tersedia;
+lewat angka itu avatarnya mulai berulang. Siswa tetap bisa menggantinya kapan
+saja di layar Profil.
 
 ### Mengelola kelas dari baris perintah
 
@@ -305,9 +318,13 @@ deploy/             berkas untuk menjalankannya di VPS
 
 ## Catatan Teknis
 
-- Mobile-first, aman di layar 320 px ke atas, menghormati `prefers-reduced-motion`.
+- Dirancang untuk layar **mendatar** — panggung batu satu layar penuh, seperti
+  arena pertandingan. Di HP yang dipegang tegak muncul ajakan memutar layar yang
+  tetap bisa dilewati (ada siswa yang kunci rotasinya menyala), dan tata letaknya
+  turun jadi satu lajur dengan menu di bawah. Menghormati `prefers-reduced-motion`.
 - Efek suara dibangkitkan lewat WebAudio — tidak ada berkas audio yang perlu diunduh.
 - Satu-satunya sumber daya eksternal adalah Google Fonts; bila diblokir, tampilan
   otomatis memakai huruf sistem.
-- Pintasan papan ketik saat bertanding: `A`–`D` atau `1`–`4` untuk menjawab,
-  `Enter` untuk lanjut.
+- Pintasan papan ketik saat bertanding: angka `0`–`9` untuk mengetik jawaban,
+  `Backspace` menghapus, `Enter` mengirim — lalu `Enter` sekali lagi untuk lanjut
+  ke soal berikutnya. Titik pada papan angka numerik dibaca sebagai koma desimal.

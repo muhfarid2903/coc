@@ -180,12 +180,55 @@ function hapusKelas(id) {
 }
 
 /* ── Siswa ─────────────────────────────────────────────────── */
+
+/* Salinan AVATARS di js/data.js, dan harus tetap sama isinya: avatar
+   yang dipasang di sini muncul sebagai pilihan terpilih di layar Profil
+   siswa. Kalau ada yang hanya tercantum di sini, anak itu melihat
+   avatarnya sendiri tidak ada di dalam kisi pilihan. */
+const AVATAR = [
+  '🦊', '🐼', '🦉', '🐯', '🦁', '🐨',
+  '🐺', '🦄', '🐸', '🦖', '🐙', '🦈',
+  '🧑‍🚀', '🧙', '🥷', '🤖', '👾', '🐝'
+];
+
+/* Avatar awal diacak, dan sebisa mungkin belum terpakai di kelas itu.
+   Satu kelas berisi 30 wajah rubah yang identik membuat papan peringkat
+   tidak terbaca sekilas — padahal justru di situ gunanya avatar. Kalau
+   kelasnya lebih besar daripada daftar avatar, pengulangan diterima:
+   lebih baik dua rubah daripada gagal menambahkan siswa. */
+function avaBaru(classId) {
+  const kepakai = new Set(
+    db.prepare('SELECT ava FROM students WHERE class_id = ?').all(classId).map((r) => r.ava)
+  );
+  const sisa = AVATAR.filter((a) => !kepakai.has(a));
+  const kolam = sisa.length ? sisa : AVATAR;
+  return kolam[Math.floor(Math.random() * kolam.length)];
+}
+
+/* Backfill sekali jalan: kelas yang sudah terlanjur dibuat sebelum
+   avatar diacak berisi tiga puluh rubah yang serupa semua. Yang diganti
+   hanya siswa yang belum pernah masuk — begitu seorang anak punya PIN,
+   ia sudah pernah membuka layar Profil dan rubahnya bisa jadi memang
+   pilihannya sendiri; yang begitu tidak boleh ditimpa diam-diam (ia
+   selalu bisa menggantinya sendiri di sana). Ditandai user_version
+   supaya avatarnya tidak dikocok ulang tiap server dinyalakan. */
+const VERSI_SKEMA = 1;
+if (Number(db.prepare('PRAGMA user_version').get().user_version || 0) < VERSI_SKEMA) {
+  const perlu = db.prepare(
+    "SELECT id, class_id FROM students WHERE ava = '🦊' AND pin_hash IS NULL"
+  ).all();
+  const pasang = db.prepare('UPDATE students SET ava = ? WHERE id = ?');
+  for (const murid of perlu) pasang.run(avaBaru(murid.class_id), murid.id);
+  db.exec(`PRAGMA user_version = ${VERSI_SKEMA}`);
+  if (perlu.length) console.log(`[db] avatar awal diacak untuk ${perlu.length} siswa lama.`);
+}
+
 function tambahSiswa(classId, nama) {
   const bersih = String(nama).trim().slice(0, 20);
   if (!bersih) return null;
   try {
-    const r = db.prepare('INSERT INTO students (class_id, name, created_at) VALUES (?, ?, ?)')
-      .run(classId, bersih, now());
+    const r = db.prepare('INSERT INTO students (class_id, name, ava, created_at) VALUES (?, ?, ?, ?)')
+      .run(classId, bersih, avaBaru(classId), now());
     return siswa(Number(r.lastInsertRowid));
   } catch (e) {
     return null; // nama sudah ada di kelas itu — UNIQUE(class_id, name)

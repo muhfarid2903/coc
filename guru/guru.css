@@ -1,11 +1,21 @@
 /* Dasbor guru dipakai di laptop, bukan HP — jadi lebarnya dilepas dari
-   --shell milik aplikasi siswa yang sengaja sempit seperti layar ponsel. */
-body.guru { padding: 0; }
+   --shell milik aplikasi siswa yang sengaja sempit seperti panggung
+   duel. Panggung batu pun tidak dipakai di sini: halaman ini panjang
+   dan digulir, sedangkan bingkai itu mengunci satu layar penuh. Yang
+   diambil hanya bahannya — batu tulis gelap, pelat baja, huruf pahat. */
+body.guru {
+  padding: 0;
+  background:
+    radial-gradient(46% 60% at 0% 30%, rgba(96, 214, 236, .12), transparent 62%),
+    radial-gradient(46% 60% at 100% 20%, rgba(96, 214, 236, .10), transparent 62%),
+    linear-gradient(180deg, var(--slab1) 0%, var(--slab2) 30%, var(--slab3) 70%, var(--slab4) 100%);
+  background-attachment: fixed;
+}
 
 .gwrap {
-  width: min(1100px, 100%);
+  width: min(1180px, 100%);
   margin: 0 auto;
-  padding: 20px 16px 60px;
+  padding: 22px 18px 64px;
 }
 
 .ghead {
@@ -14,12 +24,18 @@ body.guru { padding: 0; }
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
   margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
 }
 .gbrand { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
 .gbrand span { font-size: 24px; }
-.gbrand b { font-size: 19px; font-weight: 800; }
+.gbrand b {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: 21px;
+  letter-spacing: .06em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .25), 0 2px 4px rgba(0, 0, 0, .7);
+}
 .gbrand small { color: var(--txt3); font-size: 12px; }
 
 .gfoot { margin-top: 40px; text-align: center; }
@@ -27,24 +43,32 @@ body.guru { padding: 0; }
 /* Kode kelas ditulis guru di papan tulis, jadi harus terbaca dari bangku
    belakang: besar, monospace, berjarak lebar. */
 .kode {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(30px, 6vw, 46px);
   font-weight: 700;
   letter-spacing: .18em;
   color: var(--gold);
-  background: rgba(255, 197, 61, .08);
-  border: 1px dashed rgba(255, 197, 61, .4);
-  border-radius: var(--r-m);
-  padding: 14px 18px;
   text-align: center;
   user-select: all;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(232, 184, 75, .1), rgba(232, 184, 75, .02));
+  box-shadow: inset 0 0 0 1.5px rgba(232, 184, 75, .42), inset 0 2px 8px rgba(0, 0, 0, .55);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .7);
 }
 
 .gtabel { width: 100%; border-collapse: collapse; font-size: 14px; }
 .gtabel th, .gtabel td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line); }
-.gtabel th { color: var(--txt3); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.gtabel th {
+  color: var(--txt3);
+  font-size: 11px;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  font-weight: 700;
+}
 .gtabel td.num, .gtabel th.num { text-align: right; font-variant-numeric: tabular-nums; }
-.gtabel tbody tr:hover { background: rgba(255, 255, 255, .03); }
+.gtabel tbody tr:hover { background: rgba(190, 215, 225, .05); }
 .gscroll { overflow-x: auto; }
 
 /* Warna akurasi: hijau aman, kuning perlu diperhatikan, merah perlu
@@ -55,16 +79,34 @@ body.guru { padding: 0; }
 .ak.kurang { color: var(--red); }
 .sunyi { color: var(--txt3); }
 
-.gbar { height: 8px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; min-width: 90px; }
-.gbar i { display: block; height: 100%; border-radius: 99px; background: var(--grad-gold); }
+.gbar {
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, .55);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .8);
+  overflow: hidden;
+  min-width: 90px;
+}
+.gbar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #f7e6ae, var(--gold) 55%, var(--gold2));
+}
 
 .gkelas {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 12px;
 }
-.gkelas .card { cursor: pointer; transition: transform .12s ease, border-color .12s ease; }
-.gkelas .card:hover { transform: translateY(-2px); border-color: var(--line2); }
+/* Kartu kelas memakai pelat bersudut potong dari aplikasi siswa, jadi
+   sorotannya lewat drop-shadow — bingkai kotak akan menggantung di luar
+   sudut yang dipotong. */
+.gkelas .card { cursor: pointer; transition: transform .12s ease, filter .12s ease; }
+.gkelas .card:hover {
+  transform: translateY(-2px);
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .6)) brightness(1.07);
+}
 
 .gkolom { display: grid; grid-template-columns: 1fr; gap: 18px; }
 @media (min-width: 860px) { .gkolom.dua { grid-template-columns: 3fr 2fr; } }
@@ -86,22 +128,29 @@ select.field { appearance: none; cursor: pointer; }
 }
 .gtabel td.aksi .btn {
   padding: 6px 10px;
-  font-size: 12px;
-  box-shadow: none;
+  font-size: 11.5px;
+  letter-spacing: .04em;
   margin-left: 6px;
+  filter: none;
 }
 .gtabel td.nowrap { white-space: nowrap; }
 .gtabel td.nama { min-width: 150px; }
 .gtabel td.nama small { font-size: 11px; }
 
+/* Di dasbor, tombol tidak perlu dibatasi lebarnya seperti di panggung
+   siswa — di sini ia mengisi kolom formulir yang memang sudah sempit. */
+body.guru .btn-block { max-width: none; }
+
 /* Angka peserta saat menunggu sesi mulai: dibaca guru dari depan kelas
    sambil menunggu anak-anak membuka aplikasi, jadi dibuat besar. */
 .sesi-besar {
+  font-family: 'Cinzel', serif;
   font-size: 56px;
-  font-weight: 800;
+  font-weight: 900;
   text-align: center;
   line-height: 1.1;
   color: var(--green);
   margin-top: 6px;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, .75);
 }
 .center { text-align: center; }
