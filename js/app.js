@@ -840,8 +840,10 @@
         '</div>' +
 
         '<div class="arena-main">' +
-          '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
-          rantaiHtml(q) +
+          '<div class="thread-kolom">' +
+            '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
+            rantaiHtml(q) +
+          '</div>' +
           papanAngka('tekan', '', false) +
         '</div>' +
 
@@ -1464,8 +1466,10 @@
         '</div>' +
 
         '<div class="arena-main">' +
-          '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
-          rantaiHtml(q) +
+          '<div class="thread-kolom">' +
+            '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
+            rantaiHtml(q) +
+          '</div>' +
           papanAngka('tekanSesi', S2.ketik || '', sudah) +
         '</div>' +
 

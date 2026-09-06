@@ -555,8 +555,15 @@ img,svg{display:block;max-width:100%}
 
 /* Pertanyaannya sama di tiap soal, jadi ia ditulis kecil dan tenang —
    yang harus menarik mata adalah rantainya, bukan kalimatnya. */
-.ask{font-size:clamp(11px,1.6vmin,14px);color:var(--txt2);text-align:center;
+.ask{font-size:clamp(13px,2.6vmin,22px);color:var(--txt2);text-align:center;
   max-width:44ch;text-wrap:balance}
+
+/* Kalimat pertanyaan duduk tepat di atas rantainya, bukan sebagai baris
+   terpisah. Saat mendatar keduanya jadi satu kolom di samping papan
+   angka, dan kolom itu punya ruang sisa di atas rantainya — persis
+   tempat kalimatnya. */
+.thread-kolom{display:flex;flex-direction:column;align-items:center;
+  gap:clamp(6px,1.4vmin,14px);width:100%;min-width:0}
 
 /* Rantai operasi.
 
@@ -566,7 +573,7 @@ img,svg{display:block;max-width:100%}
    menegaskan arah jalannya rantai. Gulirannya dimulai dari ujung kanan,
    tempat nilai akhir berada — dari situlah hitung mundur berangkat. */
 .thread{
-  display:flex;align-items:center;gap:clamp(3px,.6vmin,6px);
+  display:flex;align-items:center;gap:clamp(5px,1.2vmin,12px);
   width:100%;overflow-x:auto;overflow-y:hidden;
   padding:clamp(8px,1.4vmin,14px) clamp(6px,1.2vmin,12px);
   scrollbar-width:thin;scrollbar-color:var(--sv3) transparent;
@@ -575,25 +582,25 @@ img,svg{display:block;max-width:100%}
 .thread::-webkit-scrollbar{height:5px}
 .thread::-webkit-scrollbar-thumb{background:var(--sv3);border-radius:999px}
 .th-dot{
-  flex:none;width:clamp(14px,2.4vmin,24px);height:3px;border-radius:999px;
-  background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 3px,transparent 3px 7px);
+  flex:none;width:clamp(18px,4.4vmin,44px);height:clamp(4px,.9vmin,7px);border-radius:999px;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.85) 0 4px,transparent 4px 9px);
 }
 .th-op{
   flex:none;display:grid;place-items:center;
-  min-width:clamp(52px,8vmin,78px);height:clamp(44px,7vmin,66px);
-  padding:0 clamp(10px,1.6vmin,16px) 0 clamp(6px,1vmin,10px);
+  min-width:clamp(74px,32vmin,190px);height:clamp(60px,26vmin,150px);
+  padding:0 clamp(16px,6vmin,38px) 0 clamp(8px,2.4vmin,18px);
   clip-path:polygon(0 0,72% 0,100% 50%,72% 100%,0 100%);
   background:linear-gradient(180deg,#fdfefe,#d9e5ec 55%,#b6c7d2);
   color:#10202b;font-family:'Cinzel',serif;font-weight:900;
-  font-size:clamp(13px,2.1vmin,20px);letter-spacing:.02em;
+  font-size:clamp(17px,6.2vmin,40px);letter-spacing:.02em;
   filter:drop-shadow(0 3px 7px rgba(0,0,0,.5));
 }
 .th-awal,.th-akhir{
   flex:none;display:grid;place-items:center;
-  min-width:clamp(56px,9vmin,92px);height:clamp(50px,8vmin,74px);
-  padding:0 clamp(10px,1.6vmin,18px);border-radius:12px;
+  min-width:clamp(84px,36vmin,212px);height:clamp(66px,29vmin,168px);
+  padding:0 clamp(14px,4vmin,28px);border-radius:clamp(12px,2.4vmin,18px);
   font-family:'Cinzel',serif;font-weight:900;font-variant-numeric:tabular-nums;
-  font-size:clamp(19px,3.2vmin,32px);
+  font-size:clamp(26px,9vmin,60px);
 }
 /* Kotak nilai akhir: pelat biru tua berpinggir baja, seperti di acuan. */
 .th-akhir{
@@ -652,8 +659,8 @@ img,svg{display:block;max-width:100%}
   --c:11px;--ci:8px;
   position:relative;z-index:0;
   display:flex;align-items:baseline;justify-content:center;gap:7px;
-  width:min(300px,100%);min-height:clamp(38px,5.6vmin,58px);
-  padding:clamp(5px,1vmin,10px) clamp(12px,2vmin,20px);
+  width:min(360px,100%);min-height:clamp(48px,12vmin,86px);
+  padding:clamp(6px,1.6vmin,14px) clamp(14px,3vmin,26px);
   filter:drop-shadow(0 5px 12px rgba(0,0,0,.55));
   transition:filter .2s;
 }
@@ -664,7 +671,7 @@ img,svg{display:block;max-width:100%}
   box-shadow:inset 0 3px 7px rgba(0,0,0,.3)}
 .plate b{
   font-family:'Cinzel',serif;font-weight:900;
-  font-size:clamp(20px,3.4vmin,32px);line-height:1.15;
+  font-size:clamp(25px,6.4vmin,46px);line-height:1.15;
   color:#0d1c26;font-variant-numeric:tabular-nums;letter-spacing:.04em;
   text-shadow:0 1px 0 rgba(255,255,255,.6);
 }
@@ -678,12 +685,12 @@ img,svg{display:block;max-width:100%}
 
 .pad{
   display:grid;grid-template-columns:repeat(3,auto);justify-content:center;
-  gap:clamp(6px,1.1vmin,11px);
+  gap:clamp(7px,1.7vmin,15px);
 }
 .key{
-  width:clamp(40px,6vmin,58px);aspect-ratio:1;border-radius:50%;
+  width:clamp(46px,11vmin,80px);aspect-ratio:1;border-radius:50%;
   display:grid;place-items:center;
-  font-family:'Cinzel',serif;font-weight:700;font-size:clamp(16px,2.5vmin,24px);
+  font-family:'Cinzel',serif;font-weight:700;font-size:clamp(19px,4.6vmin,34px);
   color:var(--ice-ink);
   background:
     radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.75),transparent 70%),
@@ -958,8 +965,7 @@ img,svg{display:block;max-width:100%}
     flex-direction:row;align-items:center;justify-content:center;
     gap:clamp(14px,3vmin,38px);
   }
-  .arena-main .thread{flex:1 1 0;max-width:620px;min-width:0}
-  .arena-main .ask{display:none}
+  .arena-main .thread-kolom{flex:1 1 0;max-width:660px;min-width:0}
   .arena-main .jawab{flex:none}
 }
 /* Layar mendatar yang pendek (HP): rapatkan semuanya. */
