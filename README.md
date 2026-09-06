@@ -38,9 +38,15 @@ tiap nyawa yang masih utuh. Sekali tebak langsung benar bernilai 1.750; tebakan
 ketiga yang akhirnya benar bernilai 1.250; nyawa habis bernilai 0. Nilai
 tertinggi satu permainan **5.250**.
 
-Jawaban **diketik** di papan angka pada layar, atau lewat papan ketik sungguhan.
-Jawabannya selalu bilangan bulat, jadi tidak ada tombol koma maupun garis
-pecahan.
+Satu soal ditampilkan dalam **dua layar**. Layar pertama menampilkan rantainya
+saja — selebar panggung, dengan sepasang tombol `‹` `›` untuk menggesernya
+sampai ke ujung kiri. Menekan **SUBMIT** membuka layar kedua: plakat jawaban dan
+papan angka, dengan tombol bundar di pojok kiri bawah untuk kembali melihat
+rantainya. Papan angka yang ikut terpampang di layar pertama akan memakan
+separuh lebarnya, padahal justru rantai itu yang perlu dibaca ujung ke ujung.
+
+Jawabannya selalu bilangan bulat, jadi papan angkanya tidak punya tombol koma
+maupun garis pecahan.
 
 ## Tingkat Kesulitan
 
@@ -348,6 +354,7 @@ deploy/             berkas untuk menjalankannya di VPS
 - Efek suara dibangkitkan lewat WebAudio — tidak ada berkas audio yang perlu diunduh.
 - Satu-satunya sumber daya eksternal adalah Google Fonts; bila diblokir, tampilan
   otomatis memakai huruf sistem.
-- Pintasan papan ketik saat bermain: angka `0`–`9` untuk mengetik jawaban,
-  `Backspace` menghapus, `Enter` mengirim — lalu `Enter` sekali lagi untuk lanjut
-  ke soal berikutnya.
+- Pintasan papan ketik saat bermain. Di layar rantai: `←` `→` menggeser
+  rantainya, `Enter` membuka papan angka. Di layar papan angka: `0`–`9`
+  mengetik, `Backspace` menghapus, `Enter` mengirim, `Esc` kembali ke rantai.
+  Sesudah dijawab, `Enter` melanjutkan ke soal berikutnya.

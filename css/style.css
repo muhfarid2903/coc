@@ -527,7 +527,7 @@ img,svg{display:block;max-width:100%}
 .mm-scan span{animation:spin 7s linear infinite reverse}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* ---------- 13. Arena ---------- */
-.arena{display:flex;flex-direction:column;justify-content:center;
+.arena{position:relative;display:flex;flex-direction:column;justify-content:center;
   gap:clamp(6px,1.1vmin,12px);min-height:100%}
 .arena .row{gap:8px}
 /* Soal dan papan angka bersanding saat mendatar: tinggi layar HP yang
@@ -563,7 +563,43 @@ img,svg{display:block;max-width:100%}
    angka, dan kolom itu punya ruang sisa di atas rantainya — persis
    tempat kalimatnya. */
 .thread-kolom{display:flex;flex-direction:column;align-items:center;
-  gap:clamp(6px,1.4vmin,14px);width:100%;min-width:0}
+  gap:clamp(8px,1.8vmin,18px);width:100%;min-width:0}
+.thread-kolom .btn{min-width:clamp(160px,34vmin,300px)}
+
+/* Rantai diapit dua tombol geser. Menggulir dengan jari di atas rantai
+   tetap bisa, tapi di lab komputer yang dipakai dengan tetikus tidak ada
+   cara lain untuk sampai ke ujung kiri rantai HARD yang empat belas
+   langkah. */
+.thread-baris{display:flex;align-items:center;gap:clamp(4px,1vmin,10px);width:100%;min-width:0}
+.thread-baris .thread{flex:1 1 0;min-width:0}
+.geser{
+  flex:none;display:grid;place-items:center;
+  width:clamp(34px,7vmin,56px);aspect-ratio:1;border-radius:50%;
+  font-family:'Cinzel',serif;font-weight:900;font-size:clamp(18px,3.6vmin,30px);
+  line-height:1;color:var(--ice-ink);
+  background:
+    radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.7),transparent 70%),
+    linear-gradient(180deg,var(--ice1),var(--ice2) 48%,var(--ice3) 84%,var(--ice4));
+  box-shadow:0 0 0 2px var(--sv3),inset 0 -4px 7px rgba(0,0,0,.24),0 3px 8px rgba(0,0,0,.5);
+  transition:transform .1s,opacity .18s;
+}
+.geser:active{transform:scale(.92)}
+.geser:disabled{opacity:.28;box-shadow:0 0 0 2px var(--sv4)}
+
+/* Tombol bundar kembali ke rantai, di pojok kiri bawah panggung —
+   tempat yang sama dengan tombol kembali di arena acuan. */
+.bulat{
+  position:absolute;left:clamp(6px,1.6vmin,18px);bottom:clamp(6px,1.6vmin,18px);
+  display:grid;place-items:center;
+  width:clamp(40px,8vmin,64px);aspect-ratio:1;border-radius:50%;
+  font-size:clamp(18px,3.4vmin,28px);line-height:1;color:var(--ice-ink);
+  background:
+    radial-gradient(60% 46% at 50% 16%,rgba(255,255,255,.7),transparent 70%),
+    linear-gradient(180deg,var(--ice1),var(--ice2) 48%,var(--ice3) 84%,var(--ice4));
+  box-shadow:0 0 0 2px var(--sv3),inset 0 -4px 7px rgba(0,0,0,.24),0 3px 9px rgba(0,0,0,.55);
+  transition:transform .1s;
+}
+.bulat:active{transform:scale(.92)}
 
 /* Rantai operasi.
 
@@ -965,7 +1001,9 @@ img,svg{display:block;max-width:100%}
     flex-direction:row;align-items:center;justify-content:center;
     gap:clamp(14px,3vmin,38px);
   }
-  .arena-main .thread-kolom{flex:1 1 0;max-width:660px;min-width:0}
+  /* Papan angka sudah punya layarnya sendiri, jadi rantainya boleh
+     memakai seluruh lebar panggung. */
+  .arena-main .thread-kolom{flex:1 1 0;max-width:min(1000px,100%);min-width:0}
   .arena-main .jawab{flex:none}
 }
 /* Layar mendatar yang pendek (HP): rapatkan semuanya. */

@@ -654,6 +654,7 @@
         '<div class="step"><div><h4>Tiga rantai sekali main</h4><p>Satu permainan berisi 3 soal. Tiap soal adalah satu rantai operasi hitung yang berujung pada sebuah nilai akhir.</p></div></div>' +
         '<div class="step"><div><h4>Cari nilai awalnya</h4><p>Yang ditanya bukan hasilnya, melainkan angka yang dimasukkan di ujung sebelah kiri. Telusuri rantainya mundur: lawan tiap operasi dengan kebalikannya.</p></div></div>' +
         '<div class="step"><div><h4>Urutan operasi tidak berlaku</h4><p>Rantai dijalankan apa adanya dari kiri ke kanan. Kali dan bagi tidak didahulukan — justru itu yang membuatnya bisa dibalik satu per satu.</p></div></div>' +
+        '<div class="step"><div><h4>Lihat dulu, baru jawab</h4><p>Layar pertama menampilkan rantainya saja — geser dengan tombol \u2039 dan \u203a sampai ke ujung kiri. Tekan SUBMIT untuk membuka papan angka, dan tombol bundar di pojok kiri bawah untuk kembali melihat rantainya.</p></div></div>' +
         '<div class="step"><div><h4>Tiga nyawa tiap soal</h4><p>Salah menjawab berarti kehilangan satu nyawa, dan kamu boleh mencoba lagi. Soal berganti kalau jawabanmu benar atau nyawamu habis.</p></div></div>' +
         '<div class="step"><div><h4>Tidak ada hitung mundur</h4><p>Tidak ada batas waktu — pikirkan selama yang kamu perlu. Yang dinilai ketelitian menelusuri rantai, bukan kecepatan mengetik.</p></div></div>' +
         '<div class="step"><div><h4>Kumpulkan XP dan naik tingkat</h4><p>Dari Perunggu sampai Sang Juara. XP juga menentukan posisimu di papan peringkat.</p></div></div>' +
@@ -696,6 +697,8 @@
       i: 0,
       my: 0,
       nyawa: NYAWA,
+      /* 'telusur' menelusuri rantainya, 'jawab' mengetik nilai awalnya. */
+      langkah: 'telusur',
       streak: 0, best: 0,
       correct: 0, utuh: 0,
       log: [],
@@ -819,15 +822,68 @@
     el.classList.add('hit');
   }
 
+  /* Satu soal ditampilkan dalam dua langkah, seperti di arena acuan:
+     menelusuri rantainya dulu di satu layar, baru mengetik jawabannya di
+     layar berikutnya. Papan angka yang selalu terpampang memakan separuh
+     lebar layar — padahal justru rantai itu yang perlu dibaca dari ujung
+     ke ujung, dan tiap operasi yang muat sekaligus berarti satu langkah
+     lebih sedikit yang harus diingat di kepala. */
+  function telusurHtml(q, adaSubmit) {
+    return '<div class="thread-kolom">' +
+      '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
+      '<div class="thread-baris">' +
+        '<button class="geser" data-act="geser" data-val="kiri" aria-label="Geser rantai ke kiri">\u2039</button>' +
+        rantaiHtml(q) +
+        '<button class="geser" data-act="geser" data-val="kanan" aria-label="Geser rantai ke kanan">\u203a</button>' +
+      '</div>' +
+      (adaSubmit
+        ? '<button class="btn btn-lg" data-act="' + (state.screen === 'sesi' ? 'submitSesi' : 'submit') +
+          '"><span class="shine"></span>SUBMIT</button>'
+        : '') +
+    '</div>';
+  }
+
+  /* Gulirkan ke ujung kanan — nilai akhir itulah titik berangkat hitung
+     mundurnya — lalu setel tombol gesernya. */
+  function pasangGeser() {
+    var th = $('thread');
+    if (!th) return;
+    th.scrollLeft = th.scrollWidth;
+    th.addEventListener('scroll', catGeser, { passive: true });
+    catGeser();
+  }
+
+  /* Tombol yang sudah mentok dimatikan, bukan dibiarkan menerima tekanan
+     yang tidak menghasilkan apa-apa. */
+  function catGeser() {
+    var th = $('thread');
+    if (!th) return;
+    var kiri = document.querySelector('.geser[data-val="kiri"]');
+    var kanan = document.querySelector('.geser[data-val="kanan"]');
+    var mentokKanan = th.scrollLeft + th.clientWidth >= th.scrollWidth - 2;
+    if (kiri) kiri.disabled = th.scrollLeft <= 2;
+    if (kanan) kanan.disabled = mentokKanan;
+  }
+
   function gambarSoal() {
     var m = state.match;
     if (!m) { go('home'); return; }
-    var q = m.qs[m.i];
 
     m.lock = false;
     m.ketik = '';
     m.nyawa = NYAWA;
+    m.langkah = 'telusur';
     m.mulaiPada = Date.now();
+    gambarArena();
+  }
+
+  function gambarArena() {
+    var m = state.match;
+    if (!m) { go('home'); return; }
+    var q = m.qs[m.i];
+    /* Sesudah terkunci, papan angka tidak berguna lagi — yang perlu
+       dilihat justru rantainya, bersama pembahasan di bawahnya. */
+    var mengetik = m.langkah === 'jawab' && !m.lock;
 
     scr.innerHTML =
       '<div class="arena">' +
@@ -840,20 +896,18 @@
         '</div>' +
 
         '<div class="arena-main">' +
-          '<div class="thread-kolom">' +
-            '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
-            rantaiHtml(q) +
-          '</div>' +
-          papanAngka('tekan', '', false) +
+          (mengetik
+            ? papanAngka('tekan', m.ketik, false)
+            : telusurHtml(q, !m.lock)) +
         '</div>' +
 
+        (mengetik
+          ? '<button class="bulat" data-act="kembaliTelusur" aria-label="Kembali ke rantai">\u2190</button>'
+          : '') +
         '<div id="post"></div>' +
       '</div>';
 
-    /* Digulirkan ke ujung kanan: nilai akhir itulah titik berangkat
-       hitung mundurnya, jadi ia yang harus terlihat lebih dulu. */
-    var th = $('thread');
-    if (th) th.scrollLeft = th.scrollWidth;
+    if (!mengetik) pasangGeser();
   }
 
   function catSkor() {
@@ -897,15 +951,16 @@
       m.streak += 1;
       if (m.streak > m.best) m.best = m.streak;
       if (m.nyawa === NYAWA) m.utuh += 1;
-      goyangPlakat('benar');
       kilasan(true, dapat, m.nyawa);
     } else {
       m.streak = 0;
     }
     m.log[m.i] = { ok: benar, ms: pakai, sisa: m.nyawa, ketik: benar ? String(ketikan) : '', q: q };
 
-    kunciPapan();
-    catSkor();
+    /* Digambar ulang ke tampilan rantai: pembahasannya menyebut tiap
+       langkah, dan membacanya tanpa rantai yang dibicarakan di layar
+       sama saja dengan membaca peta tanpa jalannya. */
+    gambarArena();
 
     var post = $('post');
     post.innerHTML =
@@ -1214,13 +1269,27 @@
           soalKe: jalan ? info.soalKe : -1,
           jawabKe: -1,
           skor: 0, benar: 0, runtun: 0,
-          nyawa: NYAWA,
+          nyawa: NYAWA, langkah: 'telusur',
           qs: jalan ? Q.packSemai(info.jumlah, info.tingkat, info.semai) : null,
           ketik: '',
           papan: r.data.papan || [], raf: 0
         };
         go('sesi');
       });
+    },
+    submitSesi: function () {
+      var S2 = state.sesi;
+      if (!S2 || S2.tahap !== 'soal' || S2.jawabKe === S2.soalKe) return;
+      FX.sfx.tap();
+      S2.langkah = 'jawab';
+      gambarSoalSesi();
+    },
+    kembaliSesi: function () {
+      var S2 = state.sesi;
+      if (!S2 || S2.jawabKe === S2.soalKe) return;
+      FX.sfx.tap();
+      S2.langkah = 'telusur';
+      gambarSoalSesi();
     },
     keluarSesi: function () {
       FX.sfx.tap();
@@ -1270,7 +1339,7 @@
         S2.jawabKe = S2.soalKe;
         S2.runtun = 0;
         LIVE.jawabSesi(S2.soalKe, 0, false);
-        kunciPapan();
+        gambarSoalSesi();
         var post0 = $('post');
         if (post0) post0.innerHTML = '<p class="sub center" style="margin-top:10px">' +
           'Nyawamu habis · menunggu yang lain…</p>';
@@ -1290,9 +1359,7 @@
       /* Plakatnya diwarnai lalu papan dikunci — nilai awalnya sengaja
          belum dibuka, supaya siswa yang menjawab cepat tidak bisa
          membisikkannya ke teman sebangku yang belum menjawab. */
-      goyangPlakat('benar');
-      kunciPapan();
-      var sc = $('scMe'); if (sc) sc.textContent = fmt(S2.skor);
+      gambarSoalSesi();
       var post = $('post');
       if (post) post.innerHTML = '<p class="sub center" style="margin-top:10px">' +
         'Benar! +' + fmt(poinDapat) + ' · menunggu yang lain…</p>';
@@ -1301,6 +1368,30 @@
     ulang: function () {
       var c = state.lastRes && state.lastRes.cfg;
       mulaiMain({ level: c ? c.level : state.sel.level });
+    },
+
+    /* Geser rantai. Satu tekanan memindahkan hampir satu layar penuh,
+       menyisakan sedikit tumpang tindih supaya siswa tidak kehilangan
+       jejak di mana ia tadi berada. */
+    geser: function (v) {
+      var th = $('thread');
+      if (!th) return;
+      FX.sfx.tap();
+      th.scrollBy({ left: (v === 'kiri' ? -0.7 : 0.7) * th.clientWidth, behavior: 'smooth' });
+    },
+    submit: function () {
+      var m = state.match;
+      if (!m || m.lock) return;
+      FX.sfx.tap();
+      m.langkah = 'jawab';
+      gambarArena();
+    },
+    kembaliTelusur: function () {
+      var m = state.match;
+      if (!m || m.lock) return;
+      FX.sfx.tap();
+      m.langkah = 'telusur';
+      gambarArena();
     },
 
     tekan: function (v) {
@@ -1454,6 +1545,7 @@
       return;
     }
     var sudah = S2.jawabKe === S2.soalKe;
+    var mengetik = S2.langkah === 'jawab' && !sudah;
 
     scr.innerHTML =
       '<div class="arena">' +
@@ -1466,20 +1558,20 @@
         '</div>' +
 
         '<div class="arena-main">' +
-          '<div class="thread-kolom">' +
-            '<p class="ask">Tentukan nilai awal dari rangkaian operasi berikut!</p>' +
-            rantaiHtml(q) +
-          '</div>' +
-          papanAngka('tekanSesi', S2.ketik || '', sudah) +
+          (mengetik
+            ? papanAngka('tekanSesi', S2.ketik || '', false)
+            : telusurHtml(q, !sudah)) +
         '</div>' +
 
+        (mengetik
+          ? '<button class="bulat" data-act="kembaliSesi" aria-label="Kembali ke rantai">\u2190</button>'
+          : '') +
         '<div id="post">' + (sudah
           ? '<p class="sub center" style="margin-top:10px">Jawabanmu terkirim. Menunggu yang lain…</p>' : '') +
         '</div>' +
       '</div>';
 
-    var th = $('thread');
-    if (th) th.scrollLeft = th.scrollWidth;
+    if (!mengetik) pasangGeser();
     detakSesi();
   }
 
@@ -1551,6 +1643,7 @@
       S2.soalKe = d.soalKe;
       S2.ketik = '';
       S2.nyawa = NYAWA;
+      S2.langkah = 'telusur';
       S2.info.batasMs = d.batasMs;
       S2.habisPada = Date.now() + d.batasMs;
       if (state.screen !== 'sesi') go('sesi'); else gambarSoalSesi();
@@ -1614,17 +1707,30 @@
        papan ketik sungguhan jauh lebih cepat daripada mengklik papan
        angka di layar. */
     document.addEventListener('keydown', function (e) {
-      var aksi = state.screen === 'battle' ? ACT.tekan
-               : state.screen === 'sesi' ? ACT.tekanSesi : null;
-      if (!aksi) return;
+      var diArena = state.screen === 'battle', diSesi = state.screen === 'sesi';
+      if (!diArena && !diSesi) return;
 
-      if (state.screen === 'battle' && state.match && state.match.lock) {
+      if (diArena && state.match && state.match.lock) {
         if (e.key === 'Enter') { e.preventDefault(); lanjut(); }
         return;
       }
+
+      /* Di langkah menelusur, papan ketik menggeser rantainya; angka baru
+         berarti sesuatu setelah papan angkanya terbuka. */
+      var langkah = diArena ? (state.match && state.match.langkah)
+                            : (state.sesi && state.sesi.langkah);
+      if (langkah !== 'jawab') {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); ACT.geser('kiri'); }
+        else if (e.key === 'ArrowRight') { e.preventDefault(); ACT.geser('kanan'); }
+        else if (e.key === 'Enter') { e.preventDefault(); (diArena ? ACT.submit : ACT.submitSesi)(); }
+        return;
+      }
+
+      var aksi = diArena ? ACT.tekan : ACT.tekanSesi;
       if (e.key >= '0' && e.key <= '9') { e.preventDefault(); aksi(e.key); }
       else if (e.key === 'Backspace') { e.preventDefault(); aksi('hapus'); }
       else if (e.key === 'Enter') { e.preventDefault(); aksi('kirim'); }
+      else if (e.key === 'Escape') { e.preventDefault(); (diArena ? ACT.kembaliTelusur : ACT.kembaliSesi)(); }
     });
 
     /* Bangunkan audio pada sentuhan pertama. */
