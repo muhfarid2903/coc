@@ -668,6 +668,19 @@ img,svg{display:block;max-width:100%}
   font-size:calc(var(--sel) * .5);line-height:1;color:#10202b;
 }
 
+/* Papan dan tombol SUBMIT-nya. Saat mendatar keduanya bersanding: ruang
+   kosong di kiri-kanan papan berlimpah, sedangkan tingginya yang habis —
+   jadi kalimat pertanyaan pindah ke baris kepala dan tombolnya pindah ke
+   samping, dan seluruh tinggi yang terbebas jatuh ke papan. */
+.papan-bungkus{display:flex;flex-direction:column;align-items:center;
+  gap:clamp(8px,1.8vmin,18px);width:100%;min-width:0}
+.papan-kolom{display:flex;flex-direction:column;align-items:center;
+  gap:clamp(8px,1.8vmin,18px)}
+.papan-kolom .btn{min-width:clamp(150px,30vmin,260px)}
+/* Kalimat di baris kepala hanya muncul saat mendatar — di layar tegak ia
+   sudah ada sebagai kalimat penuh di atas papan. */
+.tanya-kepala{display:none;font-style:normal}
+
 /* Kisi persegi: bidang putih bergaris tipis, seperti lembar aslinya. */
 .papan.kisi{
   background:linear-gradient(180deg,#fdfefe,#e4ecf1);
@@ -681,12 +694,15 @@ img,svg{display:block;max-width:100%}
 .papan.sarang .psel{
   clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
   background:linear-gradient(180deg,#fdfefe,#dce7ee 60%,#c2d0d9);
-  margin:0 1px;
   font-size:calc(var(--sel) * .42);
 }
+/* Baris bertumpuk seperempat tinggi sel supaya segi enamnya bertautan.
+   Pergeseran setengah sel untuk baris pendek tidak perlu ditambahkan:
+   tiap baris sudah dipusatkan, dan baris berisi n−1 sel dengan sendirinya
+   duduk setengah sel dari baris berisi n. Menggesernya lagi membuat
+   pergeserannya dobel dan sarangnya berlubang. */
 .papan.sarang .pbaris{margin-top:calc(var(--sel) * -.25)}
 .papan.sarang .pbaris:first-child{margin-top:0}
-.papan.sarang .pbaris.geser{margin-left:calc(var(--sel) * var(--lebar) * .5)}
 
 /* High score di beranda, seperti papan di layar pembuka acuan. */
 .hiscore{
@@ -1055,6 +1071,11 @@ img,svg{display:block;max-width:100%}
      memakai seluruh lebar panggung. */
   .arena-main .thread-kolom{flex:1 1 0;max-width:min(1000px,100%);min-width:0}
   .arena-main .jawab{flex:none}
+  /* Papan naik ke seluruh tinggi panggung: kalimatnya sudah pindah ke
+     baris kepala, tombolnya ke samping papan. */
+  .arena-main .papan-bungkus .ask{display:none}
+  .arena-main .papan-kolom{flex-direction:row;gap:clamp(14px,3.4vmin,44px)}
+  .tanya-kepala{display:inline}
 }
 /* Layar mendatar yang pendek (HP): rapatkan semuanya. */
 @media (orientation:landscape) and (max-height:460px){

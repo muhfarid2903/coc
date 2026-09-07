@@ -942,23 +942,95 @@
      ============================================================ */
   function papanHtml(q) {
     var sarang = q.bentuk === 'sarang';
-    var baris = q.baris.length;
-    /* Sel sarang lebah bertumpuk, jadi tinggi efektif tiap barisnya cuma
-       tiga perempat — ia boleh lebih besar untuk jumlah baris yang sama. */
-    var muat = (sarang ? 62 : 47) / baris;
-    var v = Math.min(sarang ? 12 : 10, muat);
     var lebar = q.ekspresi ? 2.6 : 1;
-    var gaya = '--sel:clamp(17px,' + v.toFixed(2) + 'vmin,54px);--lebar:' + lebar;
+    var kolom = 0;
+    for (var i = 0; i < q.baris.length; i++) kolom = Math.max(kolom, q.baris[i].length);
+    /* Ukuran awal sekadar supaya cat pertama tidak melompat; pasKanPapan()
+       yang menentukan ukuran sebenarnya sesudah tata letaknya terbentuk
+       dan ruang yang tersisa bisa diukur. */
+    var gaya = '--sel:28px;--lebar:' + lebar;
 
-    return '<div class="papan ' + (sarang ? 'sarang' : 'kisi') + '" style="' + gaya + '">' +
+    return '<div class="papan ' + (sarang ? 'sarang' : 'kisi') + '" style="' + gaya + '"' +
+      ' data-baris="' + q.baris.length + '" data-kolom="' + kolom +
+      '" data-lebar="' + lebar + '" data-sarang="' + (sarang ? 1 : 0) + '">' +
       q.baris.map(function (r, i) {
-        return '<div class="pbaris' + (sarang && i % 2 ? ' geser' : '') + '">' +
+        return '<div class="pbaris">' +
           r.map(function (c) {
             return '<span class="psel">' + esc(c.teks) + '</span>';
           }).join('') +
         '</div>';
       }).join('') +
     '</div>';
+  }
+
+  /* Besarkan papan sampai memenuhi ruang yang benar-benar tersisa.
+
+     Menakar dengan satuan `vmin` tidak pernah bisa benar: ia tidak tahu
+     berapa tinggi yang sudah dimakan kepala layar, kalimat pertanyaan,
+     dan tombol SUBMIT — dan ketiganya berubah antara layar tegak,
+     mendatar, dan layar penuh. Jadi ruangnya diukur langsung dari tata
+     letak yang sudah terbentuk, lalu selnya dibesarkan sampai pas. */
+  function pasKanPapan() {
+    var pa = document.querySelector('.papan');
+    if (!pa) return;
+    var arena = document.querySelector('.arena');
+    var utama = document.querySelector('.arena-main');
+    var bungkus = document.querySelector('.papan-bungkus');
+    var kolomPapan = document.querySelector('.papan-kolom');
+    if (!arena || !utama || !bungkus || !kolomPapan) return;
+
+    var baris = Number(pa.getAttribute('data-baris')) || 1;
+    var kolom = Number(pa.getAttribute('data-kolom')) || 1;
+    var lebarSel = Number(pa.getAttribute('data-lebar')) || 1;
+    var sarang = pa.getAttribute('data-sarang') === '1';
+
+    /* Sel sarang bertumpuk seperempat tingginya, jadi n baris hanya
+       setinggi 0,75n + 0,25 sel; barisnya juga bergeser setengah sel,
+       jadi lebarnya setengah sel lebih dari jumlah kolomnya. */
+    var tinggiEfektif = sarang ? baris * 0.75 + 0.25 : baris;
+    var lebarEfektif = (sarang ? kolom + 0.5 : kolom) * lebarSel;
+
+    var angka = function (v) { var n = parseFloat(v); return isNaN(n) ? 0 : n; };
+    var tinggi = function (el) { return el ? el.getBoundingClientRect().height : 0; };
+    var tampak = function (el) { return el && getComputedStyle(el).display !== 'none'; };
+
+    var gLayar = getComputedStyle(scr);
+    var sisaTinggi = scr.clientHeight - angka(gLayar.paddingTop) - angka(gLayar.paddingBottom);
+    var sisaLebar = scr.clientWidth - angka(gLayar.paddingLeft) - angka(gLayar.paddingRight);
+
+    /* Semua yang berbagi tinggi dengan papan, diukur satu per satu —
+       termasuk jarak antar bagiannya, karena kelonggaran yang ditebak
+       selalu meleset di salah satu ukuran layar. */
+    var gArena = angka(getComputedStyle(arena).rowGap);
+    var anak = arena.children.length;
+    sisaTinggi -= gArena * Math.max(0, anak - 1);
+    /* Yang dilewati adalah wadah papannya sendiri, bukan pembungkus di
+       dalamnya — .papan-bungkus bukan anak langsung .arena. */
+    for (var k = 0; k < anak; k++) {
+      if (arena.children[k] !== utama) sisaTinggi -= tinggi(arena.children[k]);
+    }
+
+    var tanya = bungkus.querySelector('.ask');
+    if (tampak(tanya)) sisaTinggi -= tinggi(tanya) + angka(getComputedStyle(bungkus).rowGap);
+
+    var tombol = kolomPapan.querySelector('.btn');
+    var mendatar = getComputedStyle(kolomPapan).flexDirection === 'row';
+    var gKolom = angka(mendatar ? getComputedStyle(kolomPapan).columnGap
+                                : getComputedStyle(kolomPapan).rowGap);
+    if (tombol) {
+      if (mendatar) sisaLebar -= tombol.getBoundingClientRect().width + gKolom;
+      else sisaTinggi -= tinggi(tombol) + gKolom;
+    }
+
+    /* Bantalan papan sendiri (kisi punya bingkai putih) tidak ikut
+       dibagi ke selnya. */
+    var gPapan = getComputedStyle(pa);
+    sisaTinggi -= angka(gPapan.paddingTop) + angka(gPapan.paddingBottom) + 2;
+    sisaLebar -= angka(gPapan.paddingLeft) + angka(gPapan.paddingRight) + 2;
+
+    var sel = Math.min(sisaTinggi / tinggiEfektif, sisaLebar / lebarEfektif);
+    sel = Math.max(16, Math.min(sel, 160));
+    pa.style.setProperty('--sel', Math.floor(sel) + 'px');
   }
 
   function nyawaHtml(sisa) {
@@ -996,10 +1068,15 @@
      jadi ia tidak perlu tombol apa pun untuk dilihat seluruhnya. */
   function telusurHtml(q, adaSubmit) {
     if (q.bentuk) {
-      return '<div class="thread-kolom">' +
+      /* Papan dan tombolnya dibungkus terpisah supaya saat mendatar
+         keduanya bisa bersanding: ruang kosong di kiri-kanan papan
+         berlimpah, sedangkan tingginya justru yang habis. */
+      return '<div class="papan-bungkus">' +
         '<p class="ask">Jumlahkan semua angka pada papan berikut!</p>' +
-        papanHtml(q) +
-        tombolSubmit(adaSubmit) +
+        '<div class="papan-kolom">' +
+          papanHtml(q) +
+          tombolSubmit(adaSubmit) +
+        '</div>' +
       '</div>';
     }
     return '<div class="thread-kolom">' +
@@ -1059,7 +1136,8 @@
       '<div class="arena">' +
         '<div class="row">' +
           '<span class="round-tag">' + (GAME[m.cfg.game] || GAME.rantai).satuan.toUpperCase() +
-            ' ' + (m.i + 1) + '/' + m.qs.length + '</span>' +
+            ' ' + (m.i + 1) + '/' + m.qs.length +
+            (q.bentuk ? '<em class="tanya-kepala"> · Jumlahkan semua angka</em>' : '') + '</span>' +
           '<span class="spacer"></span>' +
           nyawaHtml(m.nyawa) +
           '<span class="round-tag" id="scMe">Skor ' + fmt(m.my) + '</span>' +
@@ -1079,7 +1157,7 @@
         '<div id="post"></div>' +
       '</div>';
 
-    if (!mengetik) pasangGeser();
+    if (!mengetik) { pasangGeser(); pasKanPapan(); }
   }
 
   function catSkor() {
@@ -1768,7 +1846,8 @@
       '<div class="arena">' +
         '<div class="row">' +
           '<span class="round-tag">' + (GAME[S2.info.topik] || GAME.rantai).satuan.toUpperCase() +
-            ' ' + (S2.soalKe + 1) + '/' + S2.info.jumlah + '</span>' +
+            ' ' + (S2.soalKe + 1) + '/' + S2.info.jumlah +
+            (q.bentuk ? '<em class="tanya-kepala"> · Jumlahkan semua angka</em>' : '') + '</span>' +
           '<span class="spacer"></span>' +
           nyawaHtml(S2.nyawa) +
           '<span class="round-tag" id="scMe">' + fmt(S2.skor) + '</span>' +
@@ -1790,7 +1869,7 @@
         '</div>' +
       '</div>';
 
-    if (!mengetik) pasangGeser();
+    if (!mengetik) { pasangGeser(); pasKanPapan(); }
     detakSesi();
   }
 
@@ -2014,6 +2093,15 @@
        mengikuti keadaan sebenarnya, bukan mengingat tekanan terakhir. */
     document.addEventListener('fullscreenchange', catLayarPenuh);
     document.addEventListener('webkitfullscreenchange', catLayarPenuh);
+
+    /* Ruang yang tersedia berubah saat layar diputar, jendela diubah
+       ukurannya, dan saat masuk atau keluar layar penuh — papannya ikut
+       ditakar ulang, bukan dibiarkan seukuran saat pertama digambar. */
+    var takarUlang = function () { pasKanPapan(); catLayarPenuh(); };
+    global.addEventListener('resize', takarUlang);
+    global.addEventListener('orientationchange', takarUlang);
+    document.addEventListener('fullscreenchange', takarUlang);
+    document.addEventListener('webkitfullscreenchange', takarUlang);
 
     /* Bangunkan audio pada sentuhan pertama. */
     var buka = function () {
